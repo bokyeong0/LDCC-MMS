@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config-root>
+    <!-- 모드 
+    	LOC : 로컬
+    	DEV : 개발서버
+    	REL : 운영서버
+     -->
+    <maxDataRows>100000</maxDataRows>
+    <language>
+    	<code>SC0013</code>
+    	<key>codeGroupCd</key>
+    </language>
+    <operation>
+        <mode>REL</mode>
+        <auth>true</auth>
+    </operation>
+    <masterCompany>VERTEXID</masterCompany>
+    <cti>
+        <ip>27.125.1.226</ip>
+    </cti>
+    <locale>
+    	<defaultLang>ko</defaultLang>
+    	<defaultCount>kr</defaultCount>
+    </locale>
+    <charset>
+    	<default>UTF-8</default>
+    </charset>
+    <authKeyPath>
+    	<ios>classpath:/config/authorization/push/paragon_ios_rel.p12</ios>    	
+    	<android>60000</android>    	
+    </authKeyPath>
+    <location>
+    	<interval>60000</interval>
+    	<uri>/ctrl/settings/user/mobileLoc</uri>
+    </location>
+	<session>
+		<timeoutSec>132000</timeoutSec>
+	</session>
+	<!-- 서버 리로드 설정(언어,Allowed URI) 미설정시 10초후 20초 간격 리로딩 -->
+	<timerTask>
+		<domainUtil>
+			<reloadDelay>10000</reloadDelay>
+			<reloadPeriod>30000</reloadPeriod>
+		</domainUtil>
+		<allowedURIListUtil>
+			<reloadDelay>10000</reloadDelay>
+			<reloadPeriod>30000</reloadPeriod>
+		</allowedURIListUtil>
+	</timerTask>
+	
+	<!-- 파일 업로드 설정 -->
+	<upload>
+		<!-- 업로드 경로-->
+		<root>C:\MMS\upload\</root>
+		<dir>C:\paragon</dir>
+		<miliSec>30000</miliSec>
+		
+		<!--
+			각 업무별 파일 업로드 유효성 검사 기준
+			- limit : 업로드 파일 최대 크기(KB), -1을 입력할 경우 무제한
+			- extention : 허용할 파일 확장자 정의 ("|"로 구분)
+		-->
+		<config>
+			<temp>
+				<limit>-1</limit>
+				<extention>ppt|doc|xls|pptx|xlsx|docx|txt|jpg|gif|bmp|jpeg|pdf</extention>
+			</temp>
+			
+            <!-- 게시판 업로드 파일 -->
+            <attfile_bbs> 
+                <limit>7168</limit>
+                <!-- office문서, pdf, image파일 --> 
+                <extention>ppt|doc|xls|pptx|docx|xlsx|txt|pdf|hwp|jpg|jpeg|gif|bmp|png</extention>
+            </attfile_bbs>
+            <!-- 사용자 이미지 파일 -->
+            <image_user> 
+                <limit>300</limit>
+                <!-- image파일 --> 
+                <extention>jpg|jpeg|gif|bmp</extention>
+            </image_user>
+            <!-- 엑셀 업로드 -->
+            <excel_upload> 
+                <limit>-1</limit>
+                <extention>xlsx|xls</extention>
+            </excel_upload>
+		</config>
+	</upload>
+</config-root>

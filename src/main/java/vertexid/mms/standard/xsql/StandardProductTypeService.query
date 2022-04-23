@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardProductTypeService">
+	
+	<select id="getStndPrdTypeListLv1" resultType="HMap" >
+		SELECT /* [StandardProductTypeService.query][getStndPrdTypeListLv1][제품범주 목록조회][한성진][2017. 11. 06.] */
+		       PRD_TYPE_CD
+			 , PRD_TYPE_PRT_CD
+			 , PRD_TYPE_NM
+			 , PRD_TYPE_LV
+			 , PRD_TYPE_ORDER
+			 , USE_YN
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '1'
+		   AND DEL_YN = 'N'
+		 ORDER BY CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+	
+	<select id="getStndPrdTypeListLv2" resultType="HMap" >
+		SELECT /* [StandardProductTypeService.query][getStndPrdTypeListLv2][제품군 목록조회][한성진][2017. 11. 06.] */
+		       PRD_TYPE_CD
+			 , PRD_TYPE_PRT_CD
+			 , PRD_TYPE_NM
+			 , PRD_TYPE_LV
+			 , PRD_TYPE_ORDER
+			 , USE_YN
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '2'
+		   AND DEL_YN = 'N'
+		 <if test="prdTypePrtCd != null and !prdTypePrtCd.equals('')">
+		   AND PRD_TYPE_PRT_CD = #{prdTypePrtCd}
+		 </if>
+		 ORDER BY CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+	
+	<select id="getStndPrdTypeListLv3" resultType="HMap" >
+		SELECT /* [StandardProductTypeService.query][getStndPrdTypeListLv3][제조사 목록조회][한성진][2017. 11. 06.] */
+		       PRD_TYPE_CD
+			 , PRD_TYPE_PRT_CD
+			 , PRD_TYPE_NM
+			 , PRD_TYPE_LV
+			 , PRD_TYPE_ORDER
+			 , USE_YN
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '3'
+		   AND DEL_YN = 'N'
+		 <if test="prdTypePrtCd != null and !prdTypePrtCd.equals('')">
+		   AND PRD_TYPE_PRT_CD = #{prdTypePrtCd}
+		 </if>
+		 ORDER BY CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+	
+	<select id="getStndPrdTypeListLv4" resultType="HMap" >
+		SELECT /* [StandardProductTypeService.query][getStndPrdTypeListLv4][모델명 목록조회][한성진][2017. 11. 06.] */
+		       PRD_TYPE_CD
+			 , PRD_TYPE_PRT_CD
+			 , PRD_TYPE_NM
+			 , PRD_TYPE_LV
+			 , PRD_TYPE_ORDER
+			 , USE_YN
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '4'
+		   AND DEL_YN = 'N'
+		 <if test="prdTypePrtCd != null and !prdTypePrtCd.equals('')">
+		   AND PRD_TYPE_PRT_CD = #{prdTypePrtCd}
+		 </if>
+		 ORDER BY PRD_TYPE_ORDER
+	</select>
+	
+	<insert id="insertProductType">
+		INSERT /* [StandardProductTypeService.query][insertProductType][품목분류 저장]["Han Seong Jin"][2017. 2. 27.] */
+		  INTO TB_MMS_STND_PRD_TYPE_S (
+		  		  PRD_TYPE_NM 	
+		  		, PRD_TYPE_CD
+		  		, PRD_TYPE_PRT_CD
+		  		, PRD_TYPE_LV
+		  		, PRD_TYPE_ORDER
+		        , IN_USER_ID	
+		        , UP_USER_ID	
+		        , IN_DT
+		  )		  
+		VALUES(   #{prdTypeNm}
+				, FN_MAKE_PRD_TYPE_CODE()
+				, #{prdTypePrtCd}
+				, #{prdTypeLv}
+				, #{prdTypeOrder}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+
+	<update id="updateProductType">
+		UPDATE /* [StandardProductTypeService.query][updateProductType][품목분류 수정]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_STND_PRD_TYPE_S
+		  	 SET PRD_TYPE_NM	= #{prdTypeNm}
+		  	   , PRD_TYPE_ORDER = #{prdTypeOrder}
+		  	   , USE_YN 		= #{useYn}
+		  	   , PRD_TYPE_ORDER	= #{prdTypeOrder}
+		  	   , UP_USER_ID 	=  #{s_userId}
+		WHERE PRD_TYPE_CD = #{prdTypeCd}
+	</update>
+	
+	<update id="deleteProductType">
+		UPDATE /* [StandardProductTypeService.query][deleteProductType][품목분류 삭제]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_STND_PRD_TYPE_S
+		  	 SET DEL_YN	= 'Y'
+		  	   , UP_USER_ID =  #{s_userId}
+		  WHERE PRD_TYPE_CD = #{prdTypeCd}
+	</update>
+	
+	<select id="getPrdComboList" resultType="HMap"> 
+		SELECT /* [StandardProductTypeService.query][getPrdComboList][품목  SELECT BOX ][Han Seong Jin][2017-11-09] */
+		       PRD_TYPE_CD value
+		     , PRD_TYPE_NM name
+		  FROM TB_MMS_STND_PRD_TYPE_S  		
+		 WHERE 1=1
+		 <if test="prdTypePrtCd != null and !prdTypePrtCd.equals('')">
+		   AND PRD_TYPE_PRT_CD = #{prdTypePrtCd}
+		 </if>
+		 <if test="prdTypeLv != null and !prdTypeLv.equals('')">
+		   AND PRD_TYPE_LV = #{prdTypeLv}
+		 </if>
+		   AND DEL_YN = 'N'
+		   AND USE_YN = 'Y'
+	</select>
+	
+	<select id="getMfrComboList" resultType="HMap"> 
+		SELECT /* [StandardProductTypeService.query][getBrndCateComboList][품목  SELECT BOX ][Han Seong Jin][2017-11-09] */
+		       CC.CODE_CD value
+		     , CC.CODE_NM name
+		  FROM TB_MMS_STND_PRD_TYPE_S SP
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		    ON CC.CODE_GROUP_CD = 'SC0025'
+		   AND CC.CODE_CD = SP.PRD_TYPE_NM
+		   AND CC.DEL_YN = 'N'
+		   AND CC.USE_YN = 'Y'
+		 WHERE PRD_TYPE_PRT_CD = #{prdTypePrtCd}
+		 <if test="prdTypeLv != null and !prdTypeLv.equals('')">
+		   AND PRD_TYPE_LV = #{prdTypeLv}
+		 </if>
+		   AND SP.DEL_YN = 'N'
+		   AND SP.USE_YN = 'Y'
+	</select>
+	
+</mapper>

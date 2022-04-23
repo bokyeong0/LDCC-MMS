@@ -1,0 +1,1063 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="AssetService">
+
+	<select id="getAssetManagerList" resultType="LHMap">
+		SELECT  /* [AssetService.query][getAssetManagerList][자산 목록 조회][최판석][2017-03-23] */
+			   AM.AST_SEQ 
+			 , AM.STR_CD
+			 , AM.MNG_CD
+			 , SC.COMP_NM
+			 , SB.BRND_NM
+			 , SS.STR_NM
+			 , CC.CODE_NM STR_TYPE_NM
+			 , AM.ASP_COMP_CD
+			 , AC.ASP_COMP_NM
+			 , SS.STR_TYPE
+			 , SP.PRD_TYPE_LV1
+			 , SP.PRD_TYPE_LV2
+			 , SP.PRD_TYPE_LV3
+			 , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+			 , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+			 , CC3.CODE_NM AS PRD_TYPE_LV3_NM
+			 , AM.PRD_CD
+			 , SP.PRD_NM
+			 , SP.PRD_SPEC
+			 , IF(AM.AST_MFR_DT = '0000-00-00', '', AM.AST_MFR_DT) AS AST_MFR_DT 
+			 , AM.AST_TYPE1
+			 , AM.AST_TYPE2
+			 , AM.AST_SERIAL
+			 , AM.AST_ST
+			 , PCC2.CODE_NM AST_ST_NM
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+			ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		    ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		    ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		    ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		    ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		    ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		    ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		    ON CC3.CODE_GROUP_CD = 'SC0025'
+		    AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		    ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		    ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		    ON SS.STR_TYPE = CC.CODE_CD
+		    AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		    ON SS.STR_ST = PCC.CODE_CD
+		    AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		    ON PCC2.CODE_GROUP_CD = 'AT0003'
+		    AND PCC2.CODE_CD = AM.AST_ST
+		WHERE AM.DEL_YN = 'N'
+	    AND SS.COMP_YN = 'N'
+	    AND SC.DEL_YN = 'N'
+	    AND SB.DEL_YN = 'N'
+	    AND SS.DEL_YN = 'N'
+		<if test='s_companyCd != null and !s_companyCd.equals("")'>
+			AND AM.ASP_COMP_CD = #{s_companyCd}
+			<if test='s_areaCd != null and !s_areaCd.equals("")'>
+			AND AM.AREA_CD = #{s_areaCd}
+			</if>
+		</if>
+			<if test='s_compCd != null and !s_compCd.equals("")'>
+				AND SC.COMP_CD = #{s_compCd}
+				<if test='s_brndCd != null and !s_brndCd.equals("")'>
+			AND SB.BRND_CD = #{s_brndCd}
+			</if>
+		</if> 
+		<if test="compCd != null and !compCd.equals('')">
+			AND SC.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+			AND SB.BRND_CD = #{brndCd}
+		</if>
+		<if test="strCd != null and !strCd.equals('')">
+			AND AM.STR_CD = #{strCd}
+		</if>
+		<if test="astSt != null and !astSt.equals('')">
+			AND AM.AST_ST = #{astSt}
+		</if>
+		<if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+			AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+		</if>
+		<if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+			AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}	
+		</if>
+		<if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+			AND SP.PRD_TYPE_LV3 = #{prdTypeLv3}
+		</if>
+		<if test="prdCd != null and !prdCd.equals('')">
+			AND AM.PRD_CD = #{prdCd}
+		</if>
+		<if test="serialNo != null and !serialNo.equals('')">
+			AND AM.AST_SERIAL LIKE CONCAT('%',#{serialNo},'%')
+		</if>			
+		<if test="mngCd != null and !mngCd.equals('')">
+			AND AM.MNG_CD = #{mngCd}
+		</if>
+		<if test="astType2 != null and !astType2.equals('')">
+			AND AM.AST_TYPE2 = #{astType2}
+		</if>
+		<if test='conYearYn != null and conYearYn.equals("N")'>
+			AND AM.CON_YEAR IS NULL
+		</if>
+		<if test='conYearYn != null and conYearYn.equals("Y")'>
+			AND AM.CON_YEAR IS NOT NULL
+		</if>
+		<if test='aspCompCd != null and !aspCompCd.equals("")'>
+			AND AM.ASP_COMP_CD = #{aspCompCd}
+		</if>
+		<if test='areaCd != null and !areaCd.equals("")'>
+			AND AM.AREA_CD = #{areaCd}
+		</if>
+		ORDER BY SC.COMP_CD, SB.BRND_CD, SS.AREA_SEQ, AM.STR_CD, CASE WHEN FN_LENGTH(AM.AST_TYPE2) = 0 THEN 999999999 ELSE CAST(AM.AST_TYPE2 AS UNSIGNED) END, AM.PRD_CD
+	</select>
+
+	<select id="getAssetSearchList" resultType="LHMap">
+	  SELECT /* [AssetService.query][getAssetSearchList][자산 목록 상세 조회][유승우][2018-01-08] */
+		  	SS.AREA_SEQ
+		   , AM.AST_SEQ
+		   , AM.STR_CD
+		   , SC.COMP_CD
+		   , SB.BRND_CD   
+		   , AM.MNG_CD
+		   , SC.COMP_NM
+		   , SS.STR_NM
+		   , CC.CODE_NM AS STR_TYPE_NM
+		   , AM.ASP_COMP_CD
+		   , AC.ASP_COMP_NM
+		   , SS.STR_TYPE
+		    , SP.PRD_TYPE_LV1
+		    , SP.PRD_TYPE_LV2
+		    , SP.PRD_TYPE_LV3
+		    , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+		    , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+		    , CC3.CODE_NM AS PRD_TYPE_LV3_NM
+		   , AM.PRD_CD
+		   , SP.PRD_NM
+		   , SP.PRD_SPEC
+		   , IF(AM.AST_MFR_DT = '0000-00-00', '', AM.AST_MFR_DT) AS AST_MFR_DT 
+		   , AM.AST_TYPE1
+		   , AM.AST_TYPE2
+		   , AM.AST_SERIAL
+		   , AM.AST_ST
+		    , PCC2.CODE_NM AST_ST_NM
+		   , II.CON_YEAR
+		   , II.CON_ID
+		   , II.MTN_ITEM_ID
+		   , CONCAT(II.CON_ID,'_',II.MTN_ITEM_ID)  CONTRACT_ID
+		   , II.MTN_STR_DATE  
+		   , II.MTN_END_DATE
+		  FROM TB_MMS_AST_MNG_M AM
+		  LEFT JOIN TB_MMS_STND_STR_S SS
+		    ON SS.STR_CD = AM.STR_CD
+		  LEFT JOIN TB_MMS_ASP_COMP AC
+		    ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		  LEFT JOIN TB_MMS_STND_AREA_S SA
+		    ON AM.AREA_CD = SA.AREA_CD
+		  LEFT JOIN TB_MMS_STND_PRD_S SP
+		    ON AM.PRD_CD = SP.PRD_CD
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		   ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		   ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		    ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		  LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		    ON CC3.CODE_GROUP_CD = 'SC0025'
+		   AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		  LEFT JOIN TB_MMS_STND_BRND_S SB
+		    ON SS.BRND_CD = SB.BRND_CD
+		  LEFT JOIN TB_MMS_STND_COMP_S SC
+		    ON SS.COMP_CD = SC.COMP_CD
+		  LEFT JOIN TB_PARAGON_COMM_CODE CC
+		    ON SS.STR_TYPE = CC.CODE_CD
+		   AND CC.CODE_GROUP_CD = 'SC0021'
+		  LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		   ON SS.STR_ST = PCC.CODE_CD
+		   AND PCC.CODE_GROUP_CD = 'SC0024'
+		  LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		   ON PCC2.CODE_GROUP_CD = 'AT0003'
+		   AND PCC2.CODE_CD = AM.AST_ST
+		  LEFT JOIN LDCC_CON_ITEM_INFO II
+		   ON AM.CON_ID = II.CON_ID
+		   AND AM.CON_YEAR = II.CON_YEAR
+		   AND AM.MTN_ITEM_ID = II.MTN_ITEM_ID
+		 WHERE AM.DEL_YN = 'N'
+		   AND SS.COMP_YN = 'N'
+		   AND SC.DEL_YN = 'N'
+		   AND SB.DEL_YN = 'N'
+		   AND SS.DEL_YN = 'N'
+		   AND AM.USE_YN = 'Y'
+			<if test='s_companyCd != null and !s_companyCd.equals("")'>
+				AND AM.ASP_COMP_CD = #{s_companyCd}
+				<if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND AM.AREA_CD = #{s_areaCd}
+				</if>
+			</if>
+ 			<if test='s_compCd != null and !s_compCd.equals("")'>
+ 				AND SC.COMP_CD = #{s_compCd}
+ 				<if test='s_brndCd != null and !s_brndCd.equals("")'>
+				AND SB.BRND_CD = #{s_brndCd}
+				</if>
+			</if> 
+			<if test="strCd != null and !strCd.equals('')">
+				AND AM.STR_CD = #{strCd}
+			</if> 
+			<if test="obsAssetSel != null and obsAssetSel.equals('AST_TYPE2')">
+				AND  AM.AST_TYPE2 LIKE CONCAT('%',#{obsAssetSearch},'%')		
+			</if>
+			<if test="obsAssetSel != null and obsAssetSel.equals('PRD_TYPE_LV2_NM')">
+				AND  SPT2.PRD_TYPE_NM LIKE CONCAT('%',#{obsAssetSearch},'%')		
+			</if>			
+			<if test="obsAssetSel != null and obsAssetSel.equals('PRD_TYPE_LV3_NM')">
+				AND  CC3.CODE_NM LIKE CONCAT('%',#{obsAssetSearch},'%')		
+			</if>	
+			<if test="obsAssetSel != null and obsAssetSel.equals('PRD_NM')">
+				AND  SP.PRD_NM LIKE CONCAT('%',#{obsAssetSearch},'%')		
+			</if>		
+			<if test="obsAssetSel != null and obsAssetSel.equals('AST_TYPE1')">
+				AND  AM.AST_TYPE1 LIKE CONCAT('%',#{obsAssetSearch},'%')		
+			</if>		
+			<if test="obsAssetSel != null and obsAssetSel.equals('AST_SERIAL')">
+				AND  AM.AST_SERIAL LIKE CONCAT('%',#{obsAssetSearch},'%')		
+			</if>
+		ORDER BY SC.COMP_CD, SB.BRND_CD, SS.AREA_SEQ, AM.STR_CD, CASE WHEN FN_LENGTH(AM.AST_TYPE2) = 0 THEN 999999999 ELSE CAST(AM.AST_TYPE2 AS UNSIGNED) END, PRD_CD												   		    				    	    
+	</select>
+	
+
+	<select id="getStrList" resultType="HMap">
+		SELECT /* [AssetService.query][getStrList][Site 정보 조회][최판석][2017-03-23] */
+				STR_CD
+			,	STR_NM
+			,	COMP_CD
+			,	BRND_CD
+		FROM 	TB_MMS_STND_STR_S
+		WHERE 	DEL_YN = 'N'
+			<if test="strCd != null and !strCd.equals('')">
+				AND STR_CD LIKE CONCAT('%',#{strCd},'%')
+			</if>
+			<if test="strNm != null and !strNm.equals('')">
+				AND STR_NM LIKE CONCAT('%',#{strNm},'%')
+			</if>
+		ORDER BY IN_DT DESC
+	</select>
+
+	<select id="getCodeGroupComboList" resultType="HMap">
+		SELECT /* [AssetService.query][getCodeGroupComboList][공통코드 SELECT BOX ][최판석][2016-09-13] */
+				STR_CD value
+			,	STR_NM name
+		FROM 	TB_MMS_STND_STR_S
+		WHERE 	DEL_YN = 'N'
+			AND ASP_COMP_CD = #{s_companyCd} 
+		ORDER BY STR_CD ASC
+	</select>
+
+	<select id="getAreaCodeList" resultType="HMap">
+		SELECT /* [AssetService.query][getCodeGroupComboList][공통코드 SELECT BOX ][최판석][2016-09-13] */
+				AREA_CD value
+			,	AREA_NM name
+		FROM 	TB_MMS_STND_AREA_S
+		WHERE 	DEL_YN = 'N'
+			AND ASP_COMP_CD = #{s_companyCd} 
+	</select>
+
+	<select id="getStoreCodeList" resultType="HMap">
+		SELECT /* [AssetService.query][getStoreCodeList][ ][최판석][2016-09-13] */
+		  		STR_CD value
+			,	STR_NM name
+		FROM 	TB_MMS_STND_STR_S
+		WHERE 	ASP_COMP_CD = #{s_companyCd}
+	</select>
+
+	<insert id="insertAssetManager">
+		INSERT 
+		  INTO TB_MMS_AST_MNG_M (
+		  		  ASP_COMP_CD
+		  		, STR_CD	 			
+		  		, PRD_CD
+		  		, MNG_CD
+		  		, AST_CONT
+		  		, AST_ST	
+		  		, AST_SERIAL
+		  		, AST_TYPE1
+		        , AST_TYPE2
+		        , AST_PRC
+		        , AST_MFR_DT
+				, AREA_CD
+		        , FREE_START_DT	
+		        , FREE_END_DT
+		        , COST_START_DT
+				<if test="costEndDt != null and !costEndDt.equals('')">
+				, COST_END_DT
+				</if>
+				, EXP_DT
+				, MA_YN
+				, USE_YN
+		        , IN_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES(   #{aspCompCd}
+				, #{strCd}
+				, #{prdCd}
+				, #{mngCd}
+				, #{astCont}
+				, #{astSt}
+				<choose>
+					<when test="serialNo != null and !serialNo.equals('')">
+						, #{serialNo}
+					</when>
+					<otherwise>
+						, FN_MAKE_AST_SERIAL(#{prdCd})
+					</otherwise>
+				</choose>
+				, #{astType1}
+				, #{astType2}
+				, #{astPrc}
+				, #{astMftDt}
+				, #{areaCd}
+				, #{freeStartDt}
+				, #{freeEndDt}
+				, #{costStartDt}
+				<if test="costEndDt != null and !costEndDt.equals('')">
+				, #{costEndDt}
+				</if>	
+				, #{extDt}
+				, #{slaYn}
+				, 'Y'
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+
+	
+	<select id="getSerialCheck" resultType="HMap">
+		SELECT /* [AssetService.query][getSerialCheck][최판석][2016-09-13] */
+				COUNT(VA.AST_SERIAL) cnt
+			,	VA.STR_NM
+			,	VA.COMP_NM
+		FROM 	VEIW_ASSET VA
+		WHERE 	VA.ASP_COMP_CD = #{s_companyCd}
+	    AND 	VA.AST_SERIAL = #{serialNo}
+	</select>
+	
+	<insert id="insertAssetSerial">
+		INSERT 
+		  INTO TB_MMS_AST_MNG_M (
+		  		  ASP_COMP_CD
+		  		, STR_CD
+		  		, PRD_CD
+		  		, AST_SERIAL
+<!-- 		  		, AST_TYPE1 -->
+<!-- 		        , AST_TYPE2 -->
+<!-- 		        , AST_MFR_DT -->
+<!-- 		        , AST_ST -->
+<!-- 		        , AST_CONT -->
+		        , IN_USER_ID
+		        , UP_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES(   #{s_companyCd}
+				, #{strCd}
+				, #{prdCd}
+				, #{serialNo}
+<!-- 				, #{astType1} -->
+<!-- 				, #{astType2} -->
+<!-- 				, #{mfrDate} -->
+<!-- 				, #{assetState} -->
+<!-- 				, #{assetContent} -->
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<update id="updateAssetSerial">
+		UPDATE TB_MMS_AST_MNG_M
+			SET AST_SERIAL =  #{serialNo}
+		WHERE ASP_COMP_CD = #{s_companyCd}
+		AND AST_SEQ = #{astSeq}
+	</update>
+	
+	<update id="updateAssetManager">
+		UPDATE TB_MMS_AST_MNG_M
+		   SET STR_CD			=	#{strCd}	 			
+	 		 , AREA_CD			=	#{areaCd}
+	 		 , PRD_CD			=	#{prdCd}
+ 			 , MNG_CD			=	#{mngCd}
+			 , AST_CONT			=	#{astCont}
+			 , AST_ST			=	#{astSt}  		
+			 , AST_SERIAL		=	#{serialNo}	
+			 , AST_TYPE1		=	#{astType1}
+			 , AST_TYPE2		=	#{astType2}	
+			 , AST_PRC			=	#{astPrc}
+			 , AST_MFR_DT		=	#{astMftDt}
+			 , FREE_START_DT	=	#{freeStartDt}
+			 , FREE_END_DT		=	#{freeEndDt}
+			 , COST_START_DT	=	#{costStartDt}
+			<if test="costEndDt != null and !costEndDt.equals('')">
+			 , COST_END_DT		=	#{costEndDt}
+			</if>
+			 , MA_YN			=	#{slaYn}
+			 , UP_USER_ID		=	#{s_userId}
+			 , UP_DT			=	now()
+			 , USE_YN			=	(SELECT CODE_OTHER1 FROM TB_PARAGON_COMM_CODE WHERE CODE_GROUP_CD = 'SC0029' AND CODE_CD = #{astSt})
+		 WHERE AST_SEQ = #{astSeq}
+	</update>
+	
+	<update id="deleteAssetManager">
+		UPDATE TB_MMS_AST_MNG_M
+			SET DEL_YN = 'Y' 
+			 , UP_USER_ID = #{s_userId}
+		WHERE ASP_COMP_CD =  #{s_companyCd}
+		AND AST_SEQ = #{astSeq}
+	</update>
+	
+	<select id="getAssetManagerInfo" resultType="HMap" >
+		SELECT /* [AssetService.query][getAssetManagerInfo][자산정보 조회][김선호][2017-11-29] */
+			   AM.AST_SEQ
+			 , AM.ASP_COMP_CD
+			 , AM.STR_CD
+			 , AM.MNG_CD
+			 , SC.COMP_NM
+			 , SS.STR_NM
+			 , SB.BRND_CD
+			 , SB.BRND_NM
+			 , CC.CODE_NM STR_TYPE_NM
+			 , AM.ASP_COMP_CD
+			 , AC.ASP_COMP_NM
+			 , AM.AREA_CD
+			 , SA.AREA_NM
+			 , SS.STR_TYPE
+			 , SP.PRD_TYPE_LV1
+			 , SP.PRD_TYPE_LV2
+			 , SP.PRD_TYPE_LV3
+			 , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+			 , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+			 , CC3.CODE_NM AS PRD_TYPE_LV3_NM
+			 , AM.PRD_CD
+			 , SP.PRD_NM
+			 , SP.PRD_SPEC
+			 , IF(AM.AST_MFR_DT = '0000-00-00', '', AM.AST_MFR_DT) AS AST_MFR_DT 
+			 , AM.AST_TYPE1
+			 , AM.AST_TYPE2
+			 , AM.AST_SERIAL
+			 , AM.AST_ST
+			 , PCC2.CODE_NM AST_ST_NM
+			 , AM.MA_YN
+			 , AM.AST_MFR_DT
+			 , AM.FREE_START_DT
+			 , AM.FREE_END_DT
+			 , AM.AST_ST
+			 , AM.COST_START_DT
+			 , AM.COST_END_DT
+			 , AM.AST_CONT
+			FROM  TB_MMS_AST_MNG_M AM
+			LEFT JOIN TB_MMS_STND_STR_S SS
+			  ON SS.STR_CD = AM.STR_CD
+			LEFT JOIN TB_MMS_ASP_COMP AC
+			  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+			LEFT JOIN TB_MMS_STND_AREA_S SA
+			  ON AM.AREA_CD = SA.AREA_CD
+			LEFT JOIN TB_MMS_STND_PRD_S SP
+			  ON AM.PRD_CD = SP.PRD_CD
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+			 ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+			 ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+			  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+			LEFT JOIN TB_PARAGON_COMM_CODE CC3
+			  ON CC3.CODE_GROUP_CD = 'SC0025'
+			 AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+			LEFT JOIN TB_MMS_STND_BRND_S SB
+			  ON SS.BRND_CD = SB.BRND_CD
+			LEFT JOIN TB_MMS_STND_COMP_S SC
+			  ON SS.COMP_CD = SC.COMP_CD
+			LEFT JOIN TB_PARAGON_COMM_CODE CC
+			  ON SS.STR_TYPE = CC.CODE_CD
+			 AND CC.CODE_GROUP_CD = 'SC0021'
+			LEFT JOIN TB_PARAGON_COMM_CODE PCC
+			 ON SS.STR_ST = PCC.CODE_CD
+			 AND PCC.CODE_GROUP_CD = 'SC0024'
+			LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+			  ON PCC2.CODE_GROUP_CD = 'AT0003'
+			  AND PCC2.CODE_CD = AM.AST_ST
+			WHERE AM.DEL_YN = 'N'
+			  AND SS.COMP_YN = 'N'
+			  AND SC.DEL_YN = 'N'
+			  AND SB.DEL_YN = 'N'
+			  AND SS.DEL_YN = 'N'
+			  AND AM.AST_SEQ = #{astSeq}
+	</select>
+
+	<select id="getAseetManagerHistoryList" resultType="HMap" > 
+		SELECT /*[AssetService] [getAseetManagerHistoryList]*/
+				AST_HST_SEQ 
+			,	AST_SEQ
+			,	AST_HST_DT
+			,	AST_HST_CONT
+			,	AST_HST_ST
+			,	AST_YN
+			,	IN_USER_ID
+			,	DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		FROM 	TB_MMS_AST_HST_L
+		WHERE 
+				AST_SEQ		=	#{astSeq}
+		AND DEL_YN = 'N'
+		ORDER BY AST_HST_SEQ DESC
+	</select>
+	
+	<update id="updateAssetManagerHistory">
+		UPDATE /* [AssetService.query][updateAssetManagerHistory][자산관리 히스토리 변경]["최 판 석"][2017. 5. 16.] */
+		  TB_MMS_AST_HST_L
+		   	     SET AST_HST_ST	=  #{astHstSt}
+		   	     , AST_HST_DT	=  #{astHstDt}
+		   	     , AST_HST_CONT	=  #{astHstCont}
+		     , UP_USER_ID =  #{s_userId}
+		  WHERE AST_HST_SEQ = #{astHstSeq}
+	</update>
+	
+	<update id="deleteAssetManagerHistory">
+		UPDATE /* [AssetService.query][deleteAssetManagerHistory][자산관리 히스토리 삭제]["최 판 석"][2017. 5. 16.] */
+				TB_MMS_AST_HST_L
+			SET DEL_YN	= 'Y'
+			,	UP_USER_ID =  #{s_userId}
+		  WHERE AST_HST_SEQ = #{astHstSeq}
+	</update>
+
+	<select id="getAstHstList" resultType="LHMap">
+		SELECT /* [AssetService.getAstHstList][자산이력정보 수정][유승우][2018-01-11] */
+		      AM.AST_SEQ
+		    , AM.STR_CD 
+		    , PCC2.CODE_NM AST_HST_ST_NM
+		    , AH.AST_HST_DT
+		    , AM.PRD_CD
+		    , AM.AST_SERIAL    
+		    , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+		    , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+		    , CC3.CODE_NM AS PRD_TYPE_LV3_NM
+		    , SP.PRD_NM 
+		    , AH.AST_HST_CONT
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		  ON CC3.CODE_GROUP_CD = 'SC0025'
+		  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN MMS.TB_MMS_AST_HST_L AH 
+		  ON AH.AST_SEQ = AM.AST_SEQ
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON SS.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		  ON SS.STR_ST = PCC.CODE_CD
+		  AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		  ON PCC2.CODE_GROUP_CD = 'AT0003'
+		  AND PCC2.CODE_CD = AH.AST_HST_ST
+		WHERE AM.DEL_YN = 'N'
+		AND SS.COMP_YN = 'N'
+		AND SC.DEL_YN = 'N'
+		AND SB.DEL_YN = 'N'
+		AND SS.DEL_YN = 'N'
+		AND AH.DEL_YN = 'N'
+			<if test='s_companyCd != null and !s_companyCd.equals("")'>
+				AND AM.ASP_COMP_CD = #{s_companyCd}
+				<if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND AM.AREA_CD = #{s_areaCd}
+				</if>
+			</if>
+ 			<if test='s_compCd != null and !s_compCd.equals("")'>
+ 				AND SC.COMP_CD = #{s_compCd}
+ 				<if test='s_brndCd != null and !s_brndCd.equals("")'>
+				AND SB.BRND_CD = #{s_brndCd}
+				</if>
+			</if> 
+      		AND AM.STR_CD = #{strCd}	 
+      	  ORDER BY AH.AST_HST_DT DESC	
+      	  /*조회 100 건 */
+      	  LIMIT 0 , 100	 
+	</select>
+	
+	<select id="getPrdTypeListLv1" resultType="HMap" >
+		SELECT /* [AssetService.query][getPrdTypeListLv1][제품범주 목록조회][Kim Seon Ho][2017. 11. 13.] */
+		       PRD_TYPE_CD		AS	value
+			 , PRD_TYPE_NM		AS	name
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '1'
+		   AND DEL_YN = 'N'
+		 ORDER BY CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+	
+	<select id="getPrdTypeListLv2" resultType="HMap" >
+		SELECT /* [AssetService.query][getPrdTypeListLv2][제품군 목록조회][Kim Seon Ho][2017. 11. 13.] */
+		       PRD_TYPE_CD		AS	value
+			 , PRD_TYPE_NM		AS	name
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '2'
+		   AND DEL_YN = 'N'
+		 <if test="prdTypeCd != null and !prdTypeCd.equals('')">
+		   AND PRD_TYPE_PRT_CD = #{prdTypeCd}
+		 </if>
+		 ORDER BY CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+
+	<select id="getPrdTypeListLv3" resultType="HMap" >
+		SELECT /* [AssetService.query][getPrdTypeListLv3][제조사 목록조회][Kim Seon Ho][2017. 11. 13.] */
+		       PRD_TYPE_CD		AS	value
+			 , (SELECT CODE_NM FROM TB_PARAGON_COMM_CODE CC WHERE CC.CODE_CD = PRD_TYPE_NM ) 	AS	name
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '3'
+		   AND DEL_YN = 'N'
+		 <if test="prdTypeCd != null and !prdTypeCd.equals('')">
+		   AND PRD_TYPE_PRT_CD = #{prdTypeCd}
+		 </if>
+		 ORDER BY CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+	
+	<select id="listPrdTypeNm" resultType="HMap" >
+		SELECT /* [AssetService.query][listPrdTypeNm][모델명 목록조회][Kim Seon Ho][2017. 11. 13.] */
+		       PRD_CD	AS value
+			 , PRD_NM	AS name
+		  FROM TB_MMS_STND_PRD_S
+		 WHERE DEL_YN = 'N'
+ 		   AND PRD_TYPE_LV1 = #{prdTypeCd1}
+ 		   AND PRD_TYPE_LV2 = #{prdTypeCd2}
+		   AND PRD_TYPE_LV3 = #{prdTypeCd3}
+		 ORDER BY CAST(PRD_ORDER AS SIGNED)
+	</select>
+
+	<select id="uploadExcelDataCompare" resultType="HMap">
+		SELECT /* [AssetService.query][uploadExcelDataCompare][자산 엑셀 업로드 DATA 중복업로드비교][Kim Seon Ho][2018-01-15] */
+			DISTINCT(STR_CD)	AS STR_CD
+		FROM 
+			TB_MMS_AST_MNG_M
+		WHERE
+			ASP_COMP_CD		=	#{s_companyCd}
+	</select>
+
+	<select id="validationCode" resultType="HMap">
+		SELECT /* [AssetService.query][duplicationSerialCheck][자산 엑셀 업로드 SERIAL DATA CHECK][Kim Seon Ho][2018-01-17] */
+			(SELECT COUNT(*)
+			   FROM TB_MMS_ASP_COMP
+			  WHERE ASP_COMP_CD IN (
+			<if test="aspCompList != null || aspCompList != '' || aspCompList.equals('')">		 
+			    <foreach item="list" index="aspCompList" collection="aspCompList" separator=",">
+	        			#{list.CODE}
+	  			</foreach>
+  			</if>
+			  )) AS ASP_COMP_CNT
+			,(SELECT COUNT(*)
+			   FROM TB_MMS_STND_AREA_S
+			  WHERE AREA_CD IN (
+			<if test="araeList != null || araeList != '' || araeList.equals('')">		 
+			    <foreach item="list" index="araeList" collection="araeList" separator=",">
+	        			#{list.CODE}
+	  			</foreach>
+  			</if>
+			  )) AS AREA_CNT
+			,(SELECT COUNT(*)
+			   FROM TB_MMS_STND_STR_S
+			  WHERE STR_CD IN (
+			<if test="strList != null || strList != '' || strList.equals('')">		 
+			    <foreach item="list" index="strList" collection="strList" separator=",">
+	        			#{list.CODE}
+	  			</foreach>
+  			</if>
+			  )) AS STR_CNT
+			,(SELECT COUNT(*)
+			   FROM TB_MMS_STND_PRD_S
+			  WHERE PRD_CD IN (
+			<if test="prdList != null || prdList != '' || prdList.equals('')">		 
+			    <foreach item="list" index="prdList" collection="prdList" separator=",">
+	        			#{list.CODE}
+	  			</foreach>
+  			</if>
+			  )) AS PRD_CNT
+	</select> 
+
+	<select id="duplicationSerialCheck" resultType="HMap">
+		SELECT /* [AssetService.query][duplicationSerialCheck][자산 엑셀 업로드 SERIAL DATA CHECK][Kim Seon Ho][2018-01-17] */
+			AST_SERIAL
+		FROM
+			TB_MMS_AST_MNG_M
+		WHERE 
+			AST_SERIAL IN (
+			<if test="dt_list != null || dt_list != '' || dt_list.equals('')">		 
+			    <foreach item="list" index="dt_list" collection="dt_list" separator=",">
+	        			#{list.AST_SERIAL}
+	  			</foreach>
+  			</if>
+  			)
+	</select> 
+
+	<insert id="insertAssetUploadExcelData" parameterType="java.util.List" useGeneratedKeys="true">
+		INSERT /* [AssetService.query][insertAssetUploadExcelData][자산 엑셀 업로드][Kim Seon Ho][2017-11-27] */
+		  INTO TB_MMS_AST_MNG_M(
+			ASP_COMP_CD
+		,	AREA_CD
+		,	STR_CD
+		,	PRD_CD
+		,	MNG_CD
+		,	AST_SERIAL	
+		,	AST_TYPE1
+		,	AST_TYPE2
+		,	AST_CONT
+		,	AST_ST
+		,	AST_MFR_DT
+		,	FREE_START_DT
+		,	FREE_END_DT
+		,	COST_START_DT
+		)
+		VALUES
+		<if test="dt_list != null || dt_list != '' || !dt_list.equals('')">
+		<foreach collection="dt_list" item="dt_list"  separator=",">
+			(
+					#{dt_list.ASP_COMP_CD}
+				 , #{dt_list.AREA_CD}
+				 , #{dt_list.STR_CD}
+				 , #{dt_list.PRD_CD}
+				 , #{dt_list.MNG_CD}
+ 				 , #{dt_list.AST_SERIAL}
+				 , #{dt_list.AST_TYPE1}
+				 , #{dt_list.AST_TYPE2}
+				 , #{dt_list.AST_CONT}
+				 , #{dt_list.AST_ST}
+				 , #{dt_list.AST_MFR_DT}	
+				 , #{dt_list.FREE_START_DT}
+				 , #{dt_list.FREE_END_DT}
+				 , #{dt_list.COST_START_DT}
+			)
+		</foreach>
+		</if>
+	</insert> 
+	
+	<select id="listAssetManagerModelCountPop" resultType="HMap">
+		SELECT /* [AssetService.query][listAssetManagerModelCountPop][모델별 수량 조회][김선호][2017-11-29] */
+			   MAX(SPT1.PRD_TYPE_NM)  AS PRD_TYPE_LV1_NM
+			  , MAX(SPT2.PRD_TYPE_NM)  AS PRD_TYPE_LV2_NM
+			  , MAX(CC3.CODE_NM)  AS PRD_TYPE_LV3_NM
+			  , SP.PRD_NM
+			  , COUNT(SP.PRD_NM)   AS PRD_COUNT
+			FROM TB_MMS_AST_MNG_M AM
+			LEFT JOIN TB_MMS_STND_STR_S SS
+			  ON SS.STR_CD = AM.STR_CD
+			LEFT JOIN TB_MMS_ASP_COMP AC
+			  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+			LEFT JOIN TB_MMS_STND_AREA_S SA
+			  ON AM.AREA_CD = SA.AREA_CD
+			LEFT JOIN TB_MMS_STND_PRD_S SP
+			  ON AM.PRD_CD = SP.PRD_CD
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+			  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+			  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+			  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+			LEFT JOIN TB_PARAGON_COMM_CODE CC3
+			  ON CC3.CODE_GROUP_CD = 'SC0025'
+			  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+			LEFT JOIN TB_MMS_STND_BRND_S SB
+			  ON SS.BRND_CD = SB.BRND_CD
+			LEFT JOIN TB_MMS_STND_COMP_S SC
+			  ON SS.COMP_CD = SC.COMP_CD
+			LEFT JOIN TB_PARAGON_COMM_CODE CC
+			  ON SS.STR_TYPE = CC.CODE_CD
+			  AND CC.CODE_GROUP_CD = 'SC0021'
+			LEFT JOIN TB_PARAGON_COMM_CODE PCC
+			  ON SS.STR_ST = PCC.CODE_CD
+			  AND PCC.CODE_GROUP_CD = 'SC0024'
+			LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+			  ON PCC2.CODE_GROUP_CD = 'AT0003'
+			  AND PCC2.CODE_CD = AM.AST_ST
+			WHERE AM.DEL_YN = 'N'
+			AND SS.COMP_YN = 'N'
+			AND SC.DEL_YN = 'N'
+			AND SB.DEL_YN = 'N'
+			AND SS.DEL_YN = 'N'
+			<if test='s_companyCd != null and !s_companyCd.equals("2")'>
+				AND AM.ASP_COMP_CD = #{s_companyCd}
+				<if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND AM.AREA_CD = #{s_areaCd}
+				</if>
+			</if>
+ 			<if test='s_compCd != null and !s_compCd.equals("3")'>
+ 				AND SC.COMP_CD = #{s_compCd}
+ 				<if test='s_brndCd != null and !s_brndCd.equals("")'>
+				AND SB.BRND_CD = #{s_brndCd}
+				</if>
+			</if> 
+			<if test="compCd != null and !compCd.equals('')">
+				AND SC.COMP_CD = #{compCd}
+			</if>
+			<if test="brndCd != null and !brndCd.equals('')">
+				AND SB.BRND_CD = #{brndCd}
+			</if>
+			<if test="strCd != null and !strCd.equals('')">
+				AND AM.STR_CD = #{strCd}
+			</if>
+			<if test="astSt != null and !astSt.equals('')">
+				AND AM.AST_ST = #{astSt}
+			</if>
+			<if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+				AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+			</if>
+			<if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+				AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}	
+			</if>
+			<if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+				AND SP.PRD_TYPE_LV3 = #{prdTypeLv3}
+			</if>
+			<if test="prdCd != null and !prdCd.equals('')">
+				AND AM.PRD_CD = #{prdCd}
+			</if>
+			<if test="serialNo != null and !serialNo.equals('')">
+				AND AM.AST_SERIAL LIKE CONCAT('%',#{serialNo},'%')
+			</if>			
+			<if test="strType != null and !strType.equals('')">
+				AND SS.STR_TYPE = #{strType}
+			</if>
+			<if test="astType2 != null and !astType2.equals('')">
+				AND AM.AST_TYPE2 = #{astType2}
+			</if>
+			<if test='conYearYn != null and conYearYn.equals("N")'>
+				AND AM.CON_YEAR IS NULL
+			</if>
+			<if test='conYearYn != null and conYearYn.equals("Y")'>
+				AND AM.CON_YEAR IS NOT NULL
+			</if>
+			<if test='aspCompCd != null and !aspCompCd.equals("")'>
+				AND AM.ASP_COMP_CD = #{aspCompCd}
+			</if>
+			<if test='areaCd != null and !areaCd.equals("")'>
+				AND AM.AREA_CD = #{areaCd}
+			</if>
+			GROUP BY SPT1.PRD_TYPE_NM, SPT2.PRD_TYPE_NM, CC3.CODE_NM, SP.PRD_NM
+			ORDER BY SPT1.PRD_TYPE_NM, SPT2.PRD_TYPE_NM, CC3.CODE_NM, SP.PRD_NM
+	</select>
+
+	<select id="listAssetManagerPrdCountPop" resultType="HMap">
+		SELECT /* [AssetService.query][listAssetManagerPrdCountPop][품목별 수량 조회][김선호][2018-01-25] */
+			   MAX(SPT1.PRD_TYPE_NM)  AS PRD_TYPE_LV1_NM
+			  , SPT2.PRD_TYPE_NM  AS PRD_TYPE_LV2_NM
+			  , COUNT(SPT2.PRD_TYPE_NM)  AS PRD_TYPE_LV2_COUNT
+			FROM TB_MMS_AST_MNG_M AM
+			LEFT JOIN TB_MMS_STND_STR_S SS
+			  ON SS.STR_CD = AM.STR_CD
+			LEFT JOIN TB_MMS_ASP_COMP AC
+			  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+			LEFT JOIN TB_MMS_STND_AREA_S SA
+			  ON AM.AREA_CD = SA.AREA_CD
+			LEFT JOIN TB_MMS_STND_PRD_S SP
+			  ON AM.PRD_CD = SP.PRD_CD
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+			  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+			  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+			  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+			LEFT JOIN TB_PARAGON_COMM_CODE CC3
+			  ON CC3.CODE_GROUP_CD = 'SC0025'
+			  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+			LEFT JOIN TB_MMS_STND_BRND_S SB
+			  ON SS.BRND_CD = SB.BRND_CD
+			LEFT JOIN TB_MMS_STND_COMP_S SC
+			  ON SS.COMP_CD = SC.COMP_CD
+			LEFT JOIN TB_PARAGON_COMM_CODE CC
+			  ON SS.STR_TYPE = CC.CODE_CD
+			  AND CC.CODE_GROUP_CD = 'SC0021'
+			LEFT JOIN TB_PARAGON_COMM_CODE PCC
+			  ON SS.STR_ST = PCC.CODE_CD
+			  AND PCC.CODE_GROUP_CD = 'SC0024'
+			LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+			  ON PCC2.CODE_GROUP_CD = 'AT0003'
+			  AND PCC2.CODE_CD = AM.AST_ST
+			WHERE AM.DEL_YN = 'N'
+			AND SS.COMP_YN = 'N'
+			AND SC.DEL_YN = 'N'
+			AND SB.DEL_YN = 'N'
+			AND SS.DEL_YN = 'N'
+			<if test='s_companyCd != null and !s_companyCd.equals("")'>
+				AND AM.ASP_COMP_CD = #{s_companyCd}
+				<if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND AM.AREA_CD = #{s_areaCd}
+				</if>
+			</if>
+ 			<if test='s_compCd != null and !s_compCd.equals("")'>
+ 				AND SC.COMP_CD = #{s_compCd}
+ 				<if test='s_brndCd != null and !s_brndCd.equals("")'>
+				AND SB.BRND_CD = #{s_brndCd}
+				</if>
+			</if> 
+			<if test="compCd != null and !compCd.equals('')">
+				AND SC.COMP_CD = #{compCd}
+			</if>
+			<if test="brndCd != null and !brndCd.equals('')">
+				AND SB.BRND_CD = #{brndCd}
+			</if>
+			<if test="strCd != null and !strCd.equals('')">
+				AND AM.STR_CD = #{strCd}
+			</if>
+			<if test="astSt != null and !astSt.equals('')">
+				AND AM.AST_ST = #{astSt}
+			</if>
+			<if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+				AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+			</if>
+			<if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+				AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}	
+			</if>
+			<if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+				AND SP.PRD_TYPE_LV3 = #{prdTypeLv3}
+			</if>
+			<if test="prdCd != null and !prdCd.equals('')">
+				AND AM.PRD_CD = #{prdCd}
+			</if>
+			<if test="serialNo != null and !serialNo.equals('')">
+				AND AM.AST_SERIAL LIKE CONCAT('%',#{serialNo},'%')
+			</if>			
+			<if test="strType != null and !strType.equals('')">
+				AND SS.STR_TYPE = #{strType}
+			</if>
+			<if test="astType2 != null and !astType2.equals('')">
+				AND AM.AST_TYPE2 = #{astType2}
+			</if>
+			<if test='conYearYn != null and conYearYn.equals("N")'>
+				AND AM.CON_YEAR IS NULL
+			</if>
+			<if test='conYearYn != null and conYearYn.equals("Y")'>
+				AND AM.CON_YEAR IS NOT NULL
+			</if>
+			<if test='aspCompCd != null and !aspCompCd.equals("")'>
+				AND AM.ASP_COMP_CD = #{aspCompCd}
+			</if>
+			<if test='areaCd != null and !areaCd.equals("")'>
+				AND AM.AREA_CD = #{areaCd}
+			</if>
+			GROUP BY SPT1.PRD_TYPE_NM, SPT2.PRD_TYPE_NM
+			ORDER BY SPT1.PRD_TYPE_NM, SPT2.PRD_TYPE_NM
+	</select>
+
+ 	<insert id="insertAssetManagerModifyHistory">
+		INSERT /* [AssetService.query][insertAssertLog][자산등록 시 설치 이력 등록][김선호][2017-12-04] */
+		  INTO TB_MMS_AST_HST_L (
+		  		  ASP_COMP_CD
+		  		, STR_CD
+		  		, PRD_CD
+		  		, AST_SEQ
+		  		, AST_SERIAL
+		  		, AST_HST_DT
+		  		, AST_HST_CONT
+		  		, AST_HST_ST
+		  		, AST_YN
+		        , IN_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES(   
+				  #{aspCompCd}	
+				, #{strCd}
+				, #{prdCd}
+				, #{astSeq}
+				, #{serialNo}
+				, #{astHstDt}
+				, #{astHstCont}
+				, #{astHstSt}
+				, 'Y'		
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<select id="listAssetViewAssetHstSt" resultType="HMap">
+		SELECT /* [AssetService.query][listAssetViewAssetHstSt][자산이력그리드 자산상태 필터링 리스트][김선호][2017-12-19] */
+		       CODE_CD value
+		     , CODE_NM name
+		  FROM TB_PARAGON_COMM_CODE  		
+		 WHERE CODE_GROUP_CD = #{codeGroupCd}
+		   AND DEL_YN = 'N'
+		   AND USE_YN = 'Y'
+		   <!-- AND NOT CODE_NM IN ('설치', '가용', '비가용', '매각') -->
+		 ORDER BY CODE_CD ASC	
+	</select>
+	
+	<select id="listAssetViewAssetOpsSt" resultType="LHMap">
+		SELECT /* [AssetService.query][listAssetViewAssetOpsSt][자산정보 팝업, 장애처리이력][김선호][2017-12-20] */
+				VOR.RCPT_SEQ
+			,	VOR.STR_CD
+			,	VOR.STR_NM
+			,	VOR.AST_SEQ
+			,	VOR.RCPT_NO
+			,	VOR.RCPT_DT
+			, 	VOR.RCPT_TIME
+			,	VOR.IN_USER_NM
+			,	VOR.RCPT_CMPL_DT
+			,	VOR.COMP_NM
+			,	VOR.BRND_NM		
+			, 	VOR.RCPT_CUST_NM 
+			,	VOR.PHONE_NUM
+			,	VOR.RCPT_OBS_NM
+			,	VOR.RCPT_ENGR_NM
+			,	VOR.RCPT_STS_NM	
+		 	,	VOR.AST_SERIAL
+		 FROM 	VIEW_OBS_RCPT VOR
+		WHERE 	VOR.AST_SEQ = #{astSeq}
+	 ORDER BY 	VOR.RCPT_DT DESC
+	</select>
+
+	<select id="listAssetViewpPreventiveCheck" resultType="LHMap">
+		SELECT /* [AssetService.query][listAssetViewpPreventiveCheck][자산정보 팝업, 예방점검이력][김선호][2018-01-23] */
+				TMCM.CHECK_SEQ
+			,	TMCAL.AST_SEQ
+			,	DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T') AS CHECK_DT
+			,	TMCM.ENGR_NM
+			,	TMAC.ASP_COMP_NM AS ASP_COMP_NM
+			,	IF(ISNULL(TMCM.ATTACH_NM) OR TMCM.ATTACH_NM = '' , "N", "Y")	AS ATTACH_YN
+			,	IF(ISNULL(TMCM.ENGR_SIGN_NM) OR TMCM.ENGR_SIGN_NM = '' , "N", "Y")	AS ENGR_SIGN_YN
+			,	IF(ISNULL(TMCM.MNG_SIGN_NM) OR TMCM.MNG_SIGN_NM = '' , "N", "Y")	AS MNG_SIGN_YN
+			,	TMCAL.OBS_YN
+			, 	TMCAL.OBS_MEMO
+		FROM TB_MMS_CHECK_M TMCM
+		LEFT JOIN TB_MMS_CHECK_AST_L TMCAL
+		  ON TMCAL.CHECK_SEQ = TMCM.CHECK_SEQ
+		LEFT JOIN TB_MMS_AST_MNG_M TMAMM
+		  ON TMCM.ASP_COMP_CD = TMAMM.ASP_COMP_CD
+		  AND TMCM.STR_CD = TMAMM.STR_CD
+		  AND TMCAL.PRD_CD = TMAMM.PRD_CD
+		  AND TMCAL.AST_SEQ = TMAMM.AST_SEQ
+		LEFT JOIN TB_MMS_ASP_COMP TMAC
+		  ON TMCM.ASP_COMP_CD = TMAC.ASP_COMP_CD
+		WHERE TMCAL.AST_SEQ = #{astSeq}
+		ORDER BY TMCM.CHECK_SEQ DESC
+	</select>
+
+</mapper>

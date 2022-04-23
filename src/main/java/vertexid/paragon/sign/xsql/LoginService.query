@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LoginService">
+	<select id="getCheckId" resultType="HMap">
+		SELECT /* [LoginService.query][getCheckId][ID유무 조회][Han Seong Jin][2016-11-08] */
+			   PU.USER_SEQ
+			 , PU.USER_ID
+			 , PU.USER_PWD
+			 , PU.USER_NM
+			 , PU.USER_TYPE
+			 , PU.ASP_COMP_CD
+			 , PU.AREA_CD
+			 , PU.COMP_CD
+			 , IFNULL(PU.BRND_CD, '') AS BRND_CD
+			 , FN_COMM_CODE_NM('SC0016', PU.USER_POSITION, #{s_language}) AS USER_POSITION_NM
+			 , PU.CALL_EXT
+			 , PU.USE_YN
+			 , DATEDIFF(NOW(), IFNULL(PU.LAST_LOGIN_DT, PU.IN_DT)) AS LAST_LOGIN_DAYS
+			 , CASE WHEN PU.TEMP_PWD = #{userPwd} THEN 'TY' WHEN PU.TEMP_PWD IS NULL AND PU.USER_PWD = #{userPwd} THEN 'Y' ELSE 'N' END AS PASSWORD_YN
+			 , DATEDIFF(NOW(), PU.USER_PWD_DT) AS PASSWORD_DAYS
+			 , DATEDIFF(NOW(), PU.TEMP_PWD_DT) AS TEMP_PASSWORD_DAYS
+			 , PU.PWD_FAIL_CNT
+			 , PAU.AUTH_GROUP_SEQ
+			 , TIMESTAMPDIFF(SECOND, PU.LATELY_TRY, now()) BLOCKING_TIME
+			 , CASE WHEN PAU.DEL_YN = 'N' THEN 'Y' ELSE 'N' END AS AUTH_USER_YN
+		FROM TB_PARAGON_USER PU
+		LEFT JOIN TB_PARAGON_AUTH_USER PAU 
+		  ON PU.USER_ID = PAU.USER_ID
+		WHERE PU.USER_ID = #{userId}
+		  AND PU.DEL_YN = 'N'
+	</select>
+	
+<!-- 	<select id="getBirthLogin" resultType="LHMap"> -->
+<!-- 		SELECT /* [LoginService.query][getBirthLogin][ID,PWD,생년월일 체크][Han Seong Jin][2016-11-08] */ -->
+<!-- 			   USER_NO -->
+<!-- 			 , USER_ID -->
+<!-- 			 , USER_NM -->
+<!-- 			 , now() TIME -->
+<!-- 			 , USER_SEQ -->
+<!-- 			 , FN_COMM_CODE_NM('SC0016', UI.USER_POSITION , #{s_language}) USER_POSITION_NM -->
+<!-- 		  FROM TB_PARAGON_USER -->
+<!-- 		 WHERE USER_ID = #{userId} -->
+<!-- 		   AND USER_PWD = #{userPwd} -->
+<!-- 		   AND USER_BIRTH_DATE = #{userBirthDate} -->
+<!-- 		   AND USE_YN = 'Y' -->
+<!-- 		   AND DEL_YN = 'N' -->
+<!-- 	</select> -->
+
+	<update id="updateFailReset">
+		UPDATE /* [LoginService.query][updateFailReset][PWD	실패 횟수 초기화, 최근시도 업데이트][Han Seong Jin][2016-11-08] */
+			   TB_PARAGON_USER
+		   SET PWD_FAIL_CNT = 0
+		     , LATELY_TRY = now()
+		 WHERE USER_ID = #{userId}
+	</update>
+	
+	<update id="updateLoginFail">
+		UPDATE /* [LoginService.query][updateLoginFail][PWD	실패 횟수, 최근시도 업데이트][Han Seong Jin][2016-11-08] */
+			   TB_PARAGON_USER
+		   SET PWD_FAIL_CNT = PWD_FAIL_CNT+1
+		     , LATELY_TRY = now()
+		 WHERE USER_ID = #{userId}
+	</update>
+
+	<update id="updateLoginSuccess">
+		UPDATE /*[LoginService.query][updateLoginSuccess][PWD 실패 횟수 초기화, 최근 로그인 시간	업데이트][Han Seong Jin][2016-11-08] */
+			   TB_PARAGON_USER
+		   SET PWD_FAIL_CNT = 0
+		     , LAST_LOGIN_IP = #{connectIp}
+		     , LAST_LOGIN_DT = now()
+		 WHERE USER_ID = #{userId}
+	</update>
+
+	<update id="updateLoginUseN">
+		UPDATE /*[LoginService.query][updateLoginUseN][휴면계정으로 전환][Han Seong Jin][2017-12-06] */
+			   TB_PARAGON_USER
+		   SET USE_YN = 'N'
+		 WHERE USER_ID = #{userId}
+	</update>
+	
+	<update id="updatePassword">
+		UPDATE /*[LoginService.query][updateLoginUseN][휴면계정으로 전환][Han Seong Jin][2017-12-06] */
+			   TB_PARAGON_USER
+		   SET USE_YN = 'N'
+		     , TEMP_PWD = NULL
+		 WHERE USER_ID = #{userId}
+	</update>
+</mapper>

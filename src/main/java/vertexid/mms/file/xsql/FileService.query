@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="FileService">
+	<insert id="saveFileMaster"> 
+		INSERT /* [FileService.query][saveFileMaster][File Master 등록][Kim Jin Ho][2016-09-13] */
+		  INTO TB_MMS_FILE_MNG_M 
+		VALUES(
+			NULL
+		)
+		<selectKey keyProperty="fileMSeq" resultType="Integer" order="AFTER"> 
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+
+	</insert>
+	<insert id="saveFileDetail" >
+		INSERT /* [FileService.query][saveFileDetail][File Dtail 등록][Kim Jin Ho][2016-09-13] */
+		  INTO TB_MMS_FILE_MNG_D (
+		  		  FILE_M_SEQ
+				, FILE_SIZE		
+				, FILE_PATH		
+				, FILE_NAME		
+				, IN_USER_ID		
+				, UP_USER_ID	
+		)	
+		VALUES(	  #{fileMSeq}
+				, #{fileSize}
+				, #{webPath}
+				, #{fileName}
+				, #{s_userId}
+				, #{s_userId}
+		)
+	</insert>
+	<select id="getFileDetail" resultType="HMap" >
+		SELECT /* [FileService.query][getFileDetail][파일 한개조회 ][Kim Jin Ho][2016-09-13] */
+				  FILE_D_SEQ
+				, FILE_SIZE		
+				, FILE_PATH		
+				, FILE_NAME		
+				, IN_USER_ID		
+				, UP_USER_ID		
+		  FROM TB_MMS_FILE_MNG_D
+		 WHERE FILE_D_SEQ = #{fileDSeq}
+	</select>
+	<delete id="updateFileMSeq" > 
+		UPDATE TB_MMS_FILE_MNG_M /* [FileService.query][updateFileMSeq][매스터 테이블 업데이트][Kim Jin Ho][2016-09-13] */
+		   SET FILE_M_SEQ = #{fileMSeq}
+		   	 , UP_USER_ID = #{s_userId}
+		  WHERE <foreach collection="dt_update" item="item"  index="idx" separator="AND"  >
+		         ${item.colunmKey}= #{item.colunmValue}</foreach>
+	</delete>
+	<select id="getFileDetailList" resultType="HMap" >
+		SELECT /* [FileService.query][saveFileMaster][파일 목록조회 ][Kim Jin Ho][2016-09-13] */
+				  FILE_D_SEQ
+				, FILE_SIZE		
+				, FILE_PATH		
+				, FILE_NAME		
+				, TO_CHAR(IN_DT, 'YYYY-MM_DD') IN_DT
+				, IN_USER_ID	
+		  FROM TB_MMS_FILE_MNG_D
+		 WHERE FILE_M_SEQ = #{fileMSeq}
+		   AND DEL_YN = 'N'
+		 ORDER BY FILE_D_SEQ 
+	</select>
+	<select id="getFileInfo" resultType="HMap" >
+		SELECT /* [FileService.query][getFileInfo][PDF파일 보기][Kim Jin Ho][2016-09-13] */
+<!-- 				  FILE_D_SEQ -->
+<!-- 				, FILE_SIZE		 -->
+				  FILE_PATH		
+				, FILE_NAME		
+<!-- 				, TO_CHAR(IN_DT, 'YYYY-MM_DD') IN_DT -->
+<!-- 				, IN_USER_ID	 -->
+		  FROM TB_MMS_FILE_MNG_D
+		 WHERE FILE_D_SEQ = #{fileDSeq}
+	</select>
+	
+	<delete id="deleteFile" > 
+		UPDATE TB_MMS_FILE_MNG_D /* [FileService.query][deleteFile][파일 삭제][Kim Jin Ho][2016-09-13] */
+		   SET DEL_YN = 'Y'
+		     , UP_USER_ID = #{s_userId}
+		 WHERE FILE_D_SEQ = #{fileDSeq}
+	</delete>
+	<select id="getOneFileDetail" resultType="HMap" >
+		SELECT /* [FileService.query][getOneFileDetail][파일 미리보기][Kim Jin Ho][2016-09-13] */
+				  FILE_M_SEQ
+				, FILE_D_SEQ
+				, FILE_SIZE
+				, FILE_PATH	
+				, FILE_NAME
+		  FROM TB_MMS_FILE_MNG_D
+		 WHERE FILE_M_SEQ = #{fileMSeq}
+		   AND FILE_D_SEQ = (
+					        SELECT  MAX(FILE_D_SEQ)
+							  FROM TB_MMS_FILE_MNG_D
+							 WHERE FILE_M_SEQ = #{fileMSeq}
+							   AND DEL_YN = 'N'
+					       )
+		   AND DEL_YN = 'N'
+	</select>
+</mapper>
+ 

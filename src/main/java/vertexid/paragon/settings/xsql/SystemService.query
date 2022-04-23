@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="SystemService">
+
+	<select id="getCodeGroupList" resultType="HMap" > 
+		SELECT /* [CodeService.query][getCodeGroupList][코드그룹 목록조회 조회][Kim Jin Ho][2016-09-13] */
+		       CODE_GROUP_CD
+		     , CODE_GROUP_NM
+		     , CODE_GROUP_DESC
+		     , CODE_GROUP_TYPE
+		     , SYS_YN
+		     , USE_YN
+		     , IN_USER_ID
+		     , DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		  FROM TB_PARAGON_COMM_CODE_GROUP  
+		 WHERE 1 = 1
+		   <if test="codeGroupCd != null and !codeGroupCd.equals('')"> 
+		   AND CODE_GROUP_CD = #{codeGroupCd}
+		   </if>
+		   <if test="codeGroupNm != null and !codeGroupNm.equals('')"> 
+		   AND CODE_GROUP_NM LIKE CONCAT('%',#{codeGroupNm},'%')
+		   </if>
+		 ORDER BY CODE_GROUP_CD ASC
+	</select>
+	
+	<update id="updateCodeGroup" > 
+		UPDATE TB_PARAGON_COMM_CODE_GROUP /* [CodeService.query][updateCodeGroup][공통코드그룹 정보 수정][Kim Jin Ho][2016-09-13] */
+		   SET CODE_GROUP_NM = #{codeGroupNm}
+		     , CODE_GROUP_DESC = #{codeGgroupDesc}
+		     , CODE_GROUP_TYPE = #{codeGroupType}
+		     , SYS_YN = #{sysYn}
+		     , USE_YN = #{useYn}
+		     , UP_USER_ID = #{s_userId}
+		 WHERE CODE_GROUP_CD = #{codeGroupCd}
+	</update>
+	
+	<insert id="insertCodeGroup" > 
+		INSERT /* [CodeService.query][insertCodeGroup][공통코드그룹 정보 등록][Kim Jin Ho][2016-09-13] */
+		  INTO TB_PARAGON_COMM_CODE_GROUP (
+		  		  CODE_GROUP_CD
+				, CODE_GROUP_NM
+				, CODE_GROUP_DESC
+				, CODE_GROUP_TYPE
+				, SYS_YN
+				, USE_YN
+				, IN_USER_ID 	
+				, IN_DT 		
+		  )
+		VALUES(	  #{codeGroupCd}
+				, #{codeGroupNm}
+				, #{codeGroupDesc}
+				, #{codeGroupType}
+				, #{sysYn}
+				, #{useYn}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<delete id="deleteCodeGroup" > 
+		DELETE /* [CodeService.query][deleteCodeGroup][공통코드그룹 정보 삭제][Kim Jin Ho][2016-09-13] */
+		  FROM TB_PARAGON_COMM_CODE_GROUP
+		  WHERE CODE_GROUP_CD = #{codeGroupCd}
+	</delete>
+	
+	
+	<select id="getCodeGroupNameList" resultType="HMap"> 
+		SELECT /* [CodeService.query][getCodeGroupNameList][공통코드그룹 자동완성 목록][Kim Jin Ho][2016-09-13] */
+		       CODE_GROUP_NM value
+		     , CONCAT('[', CODE_GROUP_CD ,'] ',CODE_GROUP_NM) label
+		     , CODE_GROUP_CD pcd
+		  FROM TB_PARAGON_COMM_CODE_GROUP  		
+		 WHERE CODE_GROUP_CD LIKE CONCAT('%',#{codeGroupCd},'%')		
+	</select>
+	<select id="getCodeGroupComboList" resultType="HMap"> 
+		SELECT /* [CodeService.query][getCodeGroupComboList][공통코드 SELECT BOX ][Kim Jin Ho][2016-09-13] */
+		       CODE_CD value
+		     , CODE_NM name
+		  FROM TB_PARAGON_COMM_CODE  		
+		 WHERE CODE_GROUP_CD = #{codeGroupCd}
+		 ORDER BY CODE_ORDER ASC		
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="getCodeList" resultType="HMap" > 
+		SELECT /* [CodeService.query][getCodeList][프로그램 목록조회 조회][Kim Jin Ho][2016-09-13] */
+		       CODE_CD
+		     , CODE_GROUP_CD
+		     , CODE_NM
+		     , CODE_ORDER
+		     , CODE_DESC
+		     , CODE_OTHER1
+		     , CODE_OTHER2
+		     , CODE_OTHER3
+		     , CODE_OTHER4
+		     , CODE_OTHER5
+		     , USE_YN
+		     , IN_USER_ID
+		     , DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		  FROM TB_PARAGON_COMM_CODE  
+		 WHERE DEL_YN = 'N'
+		   <if test="codeGroupCd != null and !codeGroupCd.equals('')"> 
+		   AND CODE_GROUP_CD = #{codeGroupCd}
+		   </if>
+		   <if test="codeCd != null and !codeCd.equals('')"> 
+		   AND CODE_CD = #{codeCd}
+		   </if>
+		   <if test="codeNm != null and !codeNm.equals('')"> 
+		   AND CODE_NM LIKE CONCAT('%',#{codeNm},'%')
+		   </if>
+		 ORDER BY CODE_ORDER ASC
+	</select>
+	
+	<update id="updateCode" > 
+		UPDATE TB_PARAGON_COMM_CODE /* [ProgramService.query][updateProgram][공통코드 정보 수정][Kim Jin Ho][2016-09-13] */
+		   SET CODE_CD 		= #{codeCd}
+		     , CODE_NM 		= #{codeNm}
+		     , CODE_DESC 	= #{codeDesc}
+		     , CODE_ORDER 	= #{codeOrder}
+		     , CODE_OTHER1 	= #{codeOther1}
+		     , CODE_OTHER2 	= #{codeOther2}
+		     , CODE_OTHER3 	= #{codeOther3}
+		     , CODE_OTHER4 	= #{codeOther4}
+		     , CODE_OTHER5 	= #{codeOther5}
+		     , USE_YN 		= #{useYn}
+		     , IN_USER_ID 	= #{s_userId}
+		 WHERE CODE_CD = #{codeCd}
+		   AND CODE_GROUP_CD = #{codeGroupCd}
+	</update>
+	
+	<insert id="insertCode" > 
+		INSERT /* [ProgramService.query][updateProgram][공통코드 정보 등록][Kim Jin Ho][2016-09-13] */
+		  INTO TB_PARAGON_COMM_CODE (
+		  		  CODE_CD 		 		
+				, CODE_GROUP_CD
+				, CODE_NM 		
+				, CODE_DESC 	
+				, CODE_ORDER 
+				, CODE_OTHER1
+				, CODE_OTHER2
+				, CODE_OTHER3
+				, CODE_OTHER4
+				, CODE_OTHER5
+				, USE_YN 		
+				, IN_USER_ID 
+				, IN_DT 	
+		  )
+		VALUES(	  #{codeCd} 		 		
+				, #{codeGroupCd}
+				, #{codeNm}
+				, #{codeDesc}
+				, #{codeOrder}
+				, #{codeOther1}
+				, #{codeOther2}
+				, #{codeOther3}
+				, #{codeOther4}
+				, #{codeOther5}
+				, #{useYn}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	<delete id="deleteCode" > 
+		DELETE /* [ProgramService.query][updateProgram][공통코드 정보 삭제][Kim Jin Ho][2016-09-13] */
+		  FROM TB_PARAGON_COMM_CODE
+		  WHERE CODE_CD = #{codeCd}
+		  AND CODE_GROUP_CD = #{codeGroupCd}
+	</delete>
+	
+	
+	
+	<select id="getCodeNameList" resultType="HMap"> 
+		SELECT CODE_NM value
+		     , CONCAT('[', CODE_CD ,'] ',CODE_NM) label
+		     , CODE_CD pcd
+		  FROM TB_PARAGON_COMM_CODE  		
+		 WHERE CODE_CD LIKE CONCAT('%',#{codeCd},'%')		 
+	</select>
+</mapper>
+ 

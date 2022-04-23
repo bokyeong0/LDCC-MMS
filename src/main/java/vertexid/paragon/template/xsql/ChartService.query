@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="chart">
+	<select id="getPieChart" resultType="LHMap">
+		SELECT /* [getDonutChart] */ 
+			  COUNT(*) data
+			, LOGIN_OS
+ 		 FROM TB_PARAGON_CHART 
+ 		 WHERE DEL_YN = 'N'
+ 		 GROUP BY LOGIN_OS
+<!--      ORDER BY data DESC -->
+	</select>
+	
+	<select id="getBarChart" resultType="LHMap">
+		SELECT /* [getBarChart] */ 
+			  COUNT(*) y
+			, LOGIN_OS x
+ 		 FROM TB_PARAGON_CHART 
+ 		 WHERE DEL_YN = 'N'
+ 		 GROUP BY LOGIN_OS
+     ORDER BY y DESC
+	</select>
+	
+	<select id="getInteractiveChart" resultType="LHMap">
+		SELECT /* [getInterativeChart] */
+			DATE_FORMAT(UP_DT, '%d') x,
+			COUNT(UP_DT) y
+		FROM TB_PARAGON_CHART
+		WHERE DEL_YN = 'N'
+<!-- 		and NOT DATE_FORMAT(UP_DT, '%m%d') = '0101' and NOT DATE_FORMAT(UP_DT, '%m%d') = '1020' -->
+		and UP_DT >= DATE_ADD(now(), INTERVAL -1 year)
+		GROUP BY month
+	</select>
+	<select id="getInteractiveChart2" resultType="LHMap">
+		select dd
+		  , max(AA.app) AS app
+		  , max(AA.web) AS web
+		  FROM(
+		  SELECT date_format(a.UP_DT,'%Y%m') dd
+		      , case WHEN a.BROWSER = 'app' THEN COUNT(a.UP_DT) ELSE 0 END as app
+		      , case WHEN a.BROWSER = 'web' THEN COUNT(a.UP_DT) ELSE 0 END as web
+		 	 FROM TB_PARAGON_CHART a
+		 	WHERE a.DEL_YN = 'N' 
+<!-- 		 	and NOT DATE_FORMAT(a.UP_DT, '%m%d') = '0101' -->
+		  GROUP BY dd, a.Month, a.browser
+		) AA
+		group by dd
+	</select>
+	<select id="getPollChartAjax" resultType="LHMap">
+		SELECT count(UP_DT) y, DATE_FORMAT(UP_DT, '%m%s') x
+        FROM TB_PARAGON_CHART
+        WHERE UP_DT BETWEEN (now() - interval 25400000 SECOND) AND (now() - interval 25380000 SECOND)
+  group BY DATE_FORMAT(UP_DT, '%m%s')
+	</select>
+</mapper>

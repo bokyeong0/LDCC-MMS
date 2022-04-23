@@ -1,0 +1,712 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="UserService">
+
+	<select id="getListLdccUser" resultType="HMap" > 
+		SELECT /* [UserService.query][getListLdccUser][LDCC 사용자 리스트 조회][Kim Seon Ho][2016-11-09] */
+		  		PU.USER_SEQ							
+			  , PU.ASP_COMP_CD
+			  , PU.USER_ID
+			  , PU.USER_NM
+          	  , PU.USER_DEPT 													AS USER_DEPT
+			  , FN_COMM_CODE_NM('SC0016', PU.USER_POSITION, #{s_language}) USER_POSITION
+			  , PU.USER_PHONE
+			  , PU.CALL_EXT
+			  , PU.USER_EMAIL
+		      , IF(PU.USE_YN='Y','정상', '휴면') AS USE_YN
+			  , PU.IN_USER_ID
+		      , DATE_FORMAT(PU.IN_DT,'%Y-%m-%d') IN_DT
+    		  , AU.AUTH_GROUP_SEQ AS USER_AUTH
+    		  , CC.CODE_NM AS USER_AUTH_NM
+		   FROM TB_PARAGON_USER PU
+	LEFT OUTER JOIN
+				TB_PARAGON_AUTH_USER AU
+			ON	PU.USER_ID = AU.USER_ID
+	LEFT OUTER JOIN
+				TB_PARAGON_COMM_CODE CC
+			ON	AU.AUTH_GROUP_SEQ = CC.CODE_CD
+		   AND	CC.CODE_GROUP_CD = 'GR0001'
+		  WHERE PU.DEL_YN = 'N'
+			AND PU.USER_TYPE = '1'
+		  <if test="userId != null and !userId.equals('')">
+		  	AND PU.USER_ID LIKE CONCAT('%',#{userId},'%')
+		  </if>
+		  <if test="userNm != null and !userNm.equals('')">
+		  	AND PU.USER_NM LIKE CONCAT('%',#{userNm},'%')
+		  </if>
+		  <if test="callExt != null and !callExt.equals('')">
+		  	AND PU.CALL_EXT LIKE CONCAT('%',#{callExt},'%')
+		  </if>
+		  <if test="userDept != null and !userDept.equals('')">
+		  	AND PU.USER_DEPT LIKE CONCAT('%',#{userDept},'%')
+		  </if>
+		  <if test="useYn != null and !useYn.equals('')">
+		  	AND PU.USE_YN  = #{useYn}
+		  </if>
+		  ORDER BY PU.IN_DT DESC
+	</select>
+	
+	<select id="ldccUserAuthCombo" resultType="HMap" >
+	SELECT /* [StandardAreaService.query][ldccUserAuthCombo][LDCC사용자 권한콤보박스][김선호][2018. 01. 04] */
+				CC.CODE_CD as value
+			,	CC.CODE_NM as name
+		  FROM 	TB_PARAGON_COMM_CODE CC
+		  WHERE CC.DEL_YN = 'N'
+		  	AND	CC.CODE_GROUP_CD = 'GR0001'
+   		    AND CC.CODE_CD <![CDATA[>=]]> '100'
+			AND CC.CODE_CD <![CDATA[<]]> '200'
+		  ORDER BY CODE_CD ASC
+	</select>	
+
+	<select id="partnerUserAuthCombo" resultType="HMap" >
+	SELECT /* [StandardAreaService.query][partnerUserAuthCombo][파트너사용자 권한콤보박스][김선호][2018. 01. 04] */
+				CODE_CD as value
+			,	CODE_NM as name
+		  FROM 	TB_PARAGON_COMM_CODE
+		  WHERE DEL_YN = 'N'
+		  	AND	CODE_GROUP_CD = 'GR0001'
+   		    AND CODE_CD <![CDATA[>=]]> '200'
+	    	AND CODE_CD <![CDATA[<]]> '300'
+		  ORDER BY CODE_CD ASC
+	</select>	
+
+	<select id="getUserNameList" resultType="HMap" >
+	SELECT /* [StandardAreaService.query][getUserNameList][권역관리 목록조회 value/name][최판석][2017. 4. 07.] */
+			   USER_ID as value
+			 , USER_NM as name
+		  FROM TB_PARAGON_USER 
+		  WHERE DEL_YN = 'N'
+		    AND COMP_CD IS NULL
+		  ORDER BY USER_NM ASC
+	</select>
+	
+	<select id="getStndAreaNameList" resultType="HMap" >
+	SELECT /* [StandardAreaService.query][getStndAreaNameList][권역관리 목록조회 value/name][최판석][2017. 4. 07.] */
+		       ASP_COMP_CD AS value
+		     , ASP_COMP_NM AS name
+		  FROM TB_MMS_ASP_COMP  
+		 WHERE DEL_YN = 'N'
+		   AND USE_YN = 'Y'
+		 ORDER BY ASP_COMP_CD ASC
+	</select>
+	
+	<select id="getStndPartnerAspCompCdList" resultType="HMap" >
+		SELECT /* [UserService.query][getStndPartnerAspCompCdList][파트너 목록조회 value/name][김선호][2017. 11. 10.] */
+		       ASP_COMP_CD AS value
+		     , ASP_COMP_NM AS name
+		  FROM TB_MMS_ASP_COMP  
+		 WHERE DEL_YN = 'N'
+		   AND USE_YN = 'Y'
+	 	  <if test="aspCompCd != null and !aspCompCd.equals('')">
+		   AND ASP_COMP_CD = #{aspCompCd}
+	  	  </if>
+		 ORDER BY ASP_COMP_CD ASC
+	</select>	
+	
+	<select id="getStndUserAreaNmList" resultType="HMap" >
+		SELECT /* [UserService.query][getStndUserAreaNmList][담당부서 목록조회 value/name][김선호][2017. 11. 10.] */
+			   AREA_CD AS value
+			 , AREA_NM 	AS name
+		  FROM TB_MMS_STND_AREA_S 
+		 WHERE DEL_YN = 'N'
+	 	  <if test="aspCompCd != null and !aspCompCd.equals('')">
+		   AND ASP_COMP_CD = #{aspCompCd}
+	  	  </if>
+	</select>		
+		
+	<select id="getUserInfo" resultType="HMap" > 
+		SELECT /* [UserService.query][getUserInfo][사용자 정보 상세 조회][최 판 석][2017-05-23] */
+			   PU.USER_SEQ
+			 , PU.ASP_COMP_CD
+			 , PU.COMP_CD
+			 , PU.BRND_CD
+			 , (SELECT COMP_NM FROM TB_MMS_STND_COMP_S WHERE COMP_CD = PU.COMP_CD) AS COMP_NM		
+			 , (SELECT BRND_NM FROM TB_MMS_STND_BRND_S WHERE BRND_CD = PU.BRND_CD) AS BRND_NM			 
+			 , PU.USER_ID
+			 , PU.USER_NM
+			 , PU.USER_POSITION
+			 , IFNULL(PU.USER_PHONE,'') AS USER_PHONE
+			 , IFNULL(PU.CALL_EXT,'') AS CALL_EXT		     
+			 , IFNULL(PU.USER_EMAIL,'') AS USER_EMAIL
+			 , IF(PU.USE_YN='Y','정상', '휴면') AS USE_YN
+		  FROM 
+		  	TB_PARAGON_USER PU
+		  WHERE 
+		  	USER_SEQ = #{userSeq}
+	</select>
+	
+	<select id="getUserInfoView" resultType="HMap" > 
+		SELECT /* [UserService.query][getUserInfoView][사용자 정보 상세 조회[공통]][최 판 석][2017-05-22] */
+				PU.USER_SEQ							
+			  , PU.ASP_COMP_CD
+			  , IFNULL((SELECT COMP_NM FROM TB_MMS_STND_COMP_S WHERE COMP_CD = PU.COMP_CD), '') AS COMP_NM		
+			  , IFNULL((SELECT BRND_NM FROM TB_MMS_STND_BRND_S WHERE BRND_CD = PU.BRND_CD), '') AS BRND_NM
+			  ,	IFNULL(PU.COMP_CD, '') 			AS COMP_CD
+			  ,	IFNULL(PU.BRND_CD, '') 			AS BRND_CD
+			  ,	IFNULL(PU.USER_ID, '') 			AS USER_ID
+			  ,	IFNULL(PU.USER_NM, '') 			AS USER_NM
+			  ,	IFNULL(PU.USER_POSITION, '') 	AS USER_POSITION
+			  ,	IFNULL(PU.COMP_CD, '') 			AS COMP_CD
+			  , IFNULL(PU.USER_PHONE,'') 		AS USER_PHONE
+			  , IFNULL(PU.CALL_EXT,'') 			AS CALL_EXT		     
+			  , IFNULL(PU.USER_EMAIL,'') 		AS USER_EMAIL
+			  , IFNULL((SELECT ASP_COMP_NM FROM TB_MMS_ASP_COMP AC WHERE AC.ASP_COMP_CD = PU.ASP_COMP_CD), '') AS ASP_COMP_NM
+			  , IFNULL(PU.USER_DEPT,'') 		AS USER_DEPT		
+  			  , IFNULL(PU.AREA_CD,'') 			AS AREA_CD		
+          	  , IFNULL((SELECT AREA_NM FROM TB_MMS_STND_AREA_S WHERE AREA_CD=PU.AREA_CD), '') AS AREA_NM
+		      , IF(PU.USE_YN='Y','정상', '휴면') AS USE_YN			  
+			  , PU.IN_USER_ID
+		      , DATE_FORMAT(PU.IN_DT,'%Y-%m-%d') IN_DT
+		      , CC.AUTH_GROUP_SEQ AS USER_AUTH
+      	      , FN_COMM_CODE_NM('GR0001', CC.AUTH_GROUP_SEQ, 'ko') AS USER_AUTH_NM
+		  FROM 	TB_PARAGON_USER PU
+		LEFT OUTER JOIN
+				TB_PARAGON_AUTH_USER CC
+			ON	PU.USER_ID = CC.USER_ID
+		 WHERE USER_SEQ = #{userSeq}
+	</select>
+	
+	<select id="getCheckUserNo" resultType="HMap" > 
+		SELECT /* [UserService.query][getCheckUserNo][사번 중복 조회][Han Seong Jin][2016-09-13] */
+			   USER_NO
+		  FROM 
+		  	TB_PARAGON_USER
+		  WHERE 
+		    USER_NO = #{userNo}
+		    AND ASP_COMP_CD = #{s_companyCd}
+	</select>
+	
+    <select id="getCheckUserId" resultType="HMap" > 
+		SELECT /* [UserService.query][getCheckUserId][아이디 중복 조회][최 판 석][2017-05-23] */
+			   USER_ID
+		  FROM 
+		  	TB_PARAGON_USER
+		  WHERE 
+		    USER_ID = #{userId}
+		    AND ASP_COMP_CD = #{s_companyCd}
+	</select>
+	
+	<insert id="insertLdccUser" > 
+		INSERT /* [UserService.query][insertLdccUser][LDCC 사용자 등록][Han Seong Jin][2016-11-01] */
+		  INTO TB_PARAGON_USER (
+		  		  USER_ID
+				, USER_PWD
+				, USER_TYPE
+				, USER_NM
+				, USER_DEPT
+				, USER_PHONE
+				, CALL_EXT
+				, USER_EMAIL
+				, USER_POSITION				
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )
+		VALUES(	  #{userId}
+				, ''
+				, '1'
+				, #{userNm}
+				, #{userDept}
+				, #{userPhone}
+				, #{callExt}
+				, #{userEmail}
+				, #{userPosition}				
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<insert id="insertLdccUserAuth" > 
+		INSERT /* [UserService.query][insertLdccUserAuth][LDCC 사용자 등록 시 권한 부여][김선호][2018-01-04] */
+		  INTO TB_PARAGON_AUTH_USER (
+		  		  AUTH_GROUP_SEQ
+		  		, USER_ID
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )
+		VALUES(	  
+				  #{userAuth}
+				, #{userId}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<update id="updateUser">
+		UPDATE /* [UserService.query][updateUser][사용자 정보 수정][Kim Seon Ho][2016-09-13] */
+			TB_PARAGON_USER
+		<set>
+			USER_ID 		= #{userId}
+		  , USER_NM 		= #{userNm}
+		  , USER_POSITION 	= #{userPosition}
+		  , USER_DEPT		= #{userDept}
+		  , USER_EMAIL 		= #{userEmail}
+		  , USER_PHONE 		= #{userPhone}		  
+		  , CALL_EXT 		= #{callExt}
+		  , USE_YN			= #{useYn}
+		  , UP_USER_ID 		= #{s_userId}
+		  <if test="lastLoginDtYn eq 1">
+			, LAST_LOGIN_DT	= now()
+		  </if>
+		  <if test="compCd != null">
+			, COMP_CD 		= #{compCd}
+		  </if> 
+		  <if test="brndCd != null">
+			, BRND_CD 		= #{brndCd}
+		  </if>
+		  <if test="aspCompCd != null">
+			, ASP_COMP_CD	= #{aspCompCd}
+		  </if> 
+		  <if test="areaCd != null">
+			, AREA_CD       = #{areaCd}
+		  </if>
+		</set>
+		WHERE
+		    USER_SEQ 		= #{userSeq}
+	</update>
+	
+	<update id="updateLdccUserAuth">
+		UPDATE /* [UserService.query][updateLdccUserAuth][LDCC사용자 권한 수정][Kim Seon Ho][2018-01-04] */
+			TB_PARAGON_AUTH_USER
+		SET AUTH_GROUP_SEQ = #{userAuth}
+		,	UP_USER_ID		= #{s_userId}
+		WHERE
+		    USER_ID 		= #{userId}
+	</update>	
+	
+	<delete id="deleteLdccUserAuth">
+		DELETE FROM /* [UserService.query][deleteLdccUserAuth][LDCC사용자 권한 삭제][Kim Seon Ho][2018-01-04] */
+			TB_PARAGON_AUTH_USER
+		WHERE
+		    USER_ID 		= #{userId}
+	</delete>
+	
+	<update id="deleteUser" >
+		UPDATE /* [UserService.query][deleteUser][사용자 정보 삭제][Han Seong Jin][2016-09-13] */
+				TB_PARAGON_USER
+				SET DEL_YN = 'Y'
+				, UP_USER_ID = #{s_userId}
+			WHERE
+				USER_SEQ = #{userSeq}
+	</update>
+	
+	<select id="getListCustomer" resultType="HMap" > 
+		SELECT /* [UserService.query][getListCustomer][고객사 리스트 조회][Han Seong Jin][2016-09-13] */
+				PU.USER_SEQ							
+			  , PU.ASP_COMP_CD
+			  , (SELECT COMP_NM FROM TB_MMS_STND_COMP_S WHERE COMP_CD = PU.COMP_CD) AS COMP_NM
+			  , (SELECT BRND_NM FROM TB_MMS_STND_BRND_S WHERE BRND_CD = PU.BRND_CD) AS BRND_NM
+			  , PU.COMP_CD
+			  , PU.BRND_CD					
+			  , PU.USER_ID
+			  , PU.USER_NM
+			  , FN_COMM_CODE_NM('SC0016', PU.USER_POSITION, 'ko') USER_POSITION
+			  , PU.USER_PHONE
+			  , PU.CALL_EXT
+			  , PU.USER_EMAIL
+		      , IF(PU.USE_YN='Y','정상', '휴면') AS USE_YN
+			  , PU.IN_USER_ID
+		      , DATE_FORMAT(PU.IN_DT,'%Y-%m-%d') IN_DT
+    		  , CC.AUTH_GROUP_SEQ AS USER_AUTH
+		   FROM 
+		   		TB_PARAGON_USER PU
+LEFT OUTER JOIN
+				TB_PARAGON_AUTH_USER CC
+			ON	PU.USER_ID = CC.USER_ID
+		  WHERE PU.DEL_YN = 'N'
+		  AND	PU.USER_TYPE = '3'
+		  	<if test="userId != null and !userId.equals('')">
+		  	AND PU.USER_ID LIKE CONCAT('%',#{userId},'%')
+		  	</if>
+		  	<if test="userNm != null and !userNm.equals('')">
+		  	AND PU.USER_NM LIKE CONCAT('%',#{userNm},'%')
+		 	</if>
+		 	<if test="compCd != null and !compCd.equals('')">
+		  	AND PU.COMP_CD = #{compCd}
+		 	</if>
+		 	<if test="brndCd != null and !brndCd.equals('')">
+		  	AND PU.BRND_CD = #{brndCd}
+		 	</if>
+			<if test="useYn != null and !useYn.equals('')">
+		  	AND PU.USE_YN  = #{useYn}
+			</if>
+		 	<if test="callExt != null and !callExt.equals('')">
+		  	AND PU.CALL_EXT LIKE CONCAT('%',#{callExt},'%')
+		 	</if>		 	
+		ORDER BY PU.IN_DT DESC
+	</select>
+	
+		<select id="getListPartner" resultType="HMap" > 
+        /* [UserService.query][getListPartner][파트너사 리스트 조회][Kim Seon Ho][2016-11-10] */
+		SELECT 
+		  		PU.USER_SEQ							
+			  , PU.ASP_COMP_CD
+			  , PU.USER_ID
+			  , PU.USER_NM
+			  , PU.USER_POSITION
+			  , PU.USER_PHONE
+			  , (SELECT ASP_COMP_NM FROM TB_MMS_ASP_COMP AC WHERE AC.ASP_COMP_CD = PU.ASP_COMP_CD) AS ASP_COMP_NM
+          	  , (SELECT AREA_NM FROM TB_MMS_STND_AREA_S WHERE AREA_CD=PU.AREA_CD) AS AREA_NM
+          	  , PU.AREA_CD 
+			  , PU.CALL_EXT
+			  , PU.USER_EMAIL
+		      , IF(PU.USE_YN='Y','정상', '휴면') 	AS USE_YN
+		      , PU.DEL_YN
+		      , PU.USER_TYPE
+			  , PU.IN_USER_ID
+		      , DATE_FORMAT(PU.IN_DT,'%Y-%m-%d') 	AS IN_DT
+    		  , AU.AUTH_GROUP_SEQ AS USER_AUTH
+    		  , CC.CODE_NM AS USER_AUTH_NM
+		   FROM TB_PARAGON_USER PU
+	LEFT OUTER JOIN
+				TB_PARAGON_AUTH_USER AU
+			ON	PU.USER_ID = AU.USER_ID
+	LEFT OUTER JOIN
+				TB_PARAGON_COMM_CODE CC
+			ON	AU.AUTH_GROUP_SEQ = CC.CODE_CD
+		   AND	CC.CODE_GROUP_CD = 'GR0001'
+		  WHERE PU.DEL_YN = 'N'
+			AND PU.USER_TYPE = '2'
+		  <if test="userId != null and !userId.equals('')">
+		  	AND PU.USER_ID LIKE CONCAT('%',#{userId},'%')
+		  </if>
+		  <if test="userNm != null and !userNm.equals('')">
+		  	AND PU.USER_NM LIKE CONCAT('%',#{userNm},'%')
+		  </if>
+		  <if test="aspCompCd != null and !aspCompCd.equals('')">
+		  	AND PU.ASP_COMP_CD = #{aspCompCd}
+		  </if>
+		  <if test="useYn != null and !useYn.equals('')">
+		  	AND PU.USE_YN  = #{useYn}
+		  </if>
+		  <if test="callExt != null and !callExt.equals('')">
+		  	AND PU.CALL_EXT LIKE CONCAT('%',#{callExt},'%')
+		  </if>		  
+		  <if test="areaCd != null and !areaCd.equals('')">
+		  	AND PU.AREA_CD = #{areaCd}
+		  </if>			  	  
+		  ORDER BY PU.IN_DT DESC
+	</select>
+	
+	<insert id="insertCustomerUser" > 
+		INSERT /* [UserService.query][insertCustomerUser][고객관리 사용자 등록][Han Seong Jin][2016-11-01] */
+		  INTO TB_PARAGON_USER (
+		  		  COMP_CD
+		  		, BRND_CD
+		  		, USER_ID
+				, USER_PWD
+				, USER_TYPE
+				, USER_NM
+				, USER_PHONE
+				, CALL_EXT
+				, USER_EMAIL
+				, USER_POSITION				
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )
+		VALUES(	  #{compCd}
+				, #{brndCd}
+				, #{userId}
+				, ''
+				, '3'
+				, #{userNm}
+				, #{userPhone}
+				, #{callExt}
+				, #{userEmail}
+				, #{userPosition}				
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+		<insert id="insertPartnerUser" > 
+		INSERT /* [UserService.query][insertPartnerUser][파트너사 사용자 등록][Kim Seon Ho][2016-11-10] */
+		  INTO TB_PARAGON_USER (
+		  		  ASP_COMP_CD
+		  		, USER_ID
+				, USER_TYPE
+				, USER_NM
+				, USER_PHONE
+				, AREA_CD
+				, CALL_EXT
+				, USER_EMAIL
+				, USER_POSITION				
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )
+		VALUES(	  #{aspCompCd}
+				, #{userId}
+				, '2'
+				, #{userNm}
+				, #{userPhone}
+				, #{areaCd}
+				, #{callExt}
+				, #{userEmail}
+				, #{userPosition}				
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+
+	<insert id="insertPartnerUserAuth" > 
+		INSERT /* [UserService.query][insertPartnerUserAuth][파트너 사용자 등록 시 권한 부여][김선호][2018-01-04] */
+		  INTO TB_PARAGON_AUTH_USER (
+		  		  AUTH_GROUP_SEQ
+		  		, USER_ID
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )
+		VALUES(	  
+				  #{userAuth}
+				, #{userId}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<update id="updatePartnerUserAuth">
+		UPDATE /* [UserService.query][updatePartnerUserAuth][파트너사용자 권한 수정][Kim Seon Ho][2018-01-04] */
+			TB_PARAGON_AUTH_USER
+		SET AUTH_GROUP_SEQ = #{userAuth}
+		,	UP_USER_ID		= #{s_userId}
+		WHERE
+		    USER_ID 		= #{userId}
+	</update>	
+	
+	<delete id="deletePartnerUserAuth">
+		DELETE FROM /* [UserService.query][deletePartnerUserAuth][파트너사용자 권한 삭제][Kim Seon Ho][2018-01-04] */
+			TB_PARAGON_AUTH_USER
+		WHERE
+		    USER_ID 		= #{userId}
+	</delete>
+
+	<select id="getUserMyInfoView" resultType="HMap" > 
+		SELECT /* [UserService.query][getUserMyInfoView][메인화면 내정보 보기][김진호][2017-05-22] */
+			   ASP_COMP_CD 
+			 , USER_NO
+			 , USER_ID
+		     , IFNULL(USER_NM, '' ) 												AS USER_NM
+			 , (SELECT ASP_COMP_NM FROM TB_MMS_ASP_COMP AC WHERE AC.ASP_COMP_CD = A.ASP_COMP_CD) AS ASP_COMP_NM
+          	 , IFNULL(USER_DEPT, '' ) 												AS USER_DEPT
+		     , IFNULL(USER_POSITION, '' )											AS USER_POSITION
+         	 , FN_COMM_CODE_NM('SC0016', A.USER_POSITION, 'ko') USER_POSITION_NM
+		     , IFNULL(USER_PHONE, '' )												AS USER_PHONE
+		     , IFNULL(USER_EMAIL, '' )												AS USER_EMAIL  
+		     , IFNULL(CALL_EXT, '' )												AS CALL_EXT  
+		     , IF(USE_YN='Y','정상', '휴면') USE_YN
+		  FROM TB_PARAGON_USER A
+		 WHERE USER_ID = #{s_userId}
+	</select>
+	
+	
+	
+	<update id="saveMyInfo">
+		UPDATE TB_PARAGON_USER /* [UserService.query][saveMyInfo][메인화면 내정보 변경][김진호][2016-09-13] */
+		   SET USER_BIRTH_DATE = #{userBirthDate}
+		     , USER_PHONE = #{userPhone}
+		     , USER_EMAIL = #{userEmail}
+		     , CALL_EXT = #{callExt}
+		     , UP_USER_ID = #{s_userId}
+		 WHERE USER_ID = #{s_userId}
+	</update>	
+	
+	<update id="savePassword">
+		UPDATE TB_PARAGON_USER /* [UserService.query][savePassword][메인화면 내비밀번호 변경][김진호][2016-09-13] */
+		   SET USER_PWD = #{userNewPwd}
+		     , TEMP_PWD = NULL
+		     , PWD_FAIL_CNT = 0
+		     , USER_PWD_DT = now()
+		 WHERE USER_ID = #{s_userId}
+	</update>	
+	
+	<update id="updateUserTempPwd">
+		UPDATE TB_PARAGON_USER /* [UserService.query][updateUserTempPwd][메인화면 내비밀번호 변경][김선호][2016-11-09] */
+		   SET TEMP_PWD = #{tempPwd}
+		     , PWD_FAIL_CNT = 0
+		     , TEMP_PWD_DT = now()
+		     , LAST_LOGIN_DT = now()
+		 WHERE USER_SEQ = #{userSeq}
+	</update>
+	
+	<select id="getPwdCheck" resultType="HMap">
+		SELECT /* [LoginService.query][getPwdCheck][비밀번호 변경 기존 비밀번호 체크][Han Seong Jin][2016-11-08] */
+			   USER_ID
+			 , USER_PWD
+			 , TEMP_PWD
+			 , USER_PHONE
+			 , USER_EMAIL
+		FROM TB_PARAGON_USER
+		WHERE USER_ID = #{s_userId}
+		<if test="userPwd != null and !userPwd.equals('')">
+		  AND (USER_PWD = #{userPwd} OR TEMP_PWD = #{userPwd})
+		</if>
+	</select>
+	<select id="getInstUser" resultType="HMap" > 
+		SELECT /* [UserService.query][getInstUser][LDCC 사용자 리스트 조회][Kim Seon Ho][2016-11-09] */
+		  		USER_SEQ
+		  	  , USER_ID							
+			  , USER_NM
+		  	  , USER_PHONE							
+ 			  , USER_EMAIL
+		   FROM TB_PARAGON_USER 
+		  WHERE DEL_YN = 'N'
+		  	AND USE_YN = 'Y'
+		  	AND FN_LENGTH(USER_PWD) = 0
+		  	AND FN_LENGTH(TEMP_PWD) = 0
+		  <if test="userType != null and !userType.equals('')">
+		  	AND USER_TYPE = #{userType}
+		  </if>
+	</select>	
+	<select id="getMyMobileList"  resultType="HMap" > 
+		SELECT MOBILE_SEQ
+		     , MOBILE_AUTH_KEY
+		     , CASE WHEN MOBILE_AUTH_YN = 'N' THEN MOBILE_AUTH_KEY ELSE '인증완료' END MOBILE_AUTH_YN
+		     , MOBILE_NM
+		     , MOBILE_TYPE
+		     , MOBILE_LOC_SEND_YN
+		     , DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		     , CASE WHEN MOBILE_AUTH_YN = 'Y' THEN DATE_FORMAT(MOBILE_AUTH_DT,'%Y-%m-%d %H:%i') ELSE '' END MOBILE_AUTH_DT
+          FROM TB_PARAGON_USER_MOBILE 
+         WHERE USER_ID = #{s_userId}
+           AND DEL_YN = 'N'
+	</select>
+	<select id="getNewMobileKey"  resultType="HMap" > 
+		SELECT MOBILE_KEY 
+		  FROM (SELECT LPAD(FLOOR(1+(RAND() * 9999)), 4, '0') AS MOBILE_KEY
+		          from TB_PARAGON_USER_MOBILE 
+		  ) M
+		 WHERE MOBILE_KEY 
+		   NOT IN(SELECT  MOBILE_AUTH_KEY
+		            FROM TB_PARAGON_USER_MOBILE 
+		           WHERE USER_ID = #{s_userId}
+		             AND DEL_YN = 'N'
+		 )
+		LIMIT 1
+	</select>
+	
+	<select id="getMobileAuthCheck" resultType="int">
+		SELECT /* [LoginService.query][getPwdCheck][모바일 인증번호 확인][Han Seong Jin][2016-11-08] */
+			   COUNT(MOBILE_AUTH_KEY) AUTH_CNT
+		  FROM TB_PARAGON_USER_MOBILE 
+		 WHERE MOBILE_AUTH_KEY = #{mobileAuthKey}
+	       AND USER_ID = #{userId}
+           AND MOBILE_AUTH_YN = 'N'
+	</select>
+	<update id="updateMobileAuthCheck" >
+		UPDATE TB_PARAGON_USER_MOBILE /* [UserService.query][savePassword][모바일 인증번호 승인][김진호][2016-09-13] */
+		   SET MOBILE_AUTH_YN = 'Y'
+		     , MOBILE_AUTH_DT = now()
+		     , PUSH_ID = #{pushId}
+		 WHERE USER_ID = #{userId}
+		   AND MOBILE_AUTH_KEY = #{mobileAuthKey}
+	</update>
+	<update id="updateMobileLocationLast" >
+		UPDATE /* [UserService.query][updateMobileLocationLast][모바일 최종 위치정보 변경 YN][김진호][2016-09-13] */
+			   TB_PARAGON_USER_MOBILE_LOC_L 
+		   SET LAST_YN = 'Y'
+		 WHERE USER_ID = #{userId}
+		   AND MOBILE_AUTH_KEY = #{mobileAuthKey}
+	</update>
+	<insert id="insertMobileLocation" >
+		INSERT /* [UserService.query][insertMobileLocation][모바일 위치정보 등록][김진호][2017-06-14] */
+		  INTO TB_PARAGON_USER_MOBILE_LOC_L (
+		  		  ASP_COMP_CD
+		  		, USER_ID
+		  		, USER_LAT
+		  		, USER_LNG
+				, MOBILE_AUTH_KEY
+				, IN_DT
+		  )
+		VALUES(	  #{s_companyCd}
+				, #{userId}
+				, #{lat}
+				, #{lng}
+				, #{mobileAuthKey}
+				, NOW()
+		)
+	</insert>
+	<select id="getMobileLocationList" resultType="int">
+		SELECT /* [UserService.query][getMobileLocationList][모바일 위치정보 조회][김진호][2017-06-14] */
+			   USER_ID
+	  	     , USER_LAT
+	  	     , USER_LNG
+	  	     , MOBILE_AUTH_KEY
+	  	     , IN_DT
+		  FROM TB_PARAGON_USER_MOBILE_LOC_L 
+		 WHERE DEL_YN = 'N'
+	       AND USER_ID = #{userId}
+		   AND MOBILE_AUTH_KEY = #{mobileAuthKey}
+	       AND MOBILE_LOC_SEND_YN = 'Y'
+	      LIMT 1
+	</select>
+	
+	<insert id="insertMobile">
+		INSERT /* [UserService.query][insertMobile][모바일 등록][김진호][2017-06-14] */
+		  INTO TB_PARAGON_USER_MOBILE (
+		  		  USER_ID
+		  		, MOBILE_AUTH_KEY
+		  		, MOBILE_NM
+				, MOBILE_TYPE
+				, MOBILE_LOC_SEND_YN
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )
+		VALUES(	  #{s_userId}
+		        , #{mobileAuthKey}
+				, #{mobileNm}
+				, #{mobileType}
+				, #{mobileLocSendYn}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	<update id="updateMobile">
+		UPDATE /* [UserService.query][updateMobile][모바일 수정][김진호][2017-06-14] */
+		  	   TB_PARAGON_USER_MOBILE 
+		   SET MOBILE_NM           =  #{mobileNm}       
+			 , MOBILE_TYPE         =  #{mobileType}     
+<!-- 			 , MOBILE_LOC_SEND_YN  =  #{mobileLocSendYn} -->
+			 , UP_USER_ID          =  #{s_userId}          
+		WHERE MOBILE_SEQ = #{mobileSeq}
+	</update>
+	<update id="updateMobileSendAllN" >
+		UPDATE /* [UserService.query][updateMobileSendAllN][기존 모바일 SEND 중지][김진호][2016-09-13] */
+			   TB_PARAGON_USER_MOBILE 
+		   SET MOBILE_LOC_SEND_YN = 'N'
+		 WHERE USER_ID = #{s_userId}		   
+	</update>
+	<update id="updateMobileSend">
+		UPDATE /* [UserService.query][updateMobileSend][모바일 정보 수정][김진호][2017-06-14] */
+		  	   TB_PARAGON_USER_MOBILE 
+		   SET MOBILE_LOC_SEND_YN  =  'Y'
+			 , UP_USER_ID          =  #{s_userId}          
+		WHERE MOBILE_SEQ = #{mobileSeq}
+	</update>
+	<update id="deleteMobile">
+		UPDATE /* [UserService.query][deleteMobile][모바일 삭제][김진호][2017-06-14] */
+		  	   TB_PARAGON_USER_MOBILE 
+		   SET DEL_YN = 'Y'
+		WHERE MOBILE_SEQ = #{mobileSeq}
+	</update>
+	
+	<update id="updateUserBlock" >
+		UPDATE TB_PARAGON_USER /* [UserService.query][updateUserBlock][휴면 계정 처리][Han Seong Jin][2018-01-25] */
+		   SET USE_YN = 'N'
+		 WHERE USER_TYPE <![CDATA[<>]]> '0'
+		   AND LAST_LOGIN_DT IS NOT NULL
+		   AND TIMESTAMPDIFF(DAY, LAST_LOGIN_DT, now()) > 30
+	</update>
+</mapper>
+ 

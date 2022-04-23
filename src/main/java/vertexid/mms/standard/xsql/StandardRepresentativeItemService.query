@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardRepresentativeItemService">
+
+	<select id="listStndPrdTypeLv1" resultType="HMap" > 
+		SELECT /* [StandardRepresentativeItemService.query][listStndPrdTypeLv1][파트너사 내 제품범주 리스트 조회][김선호][2017. 12. 12.] */
+				PRD_TYPE_CD	AS value
+			,	PRD_TYPE_NM AS name
+			,	USE_YN
+		FROM	TB_MMS_STND_PRD_TYPE_S
+		WHERE	PRD_TYPE_LV = '1'
+			AND	DEL_YN = 'N'
+	ORDER BY	CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>
+	
+	<select id="listStndPrdTypeLv2" resultType="HMap" > 
+		SELECT /* [StandardRepresentativeItemService.query][listStndPrdTypeLv2][파트너사 내 제품범주 내 제품군 리스트 조회][김선호][2017. 12. 12.] */
+				PRD_TYPE_CD AS value
+			,	PRD_TYPE_NM AS name
+		FROM	TB_MMS_STND_PRD_TYPE_S
+		WHERE	PRD_TYPE_LV = '2'
+			AND	DEL_YN = 'N'
+			<if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+			AND PRD_TYPE_PRT_CD = #{prdTypeLv1}
+			</if>
+	ORDER BY	CAST(PRD_TYPE_ORDER AS SIGNED)
+	</select>	
+
+	<select id="listStndPrdNm" resultType="LHMap" > 
+		SELECT /* [StandardRepresentativeItemService.query][listStndPrdTypeLv4][파트너사 내 제품범주 내 제품군 리스트 조회][김선호][2017. 12. 12.] */
+				PRD_CD AS value
+			,	PRD_NM AS name
+		FROM	TB_MMS_STND_PRD_S
+		WHERE	DEL_YN = 'N'
+			<if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+			AND PRD_TYPE_LV2 = #{prdTypeLv2}
+			</if>
+	ORDER BY	CAST(PRD_ORDER AS SIGNED)
+	</select>	
+	 
+ 	<select id="getAspCompanyList" resultType="HMap">
+		SELECT /* [StandardRepresentativeItemService.query][getAspCompanyList][파트너사 내 파트너사 리스트 조회][김선호][2017. 12. 12.] */
+				ASP_COMP_CD AS value
+			,	ASP_COMP_NM AS name
+		FROM	TB_MMS_ASP_COMP
+		WHERE	DEL_YN = 'N'
+			AND	USE_YN = 'Y'
+	ORDER BY	ASP_COMP_NM ASC
+	</select>
+	 
+	<select id="getCompanyList" resultType="HMap">
+		SELECT /* [StandardRepresentativeItemService.query][getCompanyList][파트너사 내 고객사 리스트 조회][김선호][2017. 12. 12.] */
+				COMP_CD
+			,	COMP_CATE
+			,	FN_COMM_CODE_NM('SC0019', COMP_CATE, 'ko') COMP_CATE_NM
+			,	COMP_TYPE
+			,	FN_COMM_CODE_NM('SC0020', COMP_TYPE, 'ko') COMP_TYPE_NM
+			,	COMP_NM
+		FROM	TB_MMS_STND_COMP_S 
+		WHERE	DEL_YN = 'N'
+			AND	USE_YN = 'Y'
+	ORDER BY	COMP_NM ASC
+	</select>
+	
+	<select id="getBrandInfo" resultType="HMap">
+		SELECT /* [StandardRepresentativeItemService.query][getBrandInfo][파트너사 내 고객사 내 브랜드 리스트 조회][김선호][2017. 12. 12.] */
+				BRND_CD
+			,	BRND_NM
+		FROM
+				TB_MMS_STND_BRND_S
+		WHERE	USE_YN = 'Y'
+			AND DEL_YN = 'N'
+			AND COMP_CD = #{compCd}
+	   ORDER BY BRND_CD ASC
+	</select>
+	
+	<select id="getStoreInfo" resultType="HMap">
+		SELECT /* [StandardRepresentativeItemService.query][getStoreInfo][파트너사 내 점포 리스트 조회][김선호][2017. 12. 12.] */
+				S.STR_CD
+			,	S.STR_NM
+			,	L.MA_START_DT
+		FROM
+				TB_MMS_STND_STR_S S
+		LEFT OUTER JOIN
+				TB_MMS_REPRESENT_STR_L L
+		ON
+				S.STR_CD		=	L.STR_CD
+			AND S.DEL_YN		=	'N'
+		WHERE 
+				S.DEL_YN		=	'N'
+			AND S.BRND_CD		=	#{brndCd}
+
+	</select>
+	
+	<insert id="insertStoreAndMaStartDt">
+		INSERT /* [StandardRepresentativeItemService.query][insertStoreAndMaStartDt][점포, 유지보수계약 추가][김선호][2017. 12. 12.] */
+		INTO	TB_MMS_REPRESENT_STR_L 
+		(
+				STR_CD
+			,	MA_START_DT
+			,	IN_USER_ID
+			,	UP_USER_ID
+			,	IN_DT
+		)
+		VALUES
+		(  
+				#{strCd}
+			,	#{maStartDt}
+			,	#{s_userId}
+			,	#{s_userId}
+			,	now()
+		)
+	</insert>
+	
+
+	<select id="listPartnerPrdLvGrid" resultType="HMap" > 
+		SELECT /* [StandardRepresentativeItemService.query][listPartnerPrdLvGrid][파트너사 및 제품범주,제품군 관리 그리드][김선호][2017. 12. 12.] */
+				REPRESENT_SEQ
+			,	ASP_COMP_CD
+			,	(SELECT PRD_TYPE_PRT_CD FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV = '2' AND PRD_TYPE_CD = RM.PRD_TYPE_CD AND DEL_YN = 'N') 	AS PRD_TYPE_LV1_CD
+			,	(SELECT		PRD_TYPE_NM 
+					FROM 	TB_MMS_STND_PRD_TYPE_S 
+					WHERE	PRD_TYPE_CD = 
+										(SELECT		PRD_TYPE_PRT_CD
+										   FROM 	TB_MMS_STND_PRD_TYPE_S
+										  WHERE 	PRD_TYPE_LV = '2'
+										  	AND 	PRD_TYPE_CD = RM.PRD_TYPE_CD 
+										  	AND 	DEL_YN = 'N'
+										 )
+				LIMIT 0,1) 	AS PRD_TYPE_LV1_NM
+			,	(SELECT PRD_TYPE_CD FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV = '2' AND PRD_TYPE_CD = RM.PRD_TYPE_CD AND DEL_YN = 'N') 	AS PRD_TYPE_LV2_CD
+			,	(SELECT PRD_TYPE_NM FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV = '2' AND PRD_TYPE_CD = RM.PRD_TYPE_CD AND DEL_YN = 'N') 	AS PRD_TYPE_LV2_NM
+		FROM	TB_MMS_REPRESENT_M	RM
+		WHERE	DEL_YN = 'N'
+	</select>
+
+	<insert id="insertPartnerPrdLvGrid" useGeneratedKeys="true" keyProperty="PRD_TYPE_CD">
+		<selectKey keyProperty="PRD_TYPE_CD" resultType="string" order="BEFORE">
+			SELECT 
+					PRD_TYPE_CD
+			FROM	TB_MMS_STND_PRD_TYPE_S
+			WHERE	PRD_TYPE_LV = '2'
+				AND	PRD_TYPE_NM	= #{prdTypeLv2Nm}
+				AND	DEL_YN = 'N'
+		</selectKey>
+		INSERT /* [StandardRepresentativeItemService.query][insertPartnerPrdLvGrid][파트너사 및 제품범주,제품군 추가][김선호][2017. 12. 12.] */
+		INTO	TB_MMS_REPRESENT_M 
+		(		
+				ASP_COMP_CD
+			,	PRD_TYPE_CD
+			,	IN_USER_ID
+			,	UP_USER_ID
+			,	IN_DT
+		)
+		VALUES
+		(  
+				#{aspCompCd}
+			,	#{PRD_TYPE_CD}
+			,	#{s_userId}
+			,	#{s_userId}
+			,	now()
+		)
+	</insert>
+	
+	<update id="deletePartnerPrdLvGrid">
+		UPDATE  /* [StandardRepresentativeItemService.query][deletePartnerPrdLvGrid][파트너사 및 제품범주,제품군 삭제][김선호][2017. 12. 12.] */
+		  TB_MMS_REPRESENT_M
+		   SET DEL_YN = 'Y'
+		WHERE REPRESENT_sEQ = #{representSeq}
+	</update>
+	
+	<update id="updatePartnerPrdLvGrid" useGeneratedKeys="true" keyProperty="PRD_TYPE_CD">
+		<selectKey keyProperty="PRD_TYPE_CD" resultType="string" order="BEFORE">
+			SELECT 
+					PRD_TYPE_CD
+			FROM	TB_MMS_STND_PRD_TYPE_S
+			WHERE	PRD_TYPE_LV = '2'
+				AND	PRD_TYPE_NM	= #{prdTypeLv2Nm}
+				AND	DEL_YN = 'N'
+		</selectKey>
+		UPDATE  /* [StandardRepresentativeItemService.query][updatePartnerPrdLvGrid][파트너사 및 제품범주,제품군 수정][김선호][2017. 12. 12.] */
+		  TB_MMS_REPRESENT_M
+		   SET 	ASP_COMP_CD = #{aspCompCd}
+			,	PRD_TYPE_CD = #{PRD_TYPE_CD}
+		WHERE REPRESENT_SEQ = #{representSeq}
+	</update>
+	
+</mapper>
+ 

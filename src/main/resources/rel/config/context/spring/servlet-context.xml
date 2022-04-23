@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<annotation-driven />
+<!-- 	<context:component-scan base-package="vertexid,paragon.core" /> -->
+	
+	<context:component-scan base-package="vertexid,paragon.core">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+	</context:component-scan>
+	
+	<resources location="/resources/js/" mapping="/js/**" />
+	<resources location="/resources/css/" mapping="/css/**" />
+	<resources location="/resources/img/" mapping="/img/**" />
+<!-- 	<resources location="/resources/" mapping="/**" /> -->
+	<resources location="/upload/"  mapping="/upload/**"/>
+<!-- 	<resources location="/WEB-INF/routine/ " mapping="/routine/" /> -->
+
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+<!-- 	<mvc:interceptors> -->
+<!-- 		<mvc:interceptor> -->
+<!-- 			<mvc:mapping path="/**"/> -->
+<!-- 			<mvc:exclude-mapping path="/"/> -->
+<!-- 			<mvc:exclude-mapping path="/logout"/> -->
+<!-- 			<mvc:exclude-mapping path="/checkId"/> -->
+<!-- 			<mvc:exclude-mapping path="/checkLogin"/> -->
+<!-- 			<beans:bean class="vertexid.paragon.comm.util.SessionInterceptor"></beans:bean> -->
+<!-- 		</mvc:interceptor> -->
+<!-- 	</mvc:interceptors> -->
+	
+	<context:component-scan base-package="vertexid.paragon,paragon.core"  use-default-filters="false">
+		<context:include-filter expression="org.springframework.stereotype.Controller" type="annotation"/>
+	</context:component-scan>
+	<aop:config proxy-target-class="true">
+	    <aop:pointcut id="serviceOperation" expression="execution(public * *..svce.*Service.*(..))" />
+	    <aop:advisor id="transactionAdvisor" pointcut-ref="serviceOperation" advice-ref="txAdvice"/>
+	</aop:config>
+	         
+	
+	
+	
+	<tx:advice id="txAdvice">
+	    <tx:attributes>
+	        <tx:method name="save*" rollback-for="Exception"/>
+	        <tx:method name="update*" rollback-for="Exception"/>
+	        <tx:method name="delete*" rollback-for="Exception"/>
+	        <tx:method name="insert*" rollback-for="Exception"/>
+	        
+		    <tx:method name="loggingError2DB" rollback-for="Exception" propagation="REQUIRES_NEW"/>
+            <tx:method name="*" read-only="true" propagation="SUPPORTS"/>
+	    </tx:attributes>
+	</tx:advice>
+	
+</beans:beans>

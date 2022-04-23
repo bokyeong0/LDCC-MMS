@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.1.final using JasperReports Library version 6.3.1  -->
+<!-- 2017-03-22T10:23:28 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Report" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="eaea0fcb-6f3a-4bd0-bed7-62e68d771361">
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="NUM_INT" class="java.lang.String"/>
+	<field name="NUM_FLOAT" class="java.lang.String"/>
+	<field name="MONEY" class="java.lang.String"/>
+	<field name="CALC_INT1" class="java.lang.String"/>
+	<field name="CALC_INT2" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="79" splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="35" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="61" splitType="Stretch">
+			<staticText>
+				<reportElement stretchType="ContainerHeight" mode="Opaque" x="0" y="0" width="60" height="20" uuid="0ac6c147-0913-4df4-a7e5-88ea2957c245">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[숫자]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="ContainerHeight" mode="Opaque" x="64" y="0" width="60" height="20" uuid="074aec03-7646-4c0a-a066-849ee46cdd6c"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[플롯]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="ContainerHeight" mode="Opaque" x="130" y="0" width="60" height="20" uuid="a500bb26-4987-4a62-b4a2-0885af963371"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[금액]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="ContainerHeight" mode="Opaque" x="200" y="0" width="60" height="20" uuid="f8f74534-d464-4154-982f-942392d2c07a"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[숫자1]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="ContainerHeight" mode="Opaque" x="270" y="0" width="60" height="20" uuid="1f397217-87f8-41d6-b048-9464fef9481d"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[숫자2]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="125" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="60" height="20" uuid="b9111582-bdb6-4374-9d45-e680885b0302"/>
+				<textFieldExpression><![CDATA[$F{NUM_INT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="64" y="0" width="60" height="20" uuid="70cedbc7-07ec-478c-b330-1a623176e537"/>
+				<textFieldExpression><![CDATA[$F{NUM_FLOAT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="130" y="0" width="60" height="20" uuid="1e4d63be-6dcb-427a-bb73-ca230858acfb"/>
+				<textFieldExpression><![CDATA[$F{MONEY}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="200" y="0" width="60" height="20" uuid="9b484fd2-c700-46e2-8e78-d8045edc2235"/>
+				<textFieldExpression><![CDATA[$F{CALC_INT1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="270" y="0" width="90" height="20" uuid="3fe85c3a-70d3-4d9e-8501-3274c5ff4144"/>
+				<textFieldExpression><![CDATA[$F{CALC_INT2}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

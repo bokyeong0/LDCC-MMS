@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+
+	<import resource="bean-webservice.xml" />
+	<util:properties id="db_info" location="classpath:config/app/db_info.xml"/>
+
+<!-- 	mysql Datasource -->
+	<bean id="paragonDataSource" class="org.apache.tomcat.dbcp.dbcp2.BasicDataSource" autowire="default">
+        <property name="driverClassName" value="#{db_info.driver}"/>
+		<property name="url"			 value="#{db_info.url}"/>
+		<property name="username"		 value="#{db_info.id}"/>		
+		<property name="password" >
+			<bean class="paragon.core.utility.security.SecuredFactory" >
+				<property name="encryptedData" value="#{db_info.pw}" />
+			</bean>
+		</property> 
+	</bean>
+	<bean id="fileManager" class="paragon.core.file.FileManager" ></bean>
+	<bean id="mobileUtil" class="vertexid.paragon.comm.util.MobileUtil"></bean>
+	<!-- Oracle Datasource -->
+	<!-- 
+	<bean id="paragonDataSources" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+		<property name="driverClass" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="url" value="jdbc:oracle:thin:@52.2.165.125:1522:PEBSV" />
+		<property name="username" value="PEBS" />
+		<property name="password">
+			<bean class="paragon.core.utility.security.SecuredFactory" >
+				<property name="encryptedData" value="#{db_info.pw}" />
+			</bean>
+		</property>
+	</bean>
+ 	-->
+ 	
+	<!-- TransactionManager -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="paragonDataSource" />
+	</bean>
+
+	<!-- SqlManager -->
+	<bean id="paragonSqlManager" class="paragon.core.mvc.stereotype.SqlManager">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	
+	<!-- Fileuploader -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<property name="maxUploadSize" value="20000000"></property>
+	</bean>
+	
+	<!-- file -->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="0"></property>
+	</bean>
+
+	<!-- SqlSession Factory myBatis-->
+	<bean id="sqlSessionFactory" class="paragon.core.mybatis.ReloadableSqlSessionFactoryBean">
+		<property name="interval" value="10000" />
+	    <property name="dataSource" ref="paragonDataSource" />
+	    <property name="configLocation" value="classpath:config/context/mybatis/mybatis-context.xml" />
+<!-- 	    <property name="transactionFactory"> -->
+<!-- 	    	<bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" /> -->
+<!-- 	  	</property>   -->
+	    <property name="mapperLocations">
+	    	<list>
+				<value>classpath:vertexid/**/*.query</value>
+			</list>
+	    </property>
+	</bean>
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+	
+<!-- 	미개발 -->
+<!-- 	<bean id="serviceLogger" class="paragon.core.logger.ServiceLogger" /> -->
+	<!-- ==================================================== -->
+	<!-- Config.java -->
+	<!-- ==================================================== -->
+<!-- 	<bean id="applicationConfig" class="paragon.core.utility.config.Config"> -->
+<!-- 		<property name="reloadDelay" value="3600000" /> -->
+<!-- 		<property name="reloadPeriod" value="3600000" /> -->
+<!-- 	</bean> -->
+
+	<!-- ==================================================== -->
+	<!-- Scheduler context for Quartz. -->
+	<!-- ==================================================== -->
+<!-- 	<bean id="paragonReloadJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean" -->
+<!-- 		p:jobClass="vertexid.paragon.comm.sheduler.ParagonReloadJob" p:durability="true"> </bean> -->
+<!-- 	<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean" -->
+<!-- 		p:jobDetail-ref="paragonReloadJob" -->
+<!-- 		p:startDelay="1000" -->
+<!-- 		p:repeatInterval="5000" /> -->
+<!-- 	<bean id="schedulerFactoryBean" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/> -->
+	
+<!-- 	<bean id="paragonReloadJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean"> -->
+<!-- 		 <property name="jobClass" value="vertexid.paragon.comm.sheduler.ParagonReloadJob" /> -->
+<!--   		 <property name="durability" value="true" />  -->
+<!-- 	</bean> -->
+<!-- 	<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean"> -->
+<!-- 		<property name="jobDetail" ref="paragonReloadJob" /> -->
+<!-- 		  <property name="repeatInterval" value="60000" /> -->
+<!-- 		  <property name="startDelay" value="5000" /> -->
+<!-- 	</bean> -->
+	<!-- 
+    <bean id="paragonCacheLoadJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean"
+		p:jobClass="cj.common.syscommon.job.paragonCacheLoadJob" p:durability="true"> </bean>
+	<bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean"
+		p:jobDetail-ref="paragonCacheLoadJob"
+		p:cronExpression="50 10 * * * ?"/>
+		p:cronExpression="50 * * * * ?"/>
+	<bean id="paragonCacheElementLoadJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean"
+		p:jobClass="cj.common.syscommon.job.paragonCacheElementLoadJob" p:durability="true"> </bean>
+	<bean id="testTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean"
+		p:jobDetail-ref="paragonCacheElementLoadJob"
+		p:cronExpression="0 0/1 * * * ?"/>
+ 	-->
+<!-- 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"> -->
+<!-- 		<property name="triggers"> -->
+<!-- 			<list> -->
+<!-- 				<ref bean="simpleTrigger" /> -->
+<!-- 			</list> -->
+<!-- 		</property> -->
+<!-- 		<property name="quartzProperties"> -->
+<!-- 			<map> -->
+<!-- 				<entry key="org.quartz.threadPool.class" value="org.quartz.simpl.SimpleThreadPool"/> -->
+<!-- 				<entry key="org.quartz.threadPool.threadCount" value="3"/> -->
+<!-- 				<entry key="org.quartz.threadPool.makeThreadsDaemons" value="true"/> -->
+<!-- 				<entry key="org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread"	value="false"/> -->
+<!-- 			</map> -->
+<!-- 		</property> -->
+<!-- 		<property name="waitForJobsToCompleteOnShutdown" value="false"></property> -->
+<!-- 	</bean> -->
+
+</beans>

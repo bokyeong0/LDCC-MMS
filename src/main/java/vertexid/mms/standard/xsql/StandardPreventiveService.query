@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardPreventiveService">
+	
+	<select id="getPreventiveList" resultType="HMap" >
+		SELECT /* [StandardPreventiveService.query][getPreventiveList][품목별 점검유의사항 조회][한성진][2017. 11. 06.] */
+		       PRD_TYPE_LV2
+			 , IFNULL(CONTENT, "") AS CONTENT
+			 , USE_YN
+		  FROM TB_MMS_CHECK_PRD_M
+		 WHERE PRD_TYPE_LV2 = #{prdTypeLv2}
+		   AND DEL_YN = 'N'
+	</select>
+	
+	<update id="updatePreventive">
+		UPDATE /* [StandardPreventiveService.query][updatePreventive][품목별 점검유의사항 수정]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_CHECK_PRD_M
+		  	 SET CONTENT	= #{content}
+		  	   , USE_YN 	= #{useYn}
+		  	   , UP_USER_ID = #{s_userId}
+		WHERE PRD_TYPE_LV2 = #{prdTypeLv2}
+	</update>
+	
+</mapper>

@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardStoreService">
+	
+	<select id="getListRcptStore" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getListRcptStore][장애접수 Site 목록조회][김진호][2017. 2. 27.] */
+		       C.CODE_NM RCPT_STS_NM
+		     , C.CODE_OTHER1 RCPT_STS_ICO
+		     , R.STR_CD
+		     , R.RCPT_STS_TYPE  
+		     , R.RCPT_CNT
+		     , S.STR_NM			 
+		     , IFNULL(S.BRND_NM, '') BRND_NM
+		     , S.COMP_NM
+		     , S.COMP_CD
+		     , S.BRND_CD
+		     , S.STR_TYPE
+		     , S.STR_TYPE_NM
+		     , S.STR_ST
+		     , S.STR_ST_NM
+		     , IFNULL(S.CORP_NUM, '') CORP_NUM
+		     , IFNULL(S.MNG_CD, '') MNG_CD
+		     , IFNULL(S.CEO_NM, '') CEO_NM
+		     , S.ZIP_CD
+		     , IFNULL(S.ADDR1, '') ADDR1
+		     , IFNULL(S.ADDR2, '') ADDR2
+		     , IFNULL(S.ADDR_EXT, '') ADDR_EXT
+		     , S.AREA_SEQ
+		     , IFNULL(S.STR_LAT, '') STR_LAT
+		     , IFNULL(S.STR_LNG, '') STR_LNG
+		     , S.LOC_ICO
+		     , S.AREA_NM
+		     , IFNULL(S.PHONE_NUM, '') PHONE_NUM
+		     , IFNULL(S.FAX_NUM, '') FAX_NUM
+		     , S.USE_YN
+		     , S.IN_USER_ID
+		     , S.IN_DT
+		  FROM(SELECT SS.STR_CD
+		            , SS.STR_NM			 
+		            , SB.BRND_NM
+		            , SC.COMP_NM
+		            , SS.COMP_CD
+		            , SS.BRND_CD
+		            , STR_TYPE
+		            , FN_COMM_CODE_NM('SC0021', STR_TYPE, 'ko') STR_TYPE_NM
+		            , STR_ST
+		            , FN_COMM_CODE_NM('SC0024', STR_ST, 'ko') STR_ST_NM
+		            , SS.CORP_NUM
+		            , SS.MNG_CD
+		            , SS.CEO_NM
+		            , SS.ZIP_CD
+		            , SS.ADDR1
+		            , SS.ADDR2
+		            , SS.ADDR_EXT
+		            , SS.AREA_SEQ
+		            , SS.STR_LAT
+		            , SS.STR_LNG
+		            , IFNULL(SB.BRND_ICO,SC.COMP_ICO) LOC_ICO
+		            , FN_COMM_CODE_NM('SC0027', SS.AREA_SEQ, 'ko') AREA_NM
+		            , SS.PHONE_NUM
+		            , SS.FAX_NUM
+		            , SS.USE_YN
+		            , SS.IN_USER_ID
+		            , DATE_FORMAT(SS.IN_DT,'%Y-%m-%d') IN_DT
+		        FROM MMS.TB_MMS_STND_STR_S SS
+		        LEFT OUTER JOIN MMS.TB_MMS_STND_BRND_S SB
+		          ON SS.BRND_CD = SB.BRND_CD 
+		        LEFT OUTER JOIN MMS.TB_MMS_STND_COMP_S SC
+		          ON SS.COMP_CD = SC.COMP_CD
+		       WHERE SS.DEL_YN='N'		    
+		    ) S
+		 JOIN ( SELECT RM.STR_CD
+		             , RS.RCPT_STS_TYPE
+		             , RM.ASP_COMP_CD
+		             , COUNT(RM.RCPT_SEQ) RCPT_CNT
+		             , RCPT_ENGR
+		             , RM.DEL_YN
+		          FROM  TB_MMS_OBS_RCPT_M  RM
+		          LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		            ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		           AND RS.LAST_PROC_YN = 'Y'
+		          LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		            ON CC.CODE_GROUP_CD = 'OS0001'
+		           AND CC.CODE_CD = RS.RCPT_STS_TYPE
+		         WHERE (CC.CODE_OTHER2 = 'N' OR (CC.CODE_OTHER2 = 'Y' AND TIMESTAMPDIFF(MINUTE, RM.RCPT_CMPL_DT, now()) <![CDATA[<]]> 1))
+				  <if test="s_companyCd != null and !s_companyCd.equals('')">
+				   AND RM.ASP_COMP_CD = #{s_companyCd}
+				  </if>
+		         GROUP BY RM.STR_CD
+		     ) R  
+		    ON S.STR_CD = R.STR_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE C
+		    ON R.RCPT_STS_TYPE = C.CODE_CD
+		   AND C.CODE_GROUP_CD = 'OS0001'
+	     WHERE R.DEL_YN = 'N'
+		 <if test="compCd != null and !compCd.equals('')">
+      	   AND S.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+      	   AND S.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="strNm != null and !strNm.equals('')">
+      	   AND S.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		 </if>
+	       
+		 ORDER BY RCPT_STS_TYPE
+	</select>
+	
+	<select id="getListRcptStoreMap" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getListRcptStoreMap][장애접수 Site 목록조회][김진호][2017. 2. 27.] */
+		       C.CODE_NM RCPT_STS_NM
+		     , C.CODE_OTHER1 RCPT_STS_ICO
+		     , R.STR_CD
+		     , R.RCPT_STS_TYPE  
+		     , '' RCPT_CNT
+		     , R.RCPT_CONT
+		     , S.STR_NM			 
+		     , S.BRND_NM
+		     , S.COMP_NM
+		     , S.COMP_CD
+		     , S.BRND_CD
+		     , S.COMP_CATE
+		     , S.COMP_CATE_NM
+		     , S.STR_TYPE
+		     , S.STR_TYPE_NM
+		     , S.STR_ST
+		     , S.STR_ST_NM
+		     , S.CORP_NUM
+		     , S.MNG_CD
+		     , S.CEO_NM
+		     , S.ZIP_CD
+		     , S.ADDR1
+		     , S.ADDR2
+		     , S.ADDR_EXT
+		     , S.AREA_SEQ
+		     , S.STR_LAT
+		     , S.STR_LNG
+		     , S.LOC_ICO
+		     , S.AREA_NM
+		     , S.PHONE_NUM
+		     , S.FAX_NUM
+		     , S.USE_YN
+		     , S.IN_USER_ID
+		     , S.IN_DT
+		     , L.USER_LAT
+		     , L.USER_LNG
+		     , L.USER_NM
+		  FROM(SELECT SS.STR_CD
+		            , SS.STR_NM			 
+		            , SB.BRND_NM
+		            , SC.COMP_NM
+		            , SS.COMP_CD
+		            , SS.BRND_CD
+		            , SS.COMP_CATE
+		            , FN_COMM_CODE_NM('SC0019', SS.COMP_CATE, 'ko') COMP_CATE_NM
+		            , STR_TYPE
+		            , FN_COMM_CODE_NM('SC0021', STR_TYPE, 'ko') STR_TYPE_NM
+		            , STR_ST
+		            , FN_COMM_CODE_NM('SC0024', STR_ST, 'ko') STR_ST_NM
+		            , SS.CORP_NUM
+		            , SS.MNG_CD
+		            , SS.CEO_NM
+		            , SS.ZIP_CD
+		            , SS.ADDR1
+		            , SS.ADDR2
+		            , SS.ADDR_EXT
+		            , SS.AREA_SEQ
+		            , SS.STR_LAT
+		            , SS.STR_LNG
+		            , IFNULL(SB.BRND_ICO,SC.COMP_ICO) LOC_ICO
+		            , FN_COMM_CODE_NM('SC0027', SS.AREA_SEQ, 'ko') AREA_NM
+		            , SS.PHONE_NUM
+		            , SS.FAX_NUM
+		            , SS.USE_YN
+		            , SS.IN_USER_ID
+		            , DATE_FORMAT(SS.IN_DT,'%Y-%m-%d') IN_DT
+		        FROM MMS.TB_MMS_STND_STR_S SS
+		        LEFT OUTER JOIN MMS.TB_MMS_STND_BRND_S SB
+		          ON SS.BRND_CD = SB.BRND_CD 
+		        LEFT OUTER JOIN MMS.TB_MMS_STND_COMP_S SC
+		          ON SS.COMP_CD = SC.COMP_CD
+		       WHERE SS.DEL_YN='N'		    
+		    ) S
+		 JOIN ( SELECT RM.STR_CD
+		             , RS.RCPT_STS_TYPE
+		             , RCPT_ENGR
+		             , RCPT_CONT
+		          FROM  TB_MMS_OBS_RCPT_M  RM
+		          LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		            ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		           AND RS.LAST_PROC_YN = 'Y'
+		         WHERE (RS.RCPT_STS_TYPE = '01' OR RS.RCPT_STS_TYPE = '07' )
+		            OR (RS.RCPT_STS_TYPE <![CDATA[<>]]> '01' AND RS.RCPT_STS_TYPE <![CDATA[<>]]> '07' AND TIMESTAMPDIFF(MINUTE, RM.RCPT_CMPL_DT, now())  <![CDATA[<]]> 1) 
+		         GROUP BY RM.STR_CD
+		     ) R  
+		    ON S.STR_CD = R.STR_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE C
+		    ON R.RCPT_STS_TYPE = C.CODE_CD
+		   AND C.CODE_GROUP_CD = 'OS0001'
+	 		WHERE 1=1
+		 <if test="s_companyCd != null and !s_companyCd.equals('')">
+      	   AND S.ASP_COMP_CD = #{s_companyCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+      	   AND S.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+      	   AND S.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="strNm != null and !strNm.equals('')">
+      	   AND S.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		 </if>
+		 ORDER BY RCPT_STS_TYPE
+	</select>
+	
+	
+	<select id="getListStore" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getListStore][Site 목록조회][한성진][2017. 2. 27.] */
+		       SS.STR_CD
+			 , SS.STR_NM
+			 , CONCAT(IFNULL(SC.COMP_NM, ''), ' ', IFNULL(SB.BRND_NM, ''), ' ', IFNULL(SS.STR_NM, '')) STR_SUM_NM
+			 , IFNULL(SB.BRND_NM, '') BRND_NM
+			 , SC.COMP_NM
+			 , SS.COMP_CD
+			 , SS.BRND_CD
+			 , SS.COMP_CATE
+			 , FN_COMM_CODE_NM('SC0019', SS.COMP_CATE, 'ko') COMP_CATE_NM
+			 , STR_TYPE
+			 , FN_COMM_CODE_NM('SC0021', STR_TYPE, 'ko') STR_TYPE_NM
+			 , STR_ST
+			 , FN_COMM_CODE_NM('SC0024', STR_ST, 'ko') STR_ST_NM
+			 , SS.CORP_NUM
+			 , SS.MNG_CD
+			 , SS.CEO_NM
+			 , SS.ZIP_CD
+			 , SS.ADDR1
+			 , SS.ADDR2
+			 , SS.ADDR_EXT
+			 , SS.AREA_SEQ
+			 , SS.STR_LAT
+	         , SS.STR_LNG
+	         , IFNULL(SB.BRND_ICO,SC.COMP_ICO) LOC_ICO
+	         , FN_COMM_AREA_NM(AREA_SEQ) AREA_NM
+			 , SS.PHONE_NUM
+			 , SS.FAX_NUM
+			 , SS.TELECOMMUNITY_CD
+			 , SS.AP_YN
+			 , SS.USE_YN
+			 , SS.IN_USER_ID
+		     , DATE_FORMAT(SS.IN_DT,'%Y-%m-%d') IN_DT
+		  FROM MMS.TB_MMS_STND_STR_S SS
+      	  LEFT OUTER JOIN MMS.TB_MMS_STND_BRND_S SB
+        	ON SS.BRND_CD = SB.BRND_CD 
+      	  LEFT OUTER JOIN MMS.TB_MMS_STND_COMP_S SC
+        	ON SS.COMP_CD = SC.COMP_CD
+      	  LEFT OUTER JOIN MMS.TB_PARAGON_COMM_CODE CC
+        	ON SS.AREA_SEQ = CC.CODE_CD
+           AND CC.CODE_GROUP_CD = 'SC0027'
+		 WHERE SS.DEL_YN='N'
+		   AND SC.DEL_YN='N'
+		   AND SS.COMP_YN='N'
+		   <if test="s_companyCd != null and !s_companyCd.equals('')">
+		   AND SS.ASP_COMP_CD = #{s_companyCd}
+		   </if>
+		   <if test="searchWord != null and !searchWord.equals('')">
+		   AND (SS.STR_NM LIKE '%${searchWord}%' OR SS.PHONE_NUM LIKE '%${searchWord}%') 
+		   </if>
+		   <if test="compCate != null and !compCate.equals('')">
+		   AND SC.COMP_CATE = #{compCate}
+		   </if>
+		   <if test="strType != null and !strType.equals('')">
+		   AND SS.STR_TYPE = #{strType}
+		   </if>
+		   <if test="compNm != null and !compNm.equals('')">
+		   AND SC.COMP_NM LIKE CONCAT('%',#{compNm},'%')
+		   </if>
+		   <if test="strNm != null and !strNm.equals('')">
+		   AND SS.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		   </if>
+		   <if test="strSt != null and !strSt.equals('')">
+		   AND SS.STR_ST = #{strSt}
+		   </if>
+		   <if test="mngCd != null and !mngCd.equals('')">
+		   AND SS.MNG_CD = #{mngCd}
+		   </if>
+		   <if test="areaSeq != null and !areaSeq.equals('')">
+		   AND (CC.CODE_CD = #{areaSeq} OR CODE_OTHER1 = #{areaSeq})
+		   </if>
+		   <if test="startDate != null and !startDate.equals('') and endDate != null and !endDate.equals('')">
+		   AND DATE_FORMAT(OPEN_DATE, '%Y-%m-%d') BETWEEN #{startDate} and #{endDate}
+		   </if>
+		    <if test="s_compCd != null and !s_compCd.equals('')">
+			AND SC.COMP_CD = #{s_compCd}
+			</if>
+			<if test="s_brndCd != null and !s_brndCd.equals('')">
+			AND SB.BRND_CD = #{s_brndCd}
+			</if>
+		    <if test="compCd != null and !compCd.equals('')">
+			AND SC.COMP_CD = #{compCd}
+			</if>
+			<if test="brndCd != null and !brndCd.equals('')">
+			AND SB.BRND_CD = #{brndCd}
+			</if>
+		  
+		   ORDER BY SS.IN_DT
+	</select>
+	<select id="getListStoreLoc" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getListStoreLoc][Site 좌표변경용 주소 조회][한성진][2017. 2. 27.] */
+		       STR_CD
+			 , ADDR1
+		  FROM MMS.TB_MMS_STND_STR_S SS
+		 WHERE DEL_YN='N'
+		   AND COMP_CD = #{compCd}
+		   AND  ADDR1 <![CDATA[<>]]> ''
+		   AND (STR_LAT IS NULL OR STR_LAT ='')
+	</select>
+	
+	<insert id="insertStore">
+		INSERT 
+		  INTO TB_MMS_STND_STR_S (
+		  		  STR_CD
+		  		, STR_NM
+		  		, COMP_CD
+		  		, BRND_CD
+		  		, STR_TYPE
+		  		, STR_ST
+		        , CORP_NUM
+		        , MNG_CD
+		        , CEO_NM
+		        , ZIP_CD
+		        , ADDR1
+		        , ADDR2
+		        , ADDR_EXT
+		        , STR_LAT
+		        , STR_LNG
+		        , AREA_SEQ
+		        , PHONE_NUM
+		        , FAX_NUM
+		        , BIGO
+		        , OPEN_DATE
+		        , RENEWAL_DATE
+		        , RELOCATION_DATE
+		        , OPER_STR_NM
+		        , CHARGE_SV
+		        , VPNMODEL_NM
+		        , TELECOMMUNITY_CD
+		        , AP_YN
+		        , ETC_MEMO
+		        , IN_USER_ID
+		        , UP_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES( CONCAT(#{compCd}, RIGHT(#{brndCd}, 4), FN_MAKE_STR_CODE(#{compCd}, RIGHT(#{brndCd}, 4)))
+				, #{strNm}
+				, #{compCd}
+				, #{brndCd}
+				, #{strType}
+				, #{strSt}
+				, #{corpNum}	
+				, #{mngCd}	
+				, #{ceoNm}
+				, #{zipCd}
+				, #{addr1}
+				, #{addr2}
+				, #{addrExt}
+				, #{strX}
+				, #{strY}
+				, #{areaSeq}
+				, #{phoneNum}
+				, #{faxNum}
+				, #{bigo}
+				, #{openDt}
+				, #{renewalDt}
+				, #{relocationDt}
+				, #{addOperStr}
+				, #{chargeSv}
+				, #{vpnModel}
+				, #{teleCommnuity}
+				, #{apYn}
+				, #{etcMemo}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<select id="getStoreInfo" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getStoreInfo][Site 목록조회][한성진][2017. 2. 27.] */
+		       STR_NM
+			 , STR_TYPE
+			 , FN_COMM_CODE_NM('SC0021', STR_TYPE, 'ko')	STR_TYPE_NM
+			 , STR_ST
+			 , FN_COMM_CODE_NM('SC0024', STR_ST, 'ko')		STR_ST_NM
+			 , IFNULL(CORP_NUM, '')		CORP_NUM
+			 , IFNULL(SS.MNG_CD, '')	MNG_CD
+			 , SC.COMP_NM
+			 , IFNULL(SB.BRND_NM,'')	BRND_NM
+			 , IFNULL(CEO_NM, '')	CEO_NM
+			 , ZIP_CD
+			 , ADDR1
+			 , IFNULL(ADDR2, '')	ADDR2
+			 , ADDR_EXT
+			 , AREA_SEQ
+			 , CASE WHEN PC.CODE_NM IS NULL THEN CC.CODE_NM ELSE CONCAT(PC.CODE_NM, ' ', CC.CODE_NM) END AREA_NM
+<!-- 			 , FN_COMM_CODE_NM('SC0027', AREA_SEQ, 'ko')  AREA_NM -->
+			 , IFNULL(SS.STR_LAT,'') STR_LAT
+			 , IFNULL(SS.STR_LNG,'') STR_LNG
+			 , IFNULL(PHONE_NUM, '') PHONE_NUM
+			 , IFNULL(FAX_NUM, '') FAX_NUM
+			 , IFNULL(SS.BIGO,'') BIGO
+		     , IFNULL(SS.OPEN_DATE,'') OPEN_DATE
+	         , IFNULL(SS.RENEWAL_DATE,'') RENEWAL_DATE
+	         , IFNULL(SS.RELOCATION_DATE,'') RELOCATION_DATE
+	         , IFNULL(SS.OPER_STR_NM,'') OPER_STR_NM
+	         , IFNULL(SS.CHARGE_SV,'') CHARGE_SV
+	         , IFNULL(SS.VPNMODEL_NM,'') VPNMODEL_NM
+	         , TELECOMMUNITY_CD
+	         , FN_COMM_CODE_NM('AT0004', SS.TELECOMMUNITY_CD, #{s_language}) TELECOMMUNITY_NM
+	         , AP_YN
+	         , FN_COMM_CODE_NM('AT0005', SS.AP_YN, #{s_language}) AP_NM
+	         , ETC_MEMO
+			 , SS.USE_YN
+		  FROM MMS.TB_MMS_STND_STR_S SS
+          LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+            ON SS.COMP_CD = SC.COMP_CD
+          LEFT OUTER JOIN TB_MMS_STND_BRND_S SB
+            ON SS.BRND_CD = SB.BRND_CD
+          LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+            ON CC.CODE_GROUP_CD = 'SC0027'
+           AND SS.AREA_SEQ = CC.CODE_CD
+          LEFT OUTER JOIN TB_PARAGON_COMM_CODE PC
+            ON PC.CODE_GROUP_CD = 'SC0027'
+           AND CC.CODE_OTHER1 = PC.CODE_CD
+		 WHERE STR_CD = #{strCd}
+<!-- 		   AND SS.ASP_COMP_CD = #{s_companyCd} -->
+	</select>
+	<update id="updateStore">
+		UPDATE /* [StandardStoreService.query][updateStore][Company 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_STND_STR_S 
+		   SET STR_NM		= #{strNm}
+		     , STR_TYPE  	= #{strType}
+		     , STR_ST	  	= #{strSt}
+		     , CORP_NUM		= #{corpNum}
+		     , MNG_CD		= #{mngCd}
+		     , CEO_NM 	 	= #{ceoNm}
+		     , ZIP_CD     	= #{zipCd}
+		     , ADDR1     	= #{addr1}
+		     , ADDR2     	= #{addr2}
+		     , ADDR_EXT    	= #{addrExt}
+		     , STR_LAT     	= #{strX}
+		     , STR_LNG     	= #{strY}
+		     , AREA_SEQ     = #{areaSeq}
+		     , PHONE_NUM   	= #{phoneNum}
+		     , FAX_NUM     	= #{faxNum}
+		     , BIGO     	= #{bigo}
+		     , OPEN_DATE	= #{openDt}
+	         , RENEWAL_DATE	= #{renewalDt}
+	         , RELOCATION_DATE	= #{relocationDt}
+	         , OPER_STR_NM	= #{addOperStr}
+	         , CHARGE_SV	= #{chargeSv}
+	         , HERBMODEL_NM	= #{herbModel}
+	         , VPNMODEL_NM	= #{vpnModel}
+	         , TELECOMMUNITY_CD	= #{teleCommnuity}
+	         , AP_YN	= #{apYn}
+	         , ETC_MEMO	= #{etcMemo}
+	         , UP_USER_ID =  #{s_userId}
+		WHERE STR_CD = #{strCd}
+	</update>
+	<update id="updateStoreLoc">
+		UPDATE /* [StandardStoreService.query][updateStore][Company 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_STND_STR_S 
+		   SET STR_LAT     	= #{strLat}
+		     , STR_LNG     	= #{strLng}
+		WHERE STR_CD = #{strCd}
+	</update>
+	
+	<update id="deleteStore">
+		UPDATE /* [StandardStoreService.query][deleteStore][Store 삭제]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_STND_STR_S
+		   	     SET DEL_YN	= 'Y'
+		     , UP_USER_ID =  #{s_userId}
+		  WHERE STR_CD = #{strCd}
+	</update>
+	
+	<select id="getAutoStrList" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getAutoStrList][Site 자동완성][김진호][2017. 5. 09.] */
+			   STR_CD
+       		 , COMP_CD
+			 , BRND_CD
+			 , STR_NM
+			 , COMP_NM
+			 , BRND_NM
+			 , PHONE_NUM
+			 , COMP_CATE_NM
+			 , STR_TYPE_NM
+			 , STR_ST
+			 , STR_ST_NM
+			 , CORP_NUM
+			 , MNG_CD
+			 , CEO_NM
+			 , ZIP_CD
+			 , ADDR1
+			 , ADDR2
+			 , ADDR_EXT
+			 , AREA_SEQ
+		     , IFNULL(STR_ST_DT, '') STR_ST_DT
+			 , AREA_NM
+			 , FAX_NUM
+	         , OPEN_DATE
+	         , RENEWAL_DATE
+	         , RELOCATION_DATE
+	         , OPER_STR_NM
+	         , CHARGE_SV
+	         , IFNULL(IP_ADDRESS, '') IP_ADDRESS
+	         , BIGO
+	         , IFNULL(VPNMODEL_NM, '') VPNMODEL_NM
+	         , IFNULL(TELECOMMUNITY_CD_NM, '') TELECOMMUNITY_CD_NM
+	         , IFNULL(AP_YN_NM, '') AP_YN_NM
+	         , ETC_MEMO
+       		 , CONCAT(COMP_NM, IF(BRND_NM is null or BRND_NM = '' ,'', CONCAT(' ',BRND_NM)) ,' [', STR_NM,']',IF(PHONE_NUM is null or PHONE_NUM ='' ,'', CONCAT(' (',PHONE_NUM,')'))) value
+	         , CONCAT(COMP_NM, ' ', BRND_NM, ' ', STR_NM) name
+	         , COMP_FILE
+		     , COMP_FILE_NM
+		     , BIGO
+		  FROM (
+			SELECT SS.STR_CD
+		         , SS.COMP_CD
+		         , SS.BRND_CD
+		         , SS.STR_NM
+		         , SS.STR_ST
+		         , IFNULL(SC.COMP_NM,'') COMP_NM
+		         , IFNULL(SB.BRND_NM,'') BRND_NM
+		         , SS.PHONE_NUM       
+		         , FN_COMM_CODE_NM('SC0019', SS.COMP_CATE, 'ko') COMP_CATE_NM
+		         , FN_COMM_CODE_NM('SC0021', STR_TYPE, 'ko') STR_TYPE_NM
+		         , FN_COMM_CODE_NM('SC0024', STR_ST, 'ko') STR_ST_NM
+		         , SS.CORP_NUM
+		         , SS.MNG_CD
+		         , SS.STR_ST_DT
+		         , SS.CEO_NM
+		         , SS.ZIP_CD
+		         , SS.ADDR1
+		         , IFNULL(SS.ADDR2,'') ADDR2
+		         , IFNULL(SS.ADDR_EXT,'') ADDR_EXT
+		         , AREA_SEQ
+		         , FN_COMM_CODE_NM('SC0027', AREA_SEQ, 'ko') AREA_NM
+		         , SS.FAX_NUM
+		         , IP_ADDRESS
+		         , IFNULL(SS.BIGO,'') BIGO
+		         , IFNULL(SS.OPEN_DATE,'') OPEN_DATE
+		         , IFNULL(SS.RENEWAL_DATE,'') RENEWAL_DATE
+		         , IFNULL(SS.RELOCATION_DATE,'') RELOCATION_DATE
+		         , IFNULL(SS.OPER_STR_NM,'') OPER_STR_NM
+		         , IFNULL(SS.CHARGE_SV,'') CHARGE_SV
+		         , IFNULL(SS.HERBMODEL_NM,'') HERBMODEL_NM
+		         , IFNULL(SS.VPNMODEL_NM,'') VPNMODEL_NM
+		         , FN_COMM_CODE_NM('AT0004',SS.TELECOMMUNITY_CD, 'ko') TELECOMMUNITY_CD_NM
+		         , FN_COMM_CODE_NM('AT0005',SS.AP_YN, 'ko') AP_YN_NM
+		         , IFNULL(SS.ETC_MEMO,'') ETC_MEMO
+		         , IFNULL(SC.COMP_FILE,'') COMP_FILE
+		         , IFNULL(SC.COMP_FILE_NM,'') COMP_FILE_NM
+		  	 FROM MMS.TB_MMS_STND_STR_S SS
+      	  	 LEFT OUTER JOIN MMS.TB_MMS_STND_BRND_S SB
+        	   ON SS.BRND_CD = SB.BRND_CD 
+      	  	 LEFT OUTER JOIN MMS.TB_MMS_STND_COMP_S SC
+        	   ON SS.COMP_CD = SC.COMP_CD
+<!--         	 LEFT OUTER JOIN TB_MMS_STND_AREA_S SA -->
+<!--         	   ON SS.AREA_SEQ = SA.AREA_SEQ -->
+<!-- 		 	WHERE SS.ASP_COMP_CD ='VERTEXID' -->
+<!-- 		   	  AND SC.DEL_YN = 'N' -->
+<!-- 		   	  AND SS.DEL_YN = 'N' -->
+		 	WHERE SC.DEL_YN = 'N'
+		   	  AND SS.DEL_YN = 'N'
+		   	  AND SS.BRND_CD IS NOT NULL
+		   	  AND SS.STR_NM IS NOT NULL
+		) AS AUTO
+		  WHERE (
+		  	AUTO.STR_NM LIKE '%${keyWord}%' OR 
+		  	AUTO.COMP_NM LIKE '%${keyWord}%' OR
+		  	AUTO.PHONE_NUM LIKE '%${keyWord}%' OR
+		  	AUTO.MNG_CD = #{keyWord} OR 
+		  	AUTO.BRND_NM LIKE '%${keyWord}%' 
+		  )
+  		  ORDER BY AUTO.STR_NM DESC
+		
+	</select>
+	<select id="getCallStrList" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getCallStrList][Site 자동완성][김진호][2017. 5. 09.] */
+			   STR_CD
+       		 , COMP_CD
+			 , BRND_CD
+			 , STR_NM
+			 , COMP_NM
+			 , BRND_NM
+			 , PHONE_NUM
+			 , COMP_CATE_NM
+			 , STR_TYPE_NM
+			 , STR_ST_NM
+			 , CORP_NUM
+			 , MNG_CD
+			 , CEO_NM
+			 , ZIP_CD
+			 , ADDR1
+			 , ADDR2
+			 , ADDR_EXT
+			 , AREA_SEQ
+			 , AREA_NM
+			 , FAX_NUM
+       		 , CONCAT(COMP_NM, IF(BRND_NM is null or BRND_NM = '' ,'', CONCAT(' ',BRND_NM)) ,' [', STR_NM,']',IF(PHONE_NUM is null or PHONE_NUM ='' ,'', CONCAT(' (',PHONE_NUM,')'))) value
+	         , CONCAT(COMP_NM, ' ', BRND_NM, ' ', STR_NM) name
+	         , COMP_FILE
+		     , COMP_FILE_NM
+		     , BIGO
+		  FROM (
+			SELECT SS.STR_CD
+		         , SS.COMP_CD
+		         , SS.BRND_CD
+		         , SS.STR_NM
+		         , IFNULL(SC.COMP_NM,'') COMP_NM
+		         , IFNULL(SB.BRND_NM,'') BRND_NM
+		         , SS.PHONE_NUM       
+		         , FN_COMM_CODE_NM('SC0019', SS.COMP_CATE, 'ko') COMP_CATE_NM
+		         , FN_COMM_CODE_NM('SC0021', STR_TYPE, 'ko') STR_TYPE_NM
+		         , FN_COMM_CODE_NM('SC0024', STR_ST, 'ko') STR_ST_NM
+		         , SS.CORP_NUM
+		         , MNG_CD
+		         , SS.CEO_NM
+		         , SS.ZIP_CD
+		         , SS.ADDR1
+		         , IFNULL(SS.ADDR2,'') ADDR2
+		         , IFNULL(SS.ADDR_EXT,'') ADDR_EXT
+		         , SS.AREA_SEQ
+		         , FN_COMM_CODE_NM('SC0027', SS.AREA_SEQ, 'ko') AREA_NM
+		         , SS.FAX_NUM
+		         , IFNULL(SS.BIGO,'') BIGO
+		         , IFNULL(SC.COMP_FILE,'') COMP_FILE
+		         , IFNULL(SC.COMP_FILE_NM,'') COMP_FILE_NM
+		  	 FROM MMS.TB_MMS_STND_STR_S SS
+      	  	 LEFT OUTER JOIN MMS.TB_MMS_STND_BRND_S SB
+        	   ON SS.BRND_CD = SB.BRND_CD 
+      	  	 LEFT OUTER JOIN MMS.TB_MMS_STND_COMP_S SC
+        	   ON SS.COMP_CD = SC.COMP_CD
+		 	WHERE SC.DEL_YN = 'N'
+		   	  AND SS.DEL_YN = 'N'
+<!-- 		 	WHERE SS.ASP_COMP_CD ='VERTEXID' -->
+<!-- 		   	  AND SC.DEL_YN = 'N' -->
+<!-- 		   	  AND SS.DEL_YN = 'N' -->
+		) AS AUTO
+		  WHERE AUTO.PHONE_NUM = #{phoneNum}
+  		  LIMIT 1
+		
+	</select>
+	
+	<select id="getlistAutoStrInAssetList" resultType="HMap" >
+		SELECT /* [StandardStoreService.query][getlistAutoStrInAssetList][Site In Asset 자동완성][김선호][2017. 11. 22.] */
+			   value
+			 , name
+			 , STR_CD
+			 , STR_NM
+			 , COMP_NM
+			 , COMP_CD
+			 , BRND_CD
+			 , BRND_NM
+		  FROM
+			   (
+				SELECT CONCAT(C.COMP_NM, IF(B.BRND_NM is null or B.BRND_NM = '' ,'', CONCAT(' ',B.BRND_NM)) ,' [', S.STR_NM,']') AS value
+						 , CONCAT(C.COMP_NM, ' ', B.BRND_NM, ' ', S.STR_NM) AS name
+						 , S.STR_CD
+						 , S.STR_NM
+						 , C.COMP_NM
+						 , C.COMP_CD
+						 , B.BRND_CD
+						 , B.BRND_NM
+						FROM TB_MMS_STND_STR_S S
+						LEFT JOIN TB_MMS_STND_BRND_S B
+						  ON S.BRND_CD = B.BRND_CD
+						LEFT JOIN TB_MMS_STND_COMP_S C
+						  ON S.COMP_CD = C.COMP_CD
+						WHERE S.COMP_YN = 'N'
+				) S
+		 WHERE S.value LIKE '%${keyWordArr0}%'
+  		 <if  test="keyWordArr1 != null and !keyWordArr1.equals('')">
+		 AND	S.value LIKE '%${keyWordArr1}%'
+		 </if>
+		 <if test="keyWordArr2 != null and !keyWordArr2.equals('')">
+		 AND	S.value LIKE '%${keyWordArr2}%'
+		 </if>
+		 ORDER BY name DESC
+	</select>
+	
+	<select id="getAutoStrNmList" resultType="HMap" > 
+		SELECT /* [StandardStoreService.query]["getlistAutoStrNm"][점포명 자동완성][Han Seong Jin][2018-01-14] */
+			   STR_CD name
+		     , STR_NM value 
+	     FROM TB_MMS_STND_STR_S
+	    WHERE STR_NM LIKE '%${keyWord}%'
+	      AND DEL_YN = 'N'
+		<if test="s_companyCd != null and !s_companyCd.equals('')"> 
+		   AND ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')"> 
+		   AND COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')"> 
+		   AND BRND_CD = #{brndCd}
+		</if>
+		 ORDER BY STR_NM
+	</select>
+	
+	<select id="duplicationStoreName" resultType="HMap">
+		SELECT /* [AssetService.query][duplicationSerialCheck][자산 엑셀 업로드 SERIAL DATA CHECK][Kim Seon Ho][2018-01-17] */
+			STR_CD
+		FROM
+			TB_MMS_STND_STR_S
+		WHERE
+			BRND_CD = #{brndCd}
+			AND  STR_NM = #{strNm}
+		<if test="strCd != null and !strCd.equals('')"> 
+		   AND STR_CD != #{strCd}
+		</if>
+	</select> 
+	
+</mapper>

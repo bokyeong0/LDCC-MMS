@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardCompanyService">
+	
+	
+	<select id="getCompanyList" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getCompanyList][Company 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+			   COM.COMP_CD
+			 , COM.COMP_CATE
+			 , FN_COMM_CODE_NM('SC0019', COM.COMP_CATE, #{s_language}) COMP_CATE_NM
+			 , COM.COMP_TYPE
+			 , FN_COMM_CODE_NM('SC0020', COM.COMP_TYPE, #{s_language}) COMP_TYPE_NM
+			 , COM.COMP_NM
+			 , COM.MNG_CD
+			 , COM.MEMO
+			 , STR.CEO_NM
+			 , STR.PHONE_NUM
+			 , STR.STR_LAT
+			 , STR.STR_LNG
+			 , COM.IN_USER_ID
+			 , DATE_FORMAT(COM.IN_DT,'%Y-%m-%d') IN_DT
+		  FROM TB_MMS_STND_COMP_S COM
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S STR
+		  	ON COM.COMP_CD = STR.COMP_CD
+<!-- 		  LEFT OUTER JOIN TB_MMS_STND_AREA_S SA -->
+<!-- 		  	ON STR.AREA_SEQ = SA.AREA_SEQ -->
+		 WHERE STR.COMP_YN = 'Y'
+		   AND COM.DEL_YN = 'N'
+		   AND COM.USE_YN = 'Y'
+		<if test="compCate != null and !compCate.equals('')">
+		  AND COM.COMP_CATE = #{compCate}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+		  AND COM.COMP_CD = #{compCd}
+		</if>
+		<if test="compNm != null and !compNm.equals('')"> 
+		  AND COM.COMP_NM LIKE CONCAT('%',#{compNm},'%')
+		</if>
+		 ORDER BY COM.COMP_CD DESC
+	</select>
+	
+	<insert id="insertCompany" useGeneratedKeys="true" keyProperty="compCd" keyColumn="COMP_CD">
+		<selectKey keyProperty="compCd" resultType="String" order="BEFORE">
+			SELECT FN_MAKE_COMP_CODE() AS compCd;
+		</selectKey>
+
+		INSERT /* [StandardCompanyService.query][insertCompany][Company 등록]["Han Seong Jin"][2017. 2. 27.] */
+		  INTO TB_MMS_STND_COMP_S (
+		  		  ASP_COMP_CD
+		  		, COMP_CD
+		  		, COMP_NM
+		  		, COMP_CATE
+		  		, COMP_TYPE
+		  		, MNG_CD
+		        , MEMO
+		        , IN_USER_ID
+		        , UP_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES(   #{s_companyCd}
+				, #{compCd}
+				, #{compNm}
+				, #{compCate}
+				, #{compType}
+				, #{mngCd}
+				, #{memo}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<insert id="insertBrand" useGeneratedKeys="true" keyProperty="brndCd" keyColumn="BRND_CD">
+	
+		<selectKey keyProperty="brndCd" resultType="String" order="BEFORE">
+			SELECT FN_MAKE_BRND_CODE(#{compCd}) AS brndCd;
+		</selectKey>
+	
+		INSERT /* [StandardCompanyService.query][insertBrand][brand 등록]["Han Seong Jin"][2017. 2. 27.] */
+		  INTO TB_MMS_STND_BRND_S (
+		  		  ASP_COMP_CD
+		  		, BRND_CD
+		  		, COMP_CD
+		  		, BRND_NM
+				, IN_USER_ID
+				, UP_USER_ID
+				, IN_DT
+		  )		  
+		VALUES(	#{s_companyCd}
+				, CONCAT(#{compCd}, #{brndCd})
+				, #{compCd}
+				, #{brndNm}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<insert id="insertStore">
+		INSERT /* [StandardCompanyService.query][insertStore][store 등록]["Han Seong Jin"][2017. 2. 27.] */
+		  INTO TB_MMS_STND_STR_S (
+		  		  ASP_COMP_CD
+		  		, STR_CD
+		  		, COMP_CD
+		  		, BRND_CD
+		  		, COMP_CATE
+		  		, STR_TYPE	
+		  		, STR_ST	
+		  		, MNG_CD
+		  		, CEO_NM
+		  		, ZIP_CD
+		  		, ADDR1
+		  		, ADDR2
+		  		, ADDR_EXT
+		  		, STR_LAT
+		  		, STR_LNG
+		  		, PHONE_NUM
+		  		, FAX_NUM
+		  		, COMP_YN
+		        , IN_USER_ID
+		        , UP_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES(   #{s_companyCd}
+				, CONCAT(#{compCd}, #{brndCd}, FN_MAKE_STR_CODE(#{compCd}, #{brndCd}))
+				, #{compCd}
+				, CONCAT(#{compCd}, #{brndCd})
+				, #{compCate}
+				, #{strType}
+				, #{strSt}
+				, #{mngCd}
+				, #{ceoNm}
+				, #{zipCd}
+				, #{addr1}
+				, #{addr2}
+				, #{addrExt}
+				, #{strX}
+				, #{strY}
+				, #{phoneNum}
+				, #{faxNum}
+				, 'Y'
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+			)
+	</insert>
+	
+	<select id="getStoreInfo" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getStoreInfo][store 정보 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  STR_CD
+		  	, STR_NM
+		  	, SS.BRND_CD
+		  	, IFNULL(SB.BRND_NM, '없음') BRND_NM
+		  	, STR_TYPE
+		  	, FN_COMM_CODE_NM('SC0021', STR_TYPE, #{s_language}) STR_TYPE_NM
+		  	, STR_ST
+		  	, FN_COMM_CODE_NM('SC0024', STR_ST, #{s_language}) STR_ST_NM
+		  	, CORP_NUM
+		  	, MNG_CD
+		  	, CEO_NM
+		  	, IFNULL(ZIP_CD, '') ZIP_CD
+		  	, IFNULL(ADDR1, '') ADDR1
+		  	, IFNULL(ADDR2, '') ADDR2
+		  	, IFNULL(ADDR_EXT, '') ADDR_EXT
+		  	, IFNULL(STR_LAT, '') STR_LAT
+		  	, IFNULL(STR_LNG, '') STR_LNG
+		  	, IFNULL(PHONE_NUM, '') PHONE_NUM
+		  	, IFNULL(FAX_NUM, '') FAX_NUM
+		FROM
+			TB_MMS_STND_STR_S SS
+		LEFT OUTER JOIN MMS.TB_MMS_STND_BRND_S SB
+        	ON SS.BRND_CD = SB.BRND_CD
+		WHERE SS.COMP_CD = #{compCd}
+		  AND COMP_YN = 'Y'
+	</select>
+	
+	<select id="getBrandInfo" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getBrandInfo][brand 정보 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  BRND_CD
+		  	, BRND_NM
+		FROM
+			TB_MMS_STND_BRND_S
+		WHERE
+			COMP_CD = #{compCd}
+		AND USE_YN = 'Y'
+		AND DEL_YN = 'N'
+<!-- 		AND ASP_COMP_CD = #{s_companyCd} -->
+		ORDER BY BRND_CD ASC
+	</select>
+	
+	<select id="getCompanyInfo" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getCompanyInfo][Company 정보 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  COMP_NM
+		  	, COMP_CATE
+		    , FN_COMM_CODE_NM('SC0019', COMP_CATE, #{s_language}) COMP_CATE_NM
+		    , COMP_TYPE
+		    , IFNULL(FN_COMM_CODE_NM('SC0020', COMP_TYPE, #{s_language}), '') COMP_TYPE_NM
+		  	, IFNULL(MNG_CD, '') MNG_CD
+		  	, IFNULL(MEMO, '') AS MEMO
+		FROM
+			TB_MMS_STND_COMP_S
+		WHERE
+			COMP_CD = #{compCd}
+	</select>
+	
+	<update id="updateCompany">
+		UPDATE /* [StandardCompanyService.query][updateCompany][Company 업데이트]["Han Seong Jin"][2017. 2. 27.] */
+		  TB_MMS_STND_COMP_S
+		   SET COMP_NM = #{compNm}  
+		     , COMP_CATE = #{compCate}  
+		     , COMP_TYPE = #{compType}  
+		     , MNG_CD = #{mngCd}    
+		     , MEMO = #{memo}     
+<!-- 		     , CALL_YN = #{callYn}
+		     , OBS_MNG_YN = #{obsYn}
+		     , COMP_PRD_YN = #{prdYn} -->
+		     , UP_USER_ID = #{s_userId}
+		WHERE COMP_CD = #{compCd}
+<!-- 		  AND ASP_COMP_CD = #{s_companyCd} -->
+	</update>
+	
+	<update id="updateBrand">
+		UPDATE TB_MMS_STND_BRND_S /* [StandardCompanyService.query][updateBrand][Brand 업데이트]["Han Seong Jin"][2017. 2. 27.] */
+		   SET BRND_NM = #{brndNm}
+		     , UP_USER_ID = #{s_userId}
+		 WHERE BRND_CD = #{brndCd}
+<!-- 		   AND ASP_COMP_CD = #{s_companyCd} -->
+	</update>
+	
+	<update id="updateStore">
+		UPDATE TB_MMS_STND_STR_S /* [StandardCompanyService.query][updateStore][본사 Store 업데이트]["Han Seong Jin"][2017. 2. 27.] */
+		   SET STR_TYPE  	= #{strType}
+		     , STR_ST 	 	= #{strSt}
+		     , COMP_CATE  	= #{compCate}
+		     , MNG_CD	  	= #{mngCd}
+		     , CEO_NM	 	= #{ceoNm}
+		     , ZIP_CD 	 	= #{zipCd}
+		     , ADDR1 	 	= #{addr1}
+		     , ADDR2     	= #{addr2}
+		     , ADDR_EXT 	= #{addrExt}
+		     , STR_LAT 		= #{strX}
+		     , STR_LNG		= #{strY}
+		     , PHONE_NUM 	= #{phoneNum}
+		     , FAX_NUM 	 	= #{faxNum}
+		     , UP_USER_ID 	= #{s_userId}
+		WHERE COMP_CD = #{compCd}
+		  AND STR_CD = #{strCd}
+		  AND COMP_YN = 'Y'
+<!-- 		  AND ASP_COMP_CD = #{s_companyCd} -->
+	</update>
+	<update id="deleteCompany">
+		UPDATE TB_MMS_STND_COMP_S /* [StandardCompanyService.query][deleteCompany][Company 삭제]["Han Seong Jin"][2017. 2. 27.] */
+		   SET DEL_YN	= 'Y'
+		   	 , UP_USER_ID =  #{s_userId}
+		 WHERE COMP_CD	= #{compCd}
+<!-- 		   AND ASP_COMP_CD = #{s_companyCd} -->
+	</update>
+	<update id="deleteBrand">
+		UPDATE TB_MMS_STND_BRND_S /* [StandardCompanyService.query][deleteBrand][Brand 삭제]["Han Seong Jin"][2017. 2. 27.] */
+		   SET DEL_YN	= 'Y'
+		     , UP_USER_ID =  #{s_userId}
+		  WHERE COMP_CD	= #{compCd}
+<!-- 		    AND ASP_COMP_CD = #{s_companyCd} -->
+	</update>
+	
+	<update id="deleteStore">
+		UPDATE TB_MMS_STND_STR_S /* [StandardCompanyService.query][deleteStore][Store 삭제]["Han Seong Jin"][2017. 2. 27.] */
+		   SET DEL_YN = 'Y'
+		     , UP_USER_ID = #{s_userId}
+		 WHERE COMP_CD = #{compCd}
+<!-- 		   AND ASP_COMP_CD = #{s_companyCd} -->
+	</update>
+	
+<!-- 	<select id="getCompNameList" resultType="HMap"> -->
+<!-- 		SELECT /* [StandardCompanyService.query][getMaCompNameList][계약 관계 Company Name리스트 조회]["Kim Seon Ho"][2018. 01. 26.] */ -->
+<!-- 			  DISTINCT COMP_CD value -->
+<!-- 			, COMP_NM name -->
+<!-- 		FROM -->
+<!-- 			VIEW_PARTNER -->
+<!-- 		<where>  -->
+<!-- 			1=1 -->
+<!-- 			<if test="compCate != null and !compCate.equals('')"> -->
+<!-- 			  AND COMP_CATE = #{compCate} -->
+<!-- 			</if> -->
+<!-- 			<if test='s_companyCd != null and !s_companyCd.equals("")'> -->
+<!-- 			  AND ASP_COMP_CD = #{s_companyCd} -->
+<!-- 			</if> -->
+<!-- 			<if test='s_compCd != null and !s_compCd.equals("")'> -->
+<!-- 			  AND COMP_CD = #{s_compCd} -->
+<!-- 			</if> -->
+<!-- 		</where> -->
+<!-- 	</select> -->
+
+	<select id="getMaCompNameList" resultType="HMap">
+
+		SELECT /* [StandardCompanyService.query][getCompNameList][Company Name리스트 조회]["Han Seong Jin"][2017. 2. 27.] */
+			  COMP_CD value
+			, COMP_NM name
+		FROM
+			TB_MMS_STND_COMP_S
+		WHERE DEL_YN = 'N'
+		<if test="compCate != null and !compCate.equals('')">
+		  AND COMP_CATE = #{compCate}
+		</if>
+	</select>
+	
+	<select id="getBrandNameList" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getBrandNameList][Brnad Name리스트 조회]["Han Seong Jin"][2017. 2. 27.] */
+			   SB.BRND_CD value
+		     , SB.BRND_NM name
+		     , SC.COMP_CD
+		     , SC.COMP_NM
+		  FROM TB_MMS_STND_BRND_S SB
+		  LEFT JOIN TB_MMS_STND_COMP_S SC
+		    ON SB.COMP_CD = SC.COMP_CD
+		 WHERE COMP_CD = #{compCd}
+		<if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SB.BRND_CD = #{s_brndCd}
+		</if>
+	</select>
+	
+<!-- 	<select id="getBrandNameList" resultType="HMap"> -->
+<!-- 		SELECT /* [StandardCompanyService.query][getBrandNameList][Brnad Name리스트 조회]["Han Seong Jin"][2017. 2. 27.] */ -->
+<!-- 		  	  DISTINCT BRND_CD value -->
+<!-- 		  	, BRND_NM name -->
+<!-- 		FROM -->
+<!-- 			VIEW_PARTNER -->
+<!-- 		WHERE -->
+<!-- 			COMP_CD = #{compCd} -->
+<!-- 			<if test='s_companyCd != null and !s_companyCd.equals("")'> -->
+<!-- 			  AND ASP_COMP_CD = #{s_companyCd} -->
+<!-- 			</if> -->
+<!-- 			<if test='s_brndCd != null and !s_brndCd.equals("")'> -->
+<!-- 			  AND BRND_CD = #{s_brndCd} -->
+<!-- 			</if> -->
+<!-- 	</select> -->
+	
+	<select id="getMaBrandNameList" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getMaBrandNameList][Brnad Name리스트 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  BRND_CD value
+		  	, BRND_NM name
+		FROM
+			TB_MMS_STND_BRND_S
+		WHERE
+			COMP_CD = #{compCd}
+	</select>
+	
+	<select id="getStrNameList" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getStrNameList][Store Name리스트 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  STR_CD value
+		  	, STR_NM name
+		FROM
+			TB_MMS_STND_STR_S
+		WHERE COMP_YN = 'N'
+			<if test="s_companyCd != null and !s_companyCd.equals('')"> 
+		    AND ASP_COMP_CD = #{s_companyCd}
+			</if>
+			<if test='s_compCd != null and !s_compCd.equals("")'>
+			AND COMP_CD = #{s_compCd}
+			</if>
+			<if test='s_brndCd != null and !s_brndCd.equals("")'>
+			  AND BRND_CD = #{s_brndCd}
+			</if>
+			<if test='compCd != null and !compCd.equals("")'>
+			AND COMP_CD = #{compCd}
+			</if>
+			<if test='brndCd != null and !brndCd.equals("")'>
+			  AND BRND_CD = #{brndCd}
+			</if>
+	</select>
+
+	<select id="getBrndCd" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getBrndCd][BrndCd 조회]["Kim Seon Ho"][2017.11. 08.] */
+		  	  BRND_CD 
+		FROM
+			 TB_MMS_STND_BRND_S
+		WHERE
+			 BRND_NM 		= #{brndNm}
+<!-- 		 AND ASP_COMP_CD 	= #{s_companyCd} -->
+	</select>
+	
+	<select id="getCompCate" resultType="HMap">
+		SELECT /* [StandardCompanyService.query][getCompCate][Compcate 리스트 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  COMP_CATE
+		  	, COMP_NM
+		FROM
+			TB_MMS_STND_COMP_S
+		WHERE
+			COMP_CD = #{compCd}
+<!-- 		AND ASP_COMP_CD = #{s_companyCd} -->
+	</select>
+	
+	<select id="getCompNameCheck" resultType="Integer">
+		SELECT /* [StandardCompanyService.query][getCompNameCheck][Compcate 리스트 조회]["Han Seong Jin"][2017. 2. 27.] */
+		  	  count(COMP_CD) as cnt
+		FROM
+			TB_MMS_STND_COMP_S
+		WHERE
+			COMP_NM = #{compNm}
+<!-- 		AND ASP_COMP_CD = #{s_companyCd} -->
+	</select>
+	
+	<select id="checkManagerCodeCompany" resultType="Integer">
+		SELECT /* [StandardCompanyService.query][checkManagerCodeCompany][관리코드 확인]["Han Seong Jin"][2017. 2. 27.] */
+			count(MNG_CD) 
+		FROM TB_MMS_STND_STR_S
+  		WHERE ASP_COMP_CD = #{s_companyCd}
+  		AND MNG_CD = #{mngCd}
+	</select>
+	
+	<select id="getAutoCompList" resultType="HMap" >
+		SELECT /* [StandardCompanyService.query][getAutoStrList][회사 자동완성][김진호][2017. 5. 09.] */
+			   COMP_CD 
+      		 , COMP_NM value
+          	 , COMP_NM name
+	  	 FROM MMS.TB_MMS_STND_COMP_S SC
+	 	WHERE 1=1
+	 	   <!-- SC.ASP_COMP_CD ='VERTEXID' -->
+	   	  AND SC.DEL_YN = 'N'
+	   	  AND SC.USE_YN = 'Y'
+	   	  <if test="callYn != null and !callYn.equals('')">
+		  AND SC.CALL_YN = #{callYn}
+		  </if>
+	  	  AND SC.COMP_NM LIKE '%${keyWord}%'
+ 		  ORDER BY SC.COMP_NM 
+	</select>
+	<select id="getAstCompList" resultType="HMap" >
+	   	SELECT /* [StandardCompanyService.query][getAstCompList][자산관련 회사정보][유승우]][2018. 01. 15.] */
+		       SC.COMP_CD 
+		      , SC.COMP_NM value
+		      , SC.COMP_NM name
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		  ON CC3.CODE_GROUP_CD = 'SC0025'
+		  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON SS.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		  ON SS.STR_ST = PCC.CODE_CD
+		  AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		  ON PCC2.CODE_GROUP_CD = 'AT0003'
+		  AND PCC2.CODE_CD = AM.AST_ST
+		WHERE AM.DEL_YN = 'N'
+		AND SS.COMP_YN = 'N'
+		AND SC.DEL_YN = 'N'
+		AND SB.DEL_YN = 'N'
+		AND SS.DEL_YN = 'N'
+		AND SC.COMP_CD IS NOT NULL
+   	   	<if test="asp_cd != null and !asp_cd.equals('')">
+           AND AM.ASP_COMP_CD  = #{asp_cd}	   	 
+   	   	</if>
+    	<if test="part_cd != null and !part_cd.equals('')"> 
+           AND AM.AREA_CD  = #{part_cd}     	 
+    	</if> 	    
+ 		<if test='s_companyCd != null and !s_companyCd.equals("")'>
+	        AND AM.ASP_COMP_CD  = #{s_companyCd}
+	    	<if test="s_areaCd != null and !s_areaCd.equals('')">  
+	        AND AM.AREA_CD  = #{s_areaCd}    	   
+	    	</if>   
+	    </if>
+ 		<if test='s_compCd != null and !s_compCd.equals("")'>
+ 		       AND SC.COMP_CD = #{s_compCd}
+ 		    <if test="s_brndCd != null and !s_brndCd.equals('')">
+ 		       AND SB.BRND_CD = #{s_brndCd} 	
+ 		    </if>
+ 		</if> 		       
+        GROUP BY  SC.COMP_CD     
+        
+	</select>
+
+	
+	
+	<update id="updateCompFile">
+		UPDATE TB_MMS_STND_COMP_S /* [StandardCompanyService.query][updateCompFile][파일등록]["Han Seong Jin"][2017. 2. 27.] */
+		   SET COMP_FILE =  #{webPath}
+		     , COMP_FILE_NM =  #{webName}
+<!-- 		     , DEL_YN = 'Y' -->
+		  WHERE COMP_CD	= #{compCd}
+		    AND ASP_COMP_CD = #{s_companyCd}
+	</update>
+	
+</mapper>

@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StatusService">
+	<select id="getRcptUserList" resultType="HMap" >
+		SELECT /* [StatusService.query][getRcptUserList][사원별 연간 장애처리 현황][한성진][2017. 2. 27.] */
+               SA.AREA_NM
+		     , ORM.USER_NM
+			 , IFNULL(COUNT(RS.RCPT_SEQ),0) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(PCC.CODE_OTHER2 ='N', 1, 0)),0) RCPT_CMPL_N_CNT
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 01 THEN RCPT_DT END) AS MON_01
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 02 THEN RCPT_DT END) AS MON_02
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 03 THEN RCPT_DT END) AS MON_03
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 04 THEN RCPT_DT END) AS MON_04
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 05 THEN RCPT_DT END) AS MON_05
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 06 THEN RCPT_DT END) AS MON_06
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 07 THEN RCPT_DT END) AS MON_07
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 08 THEN RCPT_DT END) AS MON_08
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 09 THEN RCPT_DT END) AS MON_09
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 10 THEN RCPT_DT END) AS MON_10
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 11 THEN RCPT_DT END) AS MON_11
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 12 THEN RCPT_DT END) AS MON_12
+		  FROM (SELECT ORM.*, PU.USER_NM, PU.AREA_CD 
+		  		  FROM TB_MMS_OBS_RCPT_M ORM, TB_PARAGON_USER PU 
+		  		 WHERE  ORM.RCPT_ENGR = PU.USER_ID) ORM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON ORM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+		    ON ORM.AREA_CD = SA.AREA_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		    ON ORM.STR_CD = SS.STR_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE PCC
+		    ON PCC.CODE_GROUP_CD = 'OS0001'
+		   AND ORM.RCPT_CMPL_TYPE = PCC.CODE_CD
+		 WHERE LEFT(ORM.RCPT_DT, 4) = IF(ISNULL(#{searchYear}), YEAR(now()), #{searchYear})
+		   AND ORM.DEL_YN = 'N'
+	     <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND ORM.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SS.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SS.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="areaCd != null and !areaCd.equals('')">
+	       AND ORM.AREA_CD = #{areaCd}
+		 </if>
+		 <if test="userNm != null and !userNm.equals('')">
+		   AND ORM.USER_NM LIKE CONCAT('%',#{userNm},'%')
+		 </if>
+		 GROUP BY RCPT_ENGR
+		 ORDER BY RCPT_TOT_CNT DESC
+	</select>
+	
+	<select id="getRcptUserSum" resultType="HMap" >
+		SELECT /* [StatusService.query][getRcptUserSum][사원별 연간 장애처리 현황][한성진][2017. 2. 27.] */
+		       '' AREA_NM
+		     , '합계' USER_NM
+		     , COUNT(RS.RCPT_SEQ) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(PCC.CODE_OTHER2 ='N', 1, 0)),0) RCPT_CMPL_N_CNT
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 01 THEN RCPT_DT END) AS MON_01
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 02 THEN RCPT_DT END) AS MON_02
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 03 THEN RCPT_DT END) AS MON_03
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 04 THEN RCPT_DT END) AS MON_04
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 05 THEN RCPT_DT END) AS MON_05
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 06 THEN RCPT_DT END) AS MON_06
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 07 THEN RCPT_DT END) AS MON_07
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 08 THEN RCPT_DT END) AS MON_08
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 09 THEN RCPT_DT END) AS MON_09
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 10 THEN RCPT_DT END) AS MON_10
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 11 THEN RCPT_DT END) AS MON_11
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 12 THEN RCPT_DT END) AS MON_12
+		  FROM (SELECT ORM.*, PU.USER_NM, PU.AREA_CD 
+		  		  FROM TB_MMS_OBS_RCPT_M ORM, TB_PARAGON_USER PU 
+		  		 WHERE  ORM.RCPT_ENGR = PU.USER_ID) ORM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON ORM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+		    ON ORM.AREA_CD = SA.AREA_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		    ON ORM.STR_CD = SS.STR_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE PCC
+		    ON PCC.CODE_GROUP_CD = 'OS0001'
+		   AND ORM.RCPT_CMPL_TYPE = PCC.CODE_CD
+		 WHERE LEFT(ORM.RCPT_DT, 4) = IF(ISNULL(#{searchYear}), YEAR(now()), #{searchYear})
+		   AND ORM.DEL_YN = 'N'
+	     <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND ORM.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SS.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SS.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="areaCd != null and !areaCd.equals('')">
+	       AND ORM.AREA_CD = #{areaCd}
+		 </if>
+		 <if test="userNm != null and !userNm.equals('')">
+		   AND ORM.USER_NM LIKE CONCAT('%',#{userNm},'%')
+		 </if>
+	</select>
+	
+	<select id="getRcptStoreList" resultType="HMap" >
+		SELECT /* [StatusService.query][getRcptStoreList][매장 목록조회][한성진][2017. 2. 27.] */
+		       ORM.STR_CD
+		     , FN_COMM_AREA_NM(SS.AREA_SEQ) AREA_NM
+		     , SC.COMP_NM
+		     , SB.BRND_NM
+		     , SS.STR_NM
+		     , FN_COMM_CODE_NM('SC0024', SS.STR_ST, 'ko') STR_ST_NM
+		     , FN_COMM_CODE_NM('SC0021', SS.STR_TYPE, 'ko') STR_TYPE_NM
+		     , IFNULL(COUNT(RS.RCPT_SEQ),0) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(PCC.CODE_OTHER2 ='N', 1, 0)),0) RCPT_CMPL_N_CNT
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 01 THEN RCPT_DT END) AS MON_01
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 02 THEN RCPT_DT END) AS MON_02
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 03 THEN RCPT_DT END) AS MON_03
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 04 THEN RCPT_DT END) AS MON_04
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 05 THEN RCPT_DT END) AS MON_05
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 06 THEN RCPT_DT END) AS MON_06
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 07 THEN RCPT_DT END) AS MON_07
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 08 THEN RCPT_DT END) AS MON_08
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 09 THEN RCPT_DT END) AS MON_09
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 10 THEN RCPT_DT END) AS MON_10
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 11 THEN RCPT_DT END) AS MON_11
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 12 THEN RCPT_DT END) AS MON_12
+		  FROM TB_MMS_OBS_RCPT_M ORM
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON ORM.STR_CD = SS.STR_CD
+		   AND SS.COMP_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON ORM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		    ON SS.COMP_CD = SC.COMP_CD
+		  LEFT OUTER JOIN TB_MMS_STND_BRND_S SB
+		    ON SS.BRND_CD = SB.BRND_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		    ON CC.CODE_GROUP_CD = 'SC0027'
+		   AND SS.AREA_SEQ = CC.CODE_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE PCC
+		    ON PCC.CODE_GROUP_CD = 'OS0001'
+		   AND ORM.RCPT_CMPL_TYPE = PCC.CODE_CD
+		 WHERE LEFT(ORM.RCPT_DT, 4) = IF(ISNULL(#{searchYear}), YEAR(now()), #{searchYear})
+		   AND ORM.DEL_YN = 'N'
+		 <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND ORM.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SS.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SS.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="strNm != null and !strNm.equals('')">
+		   AND SS.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		 </if>
+		 <if test="strSt != null and !strSt.equals('')">
+		   AND SS.STR_ST = #{strSt}
+		 </if>
+		 <if test="strType != null and !strType.equals('')">
+		   AND SS.STR_TYPE = #{strType}
+		 </if>
+		 <if test="areaSeq != null and !areaSeq.equals('')">
+	       AND CC.CODE_OTHER1 = #{areaSeq}
+		 </if>
+		 <if test="areaSeq2 != null and !areaSeq2.equals('')">
+	       AND CC.CODE_CD = #{areaSeq2}
+		 </if>
+		 GROUP BY ORM.STR_CD
+		 ORDER BY RCPT_TOT_CNT DESC
+	</select>
+	
+	<select id="getRcptStoreSum" resultType="HMap" >
+		SELECT /* [StatusService.query][getRcptStoreSum][매장 목록조회][한성진][2017. 2. 27.] */
+		       '' AREA_NM
+		     , '' COMP_NM
+		     , '' STR_NM
+		     , '' STR_ST_NM
+		     , '합계' STR_TYPE_NM
+		     , IFNULL(COUNT(RS.RCPT_SEQ),0) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(PCC.CODE_OTHER2 ='N', 1, 0)),0) RCPT_CMPL_N_CNT
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 01 THEN RCPT_DT END) AS MON_01
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 02 THEN RCPT_DT END) AS MON_02
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 03 THEN RCPT_DT END) AS MON_03
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 04 THEN RCPT_DT END) AS MON_04
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 05 THEN RCPT_DT END) AS MON_05
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 06 THEN RCPT_DT END) AS MON_06
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 07 THEN RCPT_DT END) AS MON_07
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 08 THEN RCPT_DT END) AS MON_08
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 09 THEN RCPT_DT END) AS MON_09
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 10 THEN RCPT_DT END) AS MON_10
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 11 THEN RCPT_DT END) AS MON_11
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 12 THEN RCPT_DT END) AS MON_12
+		  FROM TB_MMS_OBS_RCPT_M ORM
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON ORM.STR_CD = SS.STR_CD
+		   AND SS.COMP_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON ORM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		    ON CC.CODE_GROUP_CD = 'SC0027'
+		   AND SS.AREA_SEQ = CC.CODE_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE PCC
+		    ON PCC.CODE_GROUP_CD = 'OS0001'
+		   AND ORM.RCPT_CMPL_TYPE = PCC.CODE_CD
+		 WHERE LEFT(ORM.RCPT_DT, 4) = IF(ISNULL(#{searchYear}), YEAR(now()), #{searchYear})
+		   AND ORM.DEL_YN = 'N'
+		 <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND ORM.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SS.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SS.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="strNm != null and !strNm.equals('')">
+		   AND SS.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		 </if>
+		 <if test="strSt != null and !strSt.equals('')">
+		   AND SS.STR_ST = #{strSt}
+		 </if>
+		 <if test="strType != null and !strType.equals('')">
+		   AND SS.STR_TYPE = #{strType}
+		 </if>
+		 <if test="areaSeq != null and !areaSeq.equals('')">
+	       AND CC.CODE_OTHER1 = #{areaSeq}
+		 </if>
+		 <if test="areaSeq2 != null and !areaSeq2.equals('')">
+	       AND CC.CODE_CD = #{areaSeq2}
+		 </if>
+		 ORDER BY RCPT_TOT_CNT DESC
+	</select>
+	
+	<select id="getRcptPrdList" resultType="HMap" >
+		SELECT /* [StatusService.query][getRcptPrdList][장애발생현황 밴더별 목록조회][한성진][2017. 2. 27.] */
+		       ORM.PRD_CD
+		     , SPT.PRD_TYPE_NM PRD_TYPE_LV1_NM
+		     , SPT2.PRD_TYPE_NM PRD_TYPE_LV2_NM
+		     , PC.CODE_NM PRD_TYPE_LV3_NM
+		     , SP.PRD_NM
+		     , COUNT(RS.RCPT_SEQ) RCPT_CNT
+		     , IFNULL(SUM(IF(CC.CODE_OTHER2 ='N', 1, 0)),0) RCPT_CMPL_CNT
+		     , IFNULL(SUM(IF(RCPT_COST_TYPE='02', 1, 0)),0) RCPT_COST_Y_CNT
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 01 THEN RCPT_DT END) AS MON_01
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 02 THEN RCPT_DT END) AS MON_02
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 03 THEN RCPT_DT END) AS MON_03
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 04 THEN RCPT_DT END) AS MON_04
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 05 THEN RCPT_DT END) AS MON_05
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 06 THEN RCPT_DT END) AS MON_06
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 07 THEN RCPT_DT END) AS MON_07
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 08 THEN RCPT_DT END) AS MON_08
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 09 THEN RCPT_DT END) AS MON_09
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 10 THEN RCPT_DT END) AS MON_10
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 11 THEN RCPT_DT END) AS MON_11
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 12 THEN RCPT_DT END) AS MON_12
+		  FROM TB_MMS_OBS_RCPT_M ORM
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+		  	ON ORM.PRD_CD = SP.PRD_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		    ON ORM.STR_CD = SS.STR_CD
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON ORM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_TYPE_S SPT
+		  	ON SPT.PRD_TYPE_LV = '1'
+		   AND SPT.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  	ON SPT2.PRD_TYPE_LV = '2'
+		   AND SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  	ON SPT3.PRD_TYPE_LV = '3'
+		   AND SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE PC
+		  	ON PC.CODE_GROUP_CD = 'SC0025'
+		   AND SPT3.PRD_TYPE_NM = PC.CODE_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  	ON CC.CODE_GROUP_CD = 'OS0001'
+		   AND ORM.RCPT_CMPL_TYPE = CC.CODE_CD
+		 WHERE LEFT(ORM.RCPT_DT, 4) = IF(ISNULL(#{searchYear}), YEAR(now()), #{searchYear})
+		   AND ORM.DEL_YN = 'N'
+		 <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND ORM.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SS.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SS.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+	       AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+		 </if>
+		 <if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+	       AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+		 </if>
+		 <if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+	       AND PC.CODE_CD = #{prdTypeLv3}
+		 </if>
+		 <if test="prdNm != null and !prdNm.equals('')">
+	       AND SP.PRD_NM LIKE CONCAT('%',#{prdNm},'%')
+		 </if>
+		 GROUP BY ORM.PRD_CD
+		 ORDER BY RCPT_CNT DESC
+	</select>
+	
+	<select id="getRcptPrdSum" resultType="HMap" >
+		SELECT /* [StatusService.query][getRcptPrdSum][장애발생현황 밴더별 합계][한성진][2017. 2. 27.] */
+			   '' MFR_NM
+			 , '' PRD_TYPE_NM
+		     , '합계' PRD_NM
+		     , COUNT(RS.RCPT_SEQ) RCPT_CNT
+		     , IFNULL(SUM(IF(CC.CODE_OTHER2 = 'N', 1, 0)) , 0) RCPT_CMPL_CNT
+		     , IFNULL(SUM(IF(RCPT_COST_TYPE='02', 1, 0)), 0) RCPT_COST_Y_CNT
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 01 THEN RCPT_DT END) AS MON_01
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 02 THEN RCPT_DT END) AS MON_02
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 03 THEN RCPT_DT END) AS MON_03
+		     , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 04 THEN RCPT_DT END) AS MON_04
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 05 THEN RCPT_DT END) AS MON_05
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 06 THEN RCPT_DT END) AS MON_06
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 07 THEN RCPT_DT END) AS MON_07
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 08 THEN RCPT_DT END) AS MON_08
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 09 THEN RCPT_DT END) AS MON_09
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 10 THEN RCPT_DT END) AS MON_10
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 11 THEN RCPT_DT END) AS MON_11
+			 , COUNT(CASE WHEN DATE_FORMAT(RCPT_DT, '%m') = 12 THEN RCPT_DT END) AS MON_12
+		  FROM TB_MMS_OBS_RCPT_M ORM
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+		  	ON ORM.PRD_CD = SP.PRD_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		    ON ORM.STR_CD = SS.STR_CD
+		    LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON ORM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_TYPE_S SPT
+		  	ON SPT.PRD_TYPE_LV = '1'
+		   AND SPT.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  	ON SPT2.PRD_TYPE_LV = '2'
+		   AND SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  	ON SPT3.PRD_TYPE_LV = '3'
+		   AND SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE PC
+		  	ON PC.CODE_GROUP_CD = 'SC0025'
+		   AND SPT3.PRD_TYPE_NM = PC.CODE_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  	ON CC.CODE_GROUP_CD = 'OS0001'
+		   AND ORM.RCPT_CMPL_TYPE = CC.CODE_CD
+		 WHERE LEFT(ORM.RCPT_DT, 4) = IF(ISNULL(#{searchYear}), YEAR(now()), #{searchYear})
+		   AND ORM.DEL_YN = 'N'
+		 <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND ORM.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SS.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SS.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+	       AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+		 </if>
+		 <if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+	       AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+		 </if>
+		 <if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+	       AND PC.CODE_CD = #{prdTypeLv3}
+		 </if>
+		 <if test="prdNm != null and !prdNm.equals('')">
+	       AND SP.PRD_NM LIKE CONCAT('%',#{prdNm},'%')
+		 </if>
+		 ORDER BY RCPT_CNT DESC
+	</select>
+	
+	
+	<!--
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	-->
+	
+	
+	
+	
+	<select id="getLineChart" resultType="LHMap"> <!-- 꺾은선 차트 -->
+		SELECT /* [StatusService.query][getLineChart][연간 건별 처리 현황][한성진][2017. 2. 27.] */
+			   MON.MON XTICK 
+		     , IFNULL(RC.RCPT_TOTAL, 0) RCPT_TOTAL
+		     , IFNULL(RC.RCPT_CMPL_CNT, 0) RCPT_CMPL_CNT
+		     , IFNULL(RC.RCPT_CMPT_N_CNT, 0) RCPT_CMPT_N_CNT
+		     , IFNULL(RC.RCPT_COSY_Y_CNT, 0) RCPT_COSY_Y_CNT
+		  FROM 
+		  (
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -10 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -9 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -8 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -7 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -5 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -4 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -3 MONTH), '%Y-%m') MON
+		UNION 
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -2 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(now(), '%Y-%m') MON
+		    )MON
+		  LEFT OUTER JOIN(
+		 SELECT DATE_FORMAT(RM.RCPT_DT, '%Y-%m') RCPT_DT
+				 , COUNT(RS.RCPT_SEQ) RCPT_TOTAL
+			     , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+			     , IFNULL(SUM(IF(CC.CODE_OTHER2='N', 1, 0)), 0) RCPT_CMPT_N_CNT
+			     , SUM(IF(RM.RCPT_COST_TYPE = '02', 1, 0)) RCPT_COSY_Y_CNT
+		  FROM TB_MMS_OBS_RCPT_M RM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  	ON CC.CODE_GROUP_CD = 'OS0001'
+		   AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON RM.STR_CD = SS.STR_CD
+		 WHERE DATE_FORMAT(RM.RCPT_DT, '%Y-%m') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m') and DATE_FORMAT( now(), '%Y-%m')
+		   AND RM.DEL_YN = 'N'
+		<if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+        <if test='s_compCd != null and !s_compCd.equals("")'>
+		   AND SS.COMP_CD = #{s_compCd}
+		</if>
+        <if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SS.BRND_CD = #{s_brndCd}
+		</if>
+		 GROUP BY DATE_FORMAT(RCPT_DT, '%Y-%m'),DATE_FORMAT(RCPT_DT, '%m')
+		) RC
+		ON MON.MON = RC.RCPT_DT
+	</select>
+	
+	<select id="getPieChart" resultType="LHMap">
+		SELECT /* [StatusService.query][getPieChart][고객사별 장애율][한성진][2017. 2. 27.] */
+			   SC.COMP_NM
+		     , COUNT(RM.RCPT_SEQ) CNT
+		  FROM TB_MMS_OBS_RCPT_M RM
+		  JOIN TB_MMS_STND_STR_S SS
+		  	ON RM.STR_CD = SS.STR_CD
+		  JOIN TB_MMS_STND_COMP_S SC
+		  	ON SS.COMP_CD = SC.COMP_CD
+		 WHERE DATE_FORMAT(RM.RCPT_DT, '%Y-%m') = DATE_FORMAT(now(), '%Y-%m')
+		   AND RM.DEL_YN = 'N'
+		<if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+        <if test='s_compCd != null and !s_compCd.equals("")'>
+		   AND SS.COMP_CD = #{s_compCd}
+		</if>
+        <if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SS.BRND_CD = #{s_brndCd}
+		</if>
+		 GROUP BY SC.COMP_CD
+		 ORDER BY CNT DESC
+		 LIMIT 6
+	</select>
+	
+	<select id="getBrndPieChart" resultType="LHMap">
+		SELECT /* [StatusService.query][getBrndPieChart][브랜드별 장애율][한성진][2017. 2. 27.] */
+			   SB.BRND_NM
+	 	     , COUNT(RM.RCPT_SEQ) CNT
+          FROM TB_MMS_OBS_RCPT_M RM
+          JOIN TB_MMS_STND_STR_S SS
+          	ON RM.STR_CD = SS.STR_CD
+          JOIN TB_MMS_STND_BRND_S SB
+          	ON SS.BRND_CD = SB.BRND_CD
+         WHERE SS.COMP_CD = #{s_compCd}
+           AND DATE_FORMAT(RM.RCPT_DT, '%m') = DATE_FORMAT(now(), '%m') 
+           AND RM.DEL_YN = 'N'
+        <if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+        <if test='s_compCd != null and !s_compCd.equals("")'>
+		   AND SS.COMP_CD = #{s_compCd}
+		</if>
+        <if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SS.BRND_CD = #{s_brndCd}
+		</if>
+         GROUP BY SB.BRND_CD
+         ORDER BY CNT DESC
+         LIMIT 6
+	</select>
+	
+	<select id="getMonthObsProcRate" resultType="LHMap">
+		SELECT /* [StatusService.query][getYearObsProcRate][월간 장애처리율][한성진][2017. 2. 27.] */
+			   COUNT(RS.RCPT_SEQ) RCPT_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+		     , DATE_FORMAT(now(), '%Y-%m') Y_MONTH
+		     , MONTH(now()) MONTH
+		  FROM TB_MMS_OBS_RCPT_M RM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  	ON CC.CODE_GROUP_CD = 'OS0001'
+		   AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON RM.STR_CD = SS.STR_CD
+		 WHERE DATE_FORMAT(RM.RCPT_DT, '%m') = DATE_FORMAT(now(), '%m') 
+		   AND RM.DEL_YN = 'N'
+		<if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+        <if test='s_compCd != null and !s_compCd.equals("")'>
+		   AND SS.COMP_CD = #{s_compCd}
+		</if>
+        <if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SS.BRND_CD = #{s_brndCd}
+		</if>
+	</select>
+	
+	<select id="getWeekObsProcRate" resultType="LHMap">
+		SELECT /* [StatusService.query][getWeekObsProcRate][주간 장애처리율][한성진][2017. 2. 27.] */
+			   COUNT(RS.RCPT_SEQ) RCPT_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+			 , DATE_FORMAT(now(), '%m/%d') END_DAY
+			 , DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%m/%d') START_DAY
+		  FROM TB_MMS_OBS_RCPT_M RM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  	ON CC.CODE_GROUP_CD = 'OS0001'
+		   AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON RM.STR_CD = SS.STR_CD
+         WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+           AND RM.DEL_YN = 'N'
+        <if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+        <if test='s_compCd != null and !s_compCd.equals("")'>
+		   AND SS.COMP_CD = #{s_compCd}
+		</if>
+        <if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SS.BRND_CD = #{s_brndCd}
+		</if>
+	</select>
+
+	<select id="getTodayObsStatus" resultType="LHMap">
+		SELECT /* [StatusService.query][getTodayObsStatus][오늘 장애현황][한성진][2017. 2. 27.] */
+			   COUNT(RS.RCPT_SEQ) RCPT_TODAY_CNT
+		     , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_TODAY_CNT
+             , DATE_FORMAT(now(), '%m/%d') END_DAY
+          FROM TB_MMS_OBS_RCPT_M RM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  	ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		   AND RS.LAST_PROC_YN = 'Y'
+		   AND RS.DEL_YN = 'N'
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  	ON CC.CODE_GROUP_CD = 'OS0001'
+		   AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		  LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON RM.STR_CD = SS.STR_CD
+        WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') = DATE_FORMAT(now(), '%Y-%m-%d')
+          AND RM.DEL_YN = 'N'
+        <if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+        <if test='s_compCd != null and !s_compCd.equals("")'>
+		   AND SS.COMP_CD = #{s_compCd}
+		</if>
+        <if test='s_brndCd != null and !s_brndCd.equals("")'>
+		   AND SS.BRND_CD = #{s_brndCd}
+		</if>
+	</select>
+</mapper>
+ 

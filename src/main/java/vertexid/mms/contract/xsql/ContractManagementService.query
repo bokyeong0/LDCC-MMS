@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ContractManagementService">
+
+	<select id="getContractMngList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getContractMngList][계약 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       CI.CON_YEAR
+		     , CI.DIV_ID
+		     , CI.CON_ID
+		     , CI.CON_NAME
+		     , CONCAT(CI.CON_ID,'_',CI.MTN_ITEM_ID) CON_ID_NM
+		     , CI.MTN_ITEM_ID
+		     , CI.MTN_ITEM_NAME
+		     , CI.DET_ITEM_ID
+		     , CI.DET_CHANG_DATE
+		     , CI.DET_ITEM_FLAG
+		     , CI.CON_CFM_YN
+		     , IFNULL(CI.POS_CFM_YN, 'N') POS_CFM_YN
+		     , CI.MTN_COMP_CODE
+		     , CI.DET_ITEM_TYPE
+		     , CC.CODE_NM AS DET_ITEM_TYPE_NM
+		     , CI.DET_ITEM_NAME
+		     , CI.DET_ITEM_CNT
+		     , CI.MTN_STR_DATE
+		     , CI.MTN_END_DATE
+		     , CI.ERROR_SOLV_TRGT_TIME
+		     , AC.ASP_COMP_NM
+		     , SC.COMP_NM
+		  FROM LDCC_CON_ITEM_INFO CI
+		  LEFT OUTER JOIN TB_MMS_ASP_COMP AC
+		    ON CI.MTN_COMP_CODE = AC.ASP_COMP_CD
+		  LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		    ON CI.DIV_ID = SC.COMP_CD
+		  LEFT OUTER JOIN TB_MMS_STND_BRND_S SB
+		    ON SC.COMP_CD = SB.COMP_CD
+		  LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		    ON CC.CODE_GROUP_CD = 'CN0001'
+		   AND CI.DET_ITEM_TYPE = CC.CODE_CD
+		 WHERE 1=1
+		 <if test="detItemType != null and !detItemType.equals('')">
+	       AND CI.DET_ITEM_TYPE = #{detItemType}
+		 </if>
+		 <if test="conId != null and !conId.equals('')">
+	       AND CONCAT(CI.CON_ID,'_',CI.MTN_ITEM_ID) LIKE CONCAT('%',#{conId},'%')
+		 </if>
+		 <if test="conName != null and !conName.equals('')">
+	       AND CI.CON_NAME LIKE CONCAT('%',#{conName},'%')
+		 </if>
+		 <if test="aspCompCd != null and !aspCompCd.equals('')">
+	       AND AC.ASP_COMP_CD = #{aspCompCd}
+		 </if>
+		 <if test="compCd != null and !compCd.equals('')">
+	       AND SC.COMP_CD = #{compCd}
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SB.BRND_CD = #{brndCd}
+		 </if>
+		 GROUP BY CI.CON_ID, CI.MTN_ITEM_ID
+		 ORDER BY CI.CON_ID DESC, CI.MTN_ITEM_ID ASC, CI.DET_ITEM_ID ASC
+	</select>
+	
+	<select id="getContractDetailList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getContractDetailList][계약 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       CON_ID
+		     , CON_YEAR
+		     , CON_NAME
+		     , DIV_ID
+		     , MTN_ITEM_ID
+		     , MTN_ITEM_NAME
+		     , DET_ITEM_ID
+		     , DET_ITEM_TYPE
+		     , DET_ITEM_NAME
+		     , DET_ITEM_CNT
+		     , POS_ITEM_CNT
+		  FROM LDCC_CON_ITEM_INFO
+		 WHERE CON_ID = #{conId}
+		   AND DIV_ID = #{divId}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		 GROUP BY CON_YEAR, CON_ID, DIV_ID, MTN_ITEM_ID, DET_ITEM_ID
+		 ORDER BY MTN_ITEM_ID ASC, DET_ITEM_ID ASC
+	</select>
+	
+	<select id="getContractAstList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getContractAstList][계약 목록조회][""HAN SEONG JIN""][2017. 2. 27.] */
+			 AM.AST_SEQ
+			 , AM.MNG_CD
+			 , SS.STR_NM
+			 , AM.PRD_CD
+			 , SP.PRD_NM
+			 , SA.AREA_NM
+			 , SP.PRD_SPEC
+			 , AM.AST_SERIAL
+			 , AM.AST_SERIAL AS posItemId
+			 , AM.AST_TYPE1
+			 , AM.AST_TYPE2
+			 , AM.FREE_START_DT
+			 , AM.COST_START_DT
+			 , AM.MA_YN
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		  ON CC3.CODE_GROUP_CD = 'SC0025'
+		  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON SS.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		  ON SS.STR_ST = PCC.CODE_CD
+		  AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		  ON PCC2.CODE_GROUP_CD = 'AT0003'
+		  AND PCC2.CODE_CD = AM.AST_ST
+		WHERE AM.DEL_YN = 'N'
+		AND SS.COMP_YN = 'N'
+		AND SC.DEL_YN = 'N'
+		AND SB.DEL_YN = 'N'
+		AND SS.DEL_YN = 'N'
+		AND SC.COMP_CD = #{compCd}
+		AND AM.ASP_COMP_CD = #{aspCompCd}
+		AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+		AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+		AND AM.USE_YN = 'Y'
+		AND AM.CON_ID = #{conId}
+		AND AM.CON_YEAR = #{conYear}
+		AND AM.MTN_ITEM_ID = #{mtnItemId}
+		 <if test="maYn != null and !maYn.equals('')">
+	       AND AM.MA_YN = #{maYn}
+		 </if>
+		 <if test='costYn != null and costYn.equals("Y")'>
+		   AND DATE_FORMAT(now(), '%Y-%m') BETWEEN DATE_FORMAT(AM.COST_START_DT, '%Y-%m') AND CASE FN_LENGTH(AM.COST_END_DT) WHEN 0 THEN '9999-12' ELSE DATE_FORMAT(AM.COST_END_DT, '%Y-%m') END
+		 </if>
+		 <if test="brndCd != null and !brndCd.equals('')">
+	       AND SB.BRND_CD = #{brndCd}
+		 </if>
+		 <if test="strNm != null and !strNm.equals('')">
+	       AND SS.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		 </if>
+		 <if test="areaCd != null and !areaCd.equals('')">
+	       AND AM.AREA_CD = #{areaCd}
+		 </if>
+		 <if test="prdNm != null and !prdNm.equals('')">
+	       AND SP.PRD_NM = #{prdNm}
+		 </if>
+		ORDER BY SC.COMP_CD, SB.BRND_CD, SS.AREA_SEQ, AM.STR_CD, CASE WHEN FN_LENGTH(AM.AST_TYPE2) = 0 THEN 999999999 ELSE CAST(AM.AST_TYPE2 AS UNSIGNED) END, AM.PRD_CD
+	</select>
+	
+	<select id="getAssetList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getAssetList][계약 목록조회][""HAN SEONG JIN""][2017. 2. 27.] */
+			   CONCAT(CI.CON_ID,'_',CI.MTN_ITEM_ID) CON_MTN_ID
+			 , CI.CON_YEAR
+			 , CI.CON_ID
+			 , CI.MTN_ITEM_ID
+			 , AM.MNG_CD
+			 , AM.AST_SERIAL
+			 , SC.COMP_NM
+			 , SB.BRND_NM
+			 , SS.STR_NM
+			 , SS.STR_TYPE
+			 , AC.ASP_COMP_NM
+			 , SA.AREA_NM
+			 , AM.AST_TYPE2
+			 , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+			 , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+			 , CC3.CODE_NM AS PRD_TYPE_LV3_NM
+			 , SP.PRD_NM
+			 , SP.PRD_SPEC
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		  ON CC3.CODE_GROUP_CD = 'SC0025'
+		  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON SS.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		  ON SS.STR_ST = PCC.CODE_CD
+		  AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		  ON PCC2.CODE_GROUP_CD = 'AT0003'
+		  AND PCC2.CODE_CD = AM.AST_ST
+		LEFT JOIN (SELECT * FROM LDCC_CON_ITEM_INFO group by CON_ID, CON_YEAR, MTN_ITEM_ID) CI
+		  ON AM.CON_ID      = CI.CON_ID
+		  AND AM.CON_YEAR    = CI.CON_YEAR
+		  AND AM.MTN_ITEM_ID = CI.MTN_ITEM_ID
+		WHERE AM.DEL_YN = 'N'
+		AND SS.COMP_YN = 'N'
+		AND SC.DEL_YN = 'N'
+		AND SB.DEL_YN = 'N'
+		AND SS.DEL_YN = 'N'
+		AND AM.USE_YN = 'Y'
+		<if test="conYear != null and !conYear.equals('')">
+		     AND AM.CON_YEAR = #{conYear}
+		</if>
+		<if test="conId != null and !conId.equals('')">
+		     AND AM.CON_ID = #{conId}
+		</if>
+		<if test="mtnItemId != null and !mtnItemId.equals('')">
+		     AND AM.MTN_ITEM_ID = #{mtnItemId}
+		</if>
+		<if test="aspCompCd != null and !aspCompCd.equals('')">
+		     AND AM.ASP_COMP_CD = #{aspCompCd}
+		</if>
+		<if test="areaCd != null and !areaCd.equals('')">
+		     AND AM.AREA_CD = #{areaCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+		     AND SC.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+		     AND SB.BRND_CD = #{brndCd}
+		</if>
+		<if test="strNm != null and !strNm.equals('')">
+		     AND SS.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		</if>
+		<!-- A20180716 k2s start -->
+		<if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+			 AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+		</if>
+		<if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+			 AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}	
+		</if>
+		<if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+			 AND SP.PRD_TYPE_LV3 = #{prdTypeLv3}
+		</if>
+		<if test="prdCd != null and !prdCd.equals('')">
+			 AND AM.PRD_CD = #{prdCd}
+		</if>		 
+		<!-- A20180716 k2s end -->
+		ORDER BY SC.COMP_CD, SB.BRND_CD, SS.AREA_SEQ, AM.STR_CD, CASE WHEN FN_LENGTH(AM.AST_TYPE2) = 0 THEN 999999999 ELSE CAST(AM.AST_TYPE2 AS UNSIGNED) END, AM.PRD_CD
+	</select>
+	
+	<select id="getStoreAstList" resultType="HMap" >
+		SELECT AST_SEQ
+			  , AM.MNG_CD
+			  , SS.STR_NM
+			  , AM.PRD_CD
+			  , SP.PRD_NM
+			  , SP.PRD_SPEC
+			  , SA.AREA_NM
+			  , AM.AST_SERIAL
+			  , AM.AST_TYPE1
+			  , AM.AST_TYPE2
+			  , AM.FREE_START_DT
+			  , AM.COST_START_DT
+			  , AM.MA_YN
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		WHERE AM.STR_CD IN (
+				   SELECT S.STR_CD
+				   FROM TB_MMS_STND_STR_S S
+				   LEFT JOIN TB_MMS_AST_MNG_M AM
+				     ON S.STR_CD = AM.STR_CD
+				   LEFT JOIN TB_MMS_STND_BRND_S B
+				     ON S.BRND_CD = B.BRND_CD
+				   LEFT JOIN TB_MMS_STND_COMP_S C
+				     ON S.COMP_CD = C.COMP_CD
+				   LEFT JOIN TB_PARAGON_COMM_CODE CC
+				     ON S.STR_TYPE = CC.CODE_CD
+				     AND CC.CODE_GROUP_CD = 'SC0021'
+				   LEFT JOIN TB_PARAGON_COMM_CODE PCC
+				     ON S.STR_TYPE = PCC.CODE_CD
+				     AND PCC.CODE_CD = S.AREA_SEQ
+				     AND PCC.CODE_GROUP_CD = 'SC0021'
+				   LEFT JOIN TB_MMS_ASP_COMP AC
+				     ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+				   LEFT JOIN TB_MMS_STND_AREA_S SA
+				     ON AM.AREA_CD = SA.AREA_CD
+				   LEFT JOIN TB_MMS_STND_PRD_S SP
+				     ON AM.PRD_CD = SP.PRD_CD
+				   WHERE S.COMP_YN = 'N'
+				   AND AM.DEL_YN = 'N'
+				   AND S.COMP_YN = 'N'
+				   AND C.DEL_YN = 'N'
+				   AND B.DEL_YN = 'N'
+				   AND S.DEL_YN = 'N'
+				   AND C.COMP_CD = #{compCd}
+				   AND AM.USE_YN = 'Y'
+				   AND AM.MA_YN = 'Y'
+				   AND AM.CON_ID = #{conId}
+				   AND AM.CON_YEAR = #{conYear}
+				   AND AM.MTN_ITEM_ID = #{mtnItemId}
+				   AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+				   AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+			       	 <if test="brndCd != null and !brndCd.equals('')">
+				       AND B.BRND_CD = #{brndCd}
+					 </if>
+				       GROUP BY S.STR_CD
+				     <choose>
+						<when test="posCnt != null and posCnt.equals('ZERO')">
+						    HAVING COUNT(AM.AST_SEQ) <![CDATA[<>]]> 0
+						</when>
+						<when test="posCnt != null and posCnt.equals('ALL')">
+						</when>
+						<otherwise>
+						    HAVING COUNT(AM.AST_SEQ) = #{posCnt}
+						</otherwise>
+					</choose>
+		   )
+		   AND AM.DEL_YN = 'N'
+	       AND SS.COMP_YN = 'N'
+	       AND SC.DEL_YN = 'N'
+	       AND SB.DEL_YN = 'N'
+	       AND SS.DEL_YN = 'N'
+	       AND AM.USE_YN = 'Y'
+	       
+	       AND AM.CON_ID = #{conId}
+	       AND AM.CON_YEAR = #{conYear}
+	       AND AM.MTN_ITEM_ID = #{mtnItemId}
+	       AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+	       AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+	     <if test="strNm != null and !strNm.equals('')">
+		   AND SS.STR_NM LIKE CONCAT('%',#{strNm},'%')
+		 </if>
+	     <if test="areaCd != null and !areaCd.equals('')">
+		   AND AM.AREA_CD = #{areaCd}
+		 </if>
+	     <if test="maYn != null and !maYn.equals('')">
+		   AND AM.MA_YN = #{maYn}
+		 </if>
+	     <if test="costYn != null and !costYn.equals('')">
+		   AND DATE_FORMAT(now(), '%Y-%m') BETWEEN DATE_FORMAT(AM.COST_START_DT, '%Y-%m') AND CASE FN_LENGTH(AM.COST_END_DT) WHEN 0 THEN '9999-12' ELSE DATE_FORMAT(AM.COST_END_DT, '%Y-%m') END
+		 </if>
+		 ORDER BY SB.BRND_NM, SS.STR_NM, CASE WHEN FN_LENGTH(AM.AST_TYPE2) = 0 THEN 999999999 ELSE CAST(AM.AST_TYPE2 AS UNSIGNED) END, AM.PRD_CD
+	</select>
+	
+	<update id="updateAssetMaYn">
+		UPDATE TB_MMS_AST_MNG_M   /* [ContractManagementService.query][updateContractProduct][모델 정보 수정]["Han Seong Jin"][2017. 11. 07.] */
+		   SET MA_YN	  = #{maYn}
+		  	 , UP_USER_ID = #{s_userId}
+		 WHERE AST_SEQ = #{astSeq}
+		   AND AST_SERIAL = #{astSerial}
+	</update>
+	
+	<update id="saveChangeContract">
+		UPDATE TB_MMS_AST_MNG_M
+		   SET CON_YEAR = #{conYear}
+		   	 , CON_ID 	= #{conId}
+		   	 , MTN_ITEM_ID = #{mtnItemId}
+	   	 <if test="areaCd != null and !areaCd.equals('')">
+	         , AREA_CD = #{areaCd}
+		 </if>
+		 WHERE AST_SERIAL IN (
+		 		<foreach collection="dt_asset" item="item"  index="idx" separator=",">
+					#{item.astSerial}
+				</foreach>  )
+	</update>
+	
+	<select id="getPosItemIds" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getPosItemIds][계약 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       AM.AST_SERIAL
+		  FROM TB_MMS_AST_MNG_M AM
+		   LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON SS.STR_CD = AM.STR_CD 
+		   AND SS.COMP_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		  	ON SC.COMP_CD = SS.COMP_CD
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+		  	ON SP.PRD_CD = AM.PRD_CD
+		 WHERE SC.COMP_CD = #{compCd}
+		   AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+	       AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+	       AND AM.USE_YN = 'Y'
+	       AND AM.DEL_YN = 'N'
+	       AND AM.MA_YN = 'Y'
+<!-- 	       AND DATE_FORMAT(now(), '%Y-%m') BETWEEN DATE_FORMAT(AM.COST_START_DT, '%Y-%m') and DATE_FORMAT(AM.COST_END_DT, '%Y-%m') -->
+	</select>
+	
+	<select id="getConIdList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getConIdList][계약ID 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       CON_ID value
+		     , CONCAT(CON_ID, '_', MTN_ITEM_ID) name
+		  FROM LDCC_CON_ITEM_INFO
+		 WHERE CON_YEAR = #{conYear}
+		 <if test="aspCompCd != null and !aspCompCd.equals('')">
+		   AND MTN_COMP_CODE = #{aspCompCd}
+		 </if>
+		 GROUP BY CON_ID, MTN_ITEM_ID
+	</select>
+	
+	<select id="getChangeConIdList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getChangeConIdList][계약ID 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       CON_ID value
+		     , CONCAT(CON_ID, '_', MTN_ITEM_ID) name
+		  FROM LDCC_CON_ITEM_INFO
+		 WHERE CON_YEAR = #{conYear}
+<!-- 		   AND DATE_FORMAT(now(), '%Y-%m') BETWEEN DATE_FORMAT(MTN_STR_DATE, '%Y-%m') and DATE_FORMAT(MTN_END_DATE, '%Y-%m') -->
+		   AND MTN_COMP_CODE = #{aspCompCd}
+		 GROUP BY CON_ID, MTN_ITEM_ID
+	</select>
+	
+	<delete id="deleteMapTemp" > 
+		DELETE /* [ContractManagementService.query][deleteMapTemp][계약집계 Temp Data 삭제][Han Seong Jin][2016-09-13] */ 
+		  FROM LDCC_CON_ITEM_MAP_INFO_TEMP
+		 WHERE CON_YEAR = #{conYear}
+		   AND DIV_ID 	= #{compCd}
+		   AND CON_ID 	= #{conId}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		   AND DET_ITEM_ID = #{detItemId}
+	</delete>
+	
+	<delete id="deleteMapInfo" > 
+		DELETE /* [ContractManagementService.query][deleteMapInfo][계약확정해제 MapInfo Data 삭제][Han Seong Jin][2016-09-13] */ 
+		  FROM LDCC_CON_ITEM_MAP_INFO
+		 WHERE CON_YEAR = #{conYear}
+		   AND DIV_ID 	= #{compCd}
+		   AND CON_ID 	= #{conId}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		   AND DET_ITEM_ID = #{detItemId}
+	</delete>
+	
+	<insert id="insertMapTemp">
+		INSERT /* [ContractManagementService.query][insertMapTemp][계약집계 Temp Data 등록][Han Seong Jin][2016-09-13] */ 
+		  INTO LDCC_CON_ITEM_MAP_INFO_TEMP (
+		  		  CON_YEAR
+		  		, DIV_ID
+		  		, CON_ID
+		  		, MTN_ITEM_ID
+		  		, DET_ITEM_ID
+		  		, DET_ITEM_TYPE
+		  		, DET_ITEM_NAME
+		        , POS_ITEM_ID
+		  )
+		  VALUES		  
+		<foreach collection="dt_posItem" item="item"  index="idx" separator=",">
+		(   #{conYear}
+			, #{compCd}
+			, #{conId}
+			, #{mtnItemId}
+			, #{detItemId}
+			, #{detItemType}
+			, #{detItemName}
+	        , #{item.posItemId}
+		)
+		</foreach>
+	</insert>
+	
+	<insert id="insertMapInfo">
+		INSERT /* [ContractManagementService.query][insertMapInfo][계약확정 MapInfo 자산 등록][Han Seong Jin][2016-09-13] */
+		  INTO LDCC_CON_ITEM_MAP_INFO (
+		  		  CON_YEAR
+		  		, DIV_ID
+		  		, CON_ID
+		  		, MTN_ITEM_ID
+		  		, DET_ITEM_ID
+		  		, DET_ITEM_TYPE
+		  		, DET_ITEM_NAME
+		        , POS_ITEM_ID
+		  )
+		SELECT CON_YEAR
+			 , DIV_ID
+			 , CON_ID
+			 , MTN_ITEM_ID
+			 , DET_ITEM_ID
+			 , DET_ITEM_TYPE
+			 , DET_ITEM_NAME
+			 , POS_ITEM_ID
+		  FROM LDCC_CON_ITEM_MAP_INFO_TEMP
+		 WHERE CON_YEAR = #{conYear}
+		   AND CON_ID = #{conId}
+		   AND DIV_ID = #{compCd}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		   AND DET_ITEM_ID = #{detItemId}
+	</insert>
+	
+	<insert id="insertMapInfoLog">
+		INSERT /* [ContractManagementService.query][insertMapInfoLog][계약확정 MapInfoLog 등록][Han Seong Jin][2016-09-13] */
+		  INTO LDCC_CON_ITEM_MAP_INFO_LOG (
+		  		  CON_YEAR
+		  		, DIV_ID
+		  		, CON_ID
+		  		, MTN_ITEM_ID
+		  		, DET_ITEM_ID
+		  		, DET_ITEM_TYPE
+		  		, DET_ITEM_NAME
+		        , POS_ITEM_ID
+		  )
+		SELECT CON_YEAR
+			 , CON_ID
+			 , DIV_ID
+			 , MTN_ITEM_ID
+			 , DET_ITEM_ID
+			 , DET_ITEM_TYPE
+			 , DET_ITEM_NAME
+			 , POS_ITEM_ID
+		  FROM LDCC_CON_ITEM_MAP_INFO
+		 WHERE CON_YEAR = #{conYear}
+		   AND CON_ID = #{conId}
+		   AND DIV_ID = #{compCd}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		   AND DET_ITEM_ID = #{detItemId}
+	</insert>
+	
+	<select id="getPosItemCnt" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getPosItemCnt][계약 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       COUNT(AM.AST_SEQ) COUNT
+		  FROM TB_MMS_AST_MNG_M AM
+		   LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  	ON SS.STR_CD = AM.STR_CD 
+		   AND SS.COMP_YN = 'N'
+		  LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		  	ON SC.COMP_CD = SS.COMP_CD
+		  LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+		  	ON SP.PRD_CD = AM.PRD_CD
+		 WHERE SC.COMP_CD = #{compCd}
+		   AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+	       AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+	       AND AM.MA_YN = 'Y'
+		   AND DATE_FORMAT(now(), '%Y-%m') BETWEEN DATE_FORMAT(AM.COST_START_DT, '%Y-%m') AND CASE FN_LENGTH(AM.COST_END_DT) WHEN 0 THEN '9999-12' ELSE DATE_FORMAT(AM.COST_END_DT, '%Y-%m') END
+	</select>
+	
+	<update id="updatePosItemCnt">
+		UPDATE LDCC_CON_ITEM_INFO
+		   SET POS_ITEM_CNT	= #{posItemCnt}
+		 WHERE CON_YEAR = #{conYear}
+		   AND CON_ID 	= #{conId}
+		   AND DIV_ID 	= #{compCd}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		   AND DET_ITEM_ID = #{detItemId}
+	</update>
+	
+	<update id="updateContractConfirm">
+		UPDATE LDCC_CON_ITEM_INFO
+		   SET POS_CFM_YN = #{posCfmYn}
+		 WHERE CON_YEAR   = #{conYear}
+		   AND CON_ID 	  = #{conId}
+		   AND DIV_ID 	  = #{compCd}
+		   AND MTN_ITEM_ID = #{mtnItemId}
+		   AND DET_ITEM_ID = #{detItemId}
+	</update>
+	
+	<insert id="insertWebServiceBatch">
+		INSERT INTO
+			LDCC_WEBSERVICE_BATCH
+			VALUES
+			(
+				 #{wsDt}
+				, #{wsNm}
+				, #{opNm}
+				, #{jsonData}
+			)
+	</insert>
+	
+	<select id="getStoreList" resultType="HMap" > 
+		SELECT /* [ContractManagementService.query][getStoreList][점포 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       S.STR_NM
+		     , S.MNG_CD
+		     , S.STR_CD
+		     , S.STR_CD AS posItemId
+		     , CC.CODE_NM AS STR_TYPE_NM
+		     , B.BRND_NM
+		     , FN_COMM_AREA_NM(S.AREA_SEQ) AS STR_AREA
+		     , COUNT(AM.AST_SEQ) COUNT
+		FROM TB_MMS_STND_STR_S S
+		LEFT JOIN TB_MMS_STND_BRND_S B
+		  ON S.BRND_CD = B.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S C
+		  ON S.COMP_CD = C.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON S.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_MMS_AST_MNG_M AM
+		  ON S.STR_CD = AM.STR_CD 
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+ 		  ON AM.PRD_CD = SP.PRD_CD
+		WHERE S.COMP_YN = 'N'
+		AND C.COMP_CD = #{compCd}
+		AND AM.CON_ID = #{conId}
+		AND AM.CON_YEAR = #{conYear}
+		AND AM.MTN_ITEM_ID = #{mtnItemId}
+		AND SP.PRD_TYPE_LV1 = #{prdTypeLv1}
+		AND SP.PRD_TYPE_LV2 = #{prdTypeLv2}
+		AND AM.DEL_YN = 'N'
+		AND AM.USE_YN = 'Y'
+		AND AM.MA_YN = 'Y'
+       	 <if test="brndCd != null and !brndCd.equals('')">
+	       AND B.BRND_CD = #{brndCd}
+		 </if>
+	     GROUP BY S.STR_CD
+	     <choose>
+			<when test="posCnt != null and posCnt.equals('ZERO')">
+			    HAVING COUNT(AM.AST_SEQ) <![CDATA[<>]]> 0
+			</when>
+			<when test="posCnt != null and posCnt.equals('ALL')">
+			</when>
+			<otherwise>
+			    HAVING COUNT(AM.AST_SEQ) = #{posCnt}
+			</otherwise>
+		</choose>
+	     ORDER BY B.BRND_NM, S.STR_NM
+	</select>
+</mapper> 

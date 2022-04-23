@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	
+	
+	<context:annotation-config />
+	
+    <context:component-scan base-package="vertexid,paragon.core">
+    	<context:include-filter type="annotation" expression="paragon.core.web.observer.ConfigCheck"/>
+	</context:component-scan>
+	
+<!-- 	<mvc:interceptors> -->
+<!-- 		<mvc:interceptor> -->
+<!-- 			<mvc:mapping path="/**"/> -->
+<!-- 			<bean id="loginInterceptor" class="vertexid.paragon.comm.util.LoginInterceptor"></bean> -->
+<!-- 		</mvc:interceptor> -->
+<!-- 	</mvc:interceptors> -->
+<!-- 	<context:component-scan base-package="paragon.core,vertexid" > -->
+<!--         <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/> -->
+<!--     </context:component-scan> -->
+	
+<!-- 	<aop:config proxy-target-class="true"> -->
+<!-- 		<aop:advisor id="managerTx" advice-ref="transactionAdvice" pointcut="execution(* *..svce.*Service.*(..))" /> -->
+<!--     </aop:config> -->
+    
+	
+	<!--
+    **************************************************
+    * Message Source
+    **************************************************
+    -->
+<!--     <task:executor id="executor" pool-size="200"/> -->
+<!--  	<task:annotation-driven executor="executor"/> -->
+ 	
+   	<bean id="messageResourcePathList" class="paragon.core.utility.config.MessageResourcePathBeanFactory" >
+        <property name="resourcePaths">
+            <list>
+                 <value>classpath:message/messageBundle</value>
+            </list>
+        </property>
+    </bean>
+    
+    <!-- 메세지 XML 로딩 -->
+    <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basenames" ref="messageResourcePathList" />
+        <property name="fallbackToSystemLocale" value="false" />
+        <property name="cacheSeconds" value="10"/>
+    </bean>
+    <bean id="messageSourceAccessor" class="org.springframework.context.support.MessageSourceAccessor">
+        <constructor-arg ref="messageSource" />
+    </bean>
+    
+    <!-- 메세지 DB 로딩 -->
+<!--     <bean id="messageSourceForDb" class="vertexid.paragon.comm.util.MessageLoadUtil" /> -->
+<!--     <bean id="messageSourceAccessor" class="org.springframework.context.support.MessageSourceAccessor"> -->
+<!--         <constructor-arg name="messageSource" ref="messageSourceForDb" /> -->
+<!--         <constructor-arg name="defaultLocale" value="ko" /> -->
+<!--     </bean> -->
+    
+    
+	<bean class="paragon.core.web.servlet.mvc.ParagonRequestMappingHandlerAdapter">
+		<property name="paramsArgumentResolver" ref="paramsArgumentResolver" ></property> 
+		<property name="paramsReturnValueHandler" ref="paramsReturnValueHandler" ></property> 
+		<property name="order" value="0" />
+	</bean>
+
+	<bean id="paramsArgumentResolver" class="paragon.core.conversion.ParamsArgumentResolver" />
+	<bean id="paramsReturnValueHandler" class="paragon.core.conversion.ParamsReturnValueHandler" />
+	
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver"/>
+	<!-- 스케줄러 객체 -->
+	<bean id="JobScheduler" class="paragon.core.utility.scheduler.JobScheduler"/>
+	<!-- 권한체크 객체 -->
+	<bean id="authorityRule" class="vertexid.paragon.comm.util.AuthorityRuleUtil" />
+</beans>

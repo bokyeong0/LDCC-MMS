@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="NoticeService">
+
+	<!-- <select id="getBoardNoticeList" resultType="HMap">
+		SELECT /* [NoticeService.query][getBoardNoticeList][공지사항 게시판 리스트 조회][김선호][2017-12-08] */
+				M.NOTICE_SEQ
+			,	MAX(M.TITLE) AS TITLE
+			,	MAX(M.CONTENT)	AS CONTENT
+			,	MAX(CONCAT(DATE_FORMAT(M.START_DT,'%Y-%m-%d'), " ~ " , DATE_FORMAT(M.END_DT,'%Y-%m-%d'))) 	AS NOTICE_DATE
+			,	MAX(DATE_FORMAT(M.IN_DT,'%Y-%m-%d %I:%i:%s')) 											AS IN_DT
+			,	MAX(M.IN_USER_ID)
+		  FROM 	TB_MMS_NOTICE_M M
+		  	,	TB_MMS_NOTICE_ASP_COMP_L L
+		 WHERE 	DEL_YN = 'N'
+		 	AND	M.NOTICE_SEQ	=	L.NOTICE_SEQ
+	        AND	L.ASP_COMP_CD	=	#{s_aspCompCd}		 	
+	        <if test="startDt != null and !startDt.equals('') and endDt == null and endDt.equals('')">
+	           AND M.START_DT <![CDATA[>=]]> DATE_FORMAT(#{startDt},'%Y-%m-%d %H:%i:%s')
+	        </if>
+	        <if test="endDt != null and !endDt.equals('') and startDt == null and startDt.equals('')">
+	           AND M.END_DT 	<![CDATA[<=]]> DATE_FORMAT(#{endDt},'%Y-%m-%d %H:%i:%s')
+	        </if>
+	        <if test="endDt != null and !endDt.equals('') and startDt != null and !startDt.equals('')">
+	           AND M.START_DT <![CDATA[>=]]> DATE_FORMAT(#{startDt},'%Y-%m-%d %H:%i:%s')     
+	           AND M.END_DT 	<![CDATA[<=]]> DATE_FORMAT(#{endDt},'%Y-%m-%d %H:%i:%s')
+	        </if>
+
+	        GROUP BY	M.NOTICE_SEQ ASC
+	</select> -->
+	<select id="getBoardNoticeList" resultType="HMap">	
+	/* [NoticeService.query][getBoardNoticeList][공지사항 게시판 리스트 조회][유승우][2017-12-18] */
+ 		 SELECT 
+	                NOTICE_SEQ
+                  , TITLE
+	              , CONTENT
+	              , WRITER
+	              , CONCAT(DATE_FORMAT(START_DT,'%Y-%m-%d'), " ~ " , DATE_FORMAT(END_DT,'%Y-%m-%d')) AS NOTICE_DATE
+                      , DATE_FORMAT(IN_DT,'%Y-%m-%d %I:%i:%s') IN_DT
+                      , IN_USER_ID		        
+	         FROM 
+	          (
+	             SELECT M.*             
+	              ,(SELECT 
+			  IFNULL(GROUP_CONCAT(ASP_COMP_CD),'TOTAL')  
+			FROM 
+			 TB_MMS_NOTICE_ASP_COMP_L 
+			 WHERE NOTICE_SEQ=M.NOTICE_SEQ) ASP_GROUP
+	              FROM 
+	              TB_MMS_NOTICE_M  M
+                      
+	          ) NOTI
+	          WHERE 1=1
+	            AND USE_YN='Y'
+	            AND DEL_YN='N'
+			<if test="s_companyCd != null and !s_companyCd.equals('')"> 
+	            AND ASP_GROUP REGEXP  '${s_companyCd},|,${s_companyCd},|,${s_companyCd}|${s_companyCd}|TOTAL' 
+	   		</if>  
+ 	           
+	        <if test="startDt != null and !startDt.equals('') and endDt == null and endDt.equals('')">
+	           AND START_DT BETWEEN #{startDt} AND #{endDt}
+	        </if>
+	        <if test="endDt != null and !endDt.equals('') and startDt == null and startDt.equals('')">
+	       	   AND END_DT BETWEEN #{startDt} AND #{endDt}
+	        </if>
+	        <if test="endDt != null and !endDt.equals('') and startDt != null and !startDt.equals('')">
+	           AND 
+                   (
+		    		(START_DT BETWEEN #{startDt} AND #{endDt})
+                   OR 
+                    (END_DT BETWEEN #{startDt} AND #{endDt})
+                   )
+	        </if>	          
+	          ORDER BY  IN_DT DESC	
+	        <if test="rowData != null and !rowData.equals('')">
+	          LIMIT 0 , ${rowData}
+	        </if>  
+	</select>	
+	
+	<select id="noticeNewPartnerComboList" resultType="HMap">
+		SELECT /* [NoticeService.query][noticeNewPartnerComboList][공지사항 게시판 등록 내 대상파트너사 콤보박스 조회][김선호][2017-12-12] */
+		       ASP_COMP_CD AS value
+		     , ASP_COMP_NM AS name
+		  FROM TB_MMS_ASP_COMP
+		  WHERE 
+		        USE_YN='Y'
+		   AND  DEL_YN='N'
+	</select>
+
+	<select id="viewNoticeParterList" resultType="HMap">
+		SELECT /* [NoticeService.query][viewNoticeParterList][등록된 대상파트너사 불러오기][유승우][2017-12-22] */
+		       ASP_COMP_CD
+		  FROM TB_MMS_NOTICE_ASP_COMP_L
+		  WHERE 
+ 	         NOTICE_SEQ =#{notiSeq}   		   
+	</select>
+
+	<select id="viewBoardNotice" resultType="HMap">	
+	/* [NoticeService.query][viewBoardNotice][공지사항 게시판 상세][유승우][2017-12-18] */
+ 		 SELECT 
+	                NOTICE_SEQ
+                  , TITLE
+	              , CONTENT
+	              , WRITER
+	              , DATE_FORMAT(START_DT,'%Y-%m-%d') START_DT
+	              , DATE_FORMAT(END_DT,'%Y-%m-%d') END_DT
+	              , CONCAT(DATE_FORMAT(START_DT,'%Y-%m-%d'), " ~ " , DATE_FORMAT(END_DT,'%Y-%m-%d')) AS NOTICE_DATE
+                  , DATE_FORMAT(IN_DT,'%Y-%m-%d %I:%i:%s') IN_DT
+                  , IN_USER_ID		   
+                  , ASP_GROUP           
+	         FROM 
+	          (
+	             SELECT M.*             
+	              ,(SELECT 
+			  IFNULL(GROUP_CONCAT(ASP_COMP_CD),'TOTAL')  
+			FROM 
+			 TB_MMS_NOTICE_ASP_COMP_L 
+			 WHERE NOTICE_SEQ=M.NOTICE_SEQ) ASP_GROUP
+	              FROM 
+	              TB_MMS_NOTICE_M  M
+                      
+	          ) NOTI
+	          WHERE 1=1
+			<if test="strAspCompCd != null and !strAspCompCd.equals('')"> 
+	             AND  ASP_GROUP LIKE '%${strAspCompCd}%'
+		    </if>  	        	          
+ 	        	 AND  NOTICE_SEQ =#{notiSeq}                
+	</select>
+	
+	<update id="updateBoardNotice">
+		 UPDATE 
+ 	         TB_MMS_NOTICE_M
+ 	         SET   TITLE = #{title} 
+ 	              , CONTENT = #{content} 
+ 	              , WRITER 	= #{writer}  	              
+ 	              , START_DT = #{startDt}
+ 	              , END_DT = #{endDt}
+ 	              , UP_USER_ID = #{s_userId}
+ 	              , UP_DT = NOW()
+ 	      WHERE  
+ 	          NOTICE_SEQ = #{notiSeq}   	
+	</update>
+	
+	<update id="deleteBoardNotice">
+ 	   UPDATE
+ 	      TB_MMS_NOTICE_M 
+ 	       SET   USE_YN = 'N'
+ 	           , DEL_YN = 'Y'
+ 	   WHERE NOTICE_SEQ =  #{notiSeq}   	
+	</update>
+	
+	<delete id="deleteBoardNoticeParter">
+	    DELETE
+ 	      FROM TB_MMS_NOTICE_ASP_COMP_L
+ 	    WHERE NOTICE_SEQ = #{notiSeq}
+	</delete>
+
+	<insert id="updateBoardNoticePartner">
+		INSERT INTO TB_MMS_NOTICE_ASP_COMP_L /* [NoticeService.query][updateBoardNoticePartner][파트너사수정][유승우][2017-12-22] */
+				(
+				NOTICE_SEQ
+			,	ASP_COMP_CD
+				)
+		VALUES	(
+				#{notiSeq}
+			,	#{aspCompCd}
+				)
+
+	</insert>
+	<insert id="saveBoardNotice">
+		INSERT INTO TB_MMS_NOTICE_M /* [NoticeService.query][saveBoardNotice][공지사항 게시판 등록 저장][김선호][2017-12-12] */
+			 	(
+				TITLE
+			,	CONTENT
+			,   WRITER
+			,	START_DT
+			,	END_DT
+			,	IN_DT
+			,	IN_USER_ID
+			,	UP_USER_ID
+				)
+		VALUES
+				(
+				#{title}
+			,	#{content}
+			,	#{writer}			
+			,	DATE_FORMAT(#{startDt},'%Y-%m-%d')
+			,	DATE_FORMAT(#{endDt},'%Y-%m-%d')
+			,	now()
+			,	#{s_userId}
+			,	#{s_userId}
+				)
+		<selectKey keyProperty="NOTICE_SEQ" resultType="java.lang.Integer" order="AFTER">
+		    SELECT LAST_INSERT_ID()
+		</selectKey>				
+	</insert>
+	
+	<insert id="saveBoardNoticePartner">
+	<!--<selectKey keyProperty="NOTICE_SEQ" resultType="string" order="BEFORE">
+			SELECT MAX(NOTICE_SEQ) AS IDX FROM TB_MMS_NOTICE_M
+		</selectKey> -->
+		INSERT INTO TB_MMS_NOTICE_ASP_COMP_L /* [NoticeService.query][saveBoardNotice][공지사항 게시판 등록 저장:파트너사저장][김선호][2017-12-12] */
+				(
+				NOTICE_SEQ
+			,	ASP_COMP_CD
+				)
+		VALUES	(
+				#{NOTICE_SEQ}
+			,	#{aspCompCd}
+				)
+	</insert>
+	
+</mapper>
+ 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs" xmlns:simple="http://cxf.apache.org/simple"
+	xmlns:soap="http://cxf.apache.org/bindings/soap" xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:cxf="http://cxf.apache.org/core"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+            http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+            http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd
+            http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
+    <context:annotation-config />
+<!--     <context:component-scan base-package="paragon.core.common.service,vertex.common.syscommon,vertex.common.template,vertex.common.template.ws ,vertex.pda.ws" /> -->
+
+<!--     <import resource="classpath:META-INF/cxf/cxf.xml" /> -->
+<!-- 	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" /> -->
+<!--     <import resource="classpath:META-INF/cxf/cxf-extension-soap.xml"/> -->
+	<!--import resource="classpath:META-INF/cxf/cxf-extension-jaxrs-binding.xml"/-->
+
+	<!-- Interceptor -->
+<!-- 	<bean id="soapInterceptor" class="paragon.core.ws.util.SoapInterceptor" /> -->
+<!-- 	<bean id="soapOutInterceptor" class="paragon.core.ws.util.SoapOutInterceptor" /> -->
+<!-- 	<bean id="restInterceptor" class="paragon.core.ws.util.RestInterceptor" /> -->
+<!-- 	<bean id="restOutInterceptor" class="paragon.core.ws.util.RestOutInterceptor"/> -->
+	
+<!-- 	<bean id="pDAWSMasterDataController" class="vertex.pda.ws.controller.PDAWSMasterDataController" /> -->
+	<!-- BindingProvider -->
+<!-- 	<bean id="parametersBindingProvider" class="vertex.common.template.ws.provider.ParametersBindingProvider"/> -->
+<!-- 	<bean id="pdaProvider" class="vertex.pda.ws.provider.PdaParametersBindingProvider"/> -->
+</beans>

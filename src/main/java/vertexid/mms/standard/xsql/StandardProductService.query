@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardProductService">
+	
+	<select id="getStndPrdList" resultType="HMap" >
+		SELECT /* [StandardProductService.query][getProductList][제품(장비) 목록조회][한성진][2017. 2. 27.] */
+		       PRD_CD
+			 , PRD_NM
+			 , PRD_SPEC
+			 , PRD_TYPE_LV1
+			 , PRD_TYPE_LV2
+			 , PRD_TYPE_LV3
+			 , PRD_TYPE_LV4
+			 , FN_COMM_CODE_NM('SC0022', PRD_TYPE_LV1, #{s_language}) PRD_TYPE_LV1_NM
+			 , FN_COMM_CODE_NM('SC0023', PRD_TYPE_LV2, #{s_language}) PRD_TYPE_LV2_NM
+			 , FN_COMM_CODE_NM('SC0025', PRD_TYPE_LV3, #{s_language}) PRD_TYPE_LV3_NM
+			 , FN_COMM_CODE_NM('SC0026', PRD_TYPE_LV4, #{s_language}) PRD_TYPE_LV4_NM
+			 , PRD_ORDER
+			 , MEMO
+			 , IN_USER_ID
+		     , DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		  FROM MMS.TB_MMS_STND_PRD_S
+		  WHERE DEL_YN = 'N' 
+		   <if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+		   AND PRD_TYPE_LV1 = #{prdTypeLv1}
+		   </if>
+		   <if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+		   AND PRD_TYPE_LV2 = #{prdTypeLv2}
+		   </if>
+		   <if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+		   AND PRD_TYPE_LV3 = #{prdTypeLv3}
+		   </if>
+		   <if test="prdTypeLv4 != null and !prdTypeLv4.equals('')">
+		   AND PRD_TYPE_LV4 = #{prdTypeLv4}
+		   </if>
+		   <if test="prdCd != null and !prdCd.equals('')">
+		   AND PRD_CD LIKE CONCAT('%',#{prdCd},'%')
+		   </if>
+		   <if test="prdNm != null and !prdNm.equals('') ">
+		   AND PRD_NM LIKE CONCAT('%',#{prdNm},'%')
+		   </if>
+		   <if test="prdSpec != null and !prdSpec.equals('')">
+		   AND PRD_SPEC LIKE CONCAT('%',#{prdSpec},'%')
+		   </if>
+		 ORDER BY PRD_CD
+	</select>
+	
+	<select id="getProductList" resultType="HMap" >
+		SELECT /* [StandardProductService.query][getProductList][모델명 목록조회][한성진][2017. 11. 07.] */
+		       PRD_CD
+			 , PRD_NM
+			 , PRD_TYPE_LV1
+			 , PRD_TYPE_LV2
+			 , PRD_TYPE_LV3
+			 , PRD_ORDER
+			 , PRD_SPEC
+			 , USE_YN
+		  FROM TB_MMS_STND_PRD_S
+		 WHERE DEL_YN = 'N'
+		 <if test="prdTypeLv1 != null and !prdTypeLv1.equals('')">
+		   AND PRD_TYPE_LV1 = #{prdTypeLv1}
+		 </if>
+		 <if test="prdTypeLv2 != null and !prdTypeLv2.equals('')">
+		   AND PRD_TYPE_LV2 = #{prdTypeLv2}
+		 </if>
+		 <if test="prdTypeLv3 != null and !prdTypeLv3.equals('')">
+		   AND PRD_TYPE_LV3 = #{prdTypeLv3}
+		 </if>
+		 ORDER BY CAST(PRD_ORDER AS SIGNED)
+	</select>
+	
+	<insert id="insertProduct">
+		INSERT /* [StandardProductService.query][insertProduct][모델 정보 저장]["Han Seong Jin"][2017. 11. 07.] */
+		  INTO TB_MMS_STND_PRD_S (
+		  		  PRD_CD	
+		  		, PRD_TYPE_LV1
+		  		, PRD_TYPE_LV2
+		  		, PRD_TYPE_LV3
+		  		, PRD_NM
+		  		, PRD_SPEC
+		  		, PRD_ORDER
+		  		, USE_YN
+		        , IN_USER_ID	
+		        , UP_USER_ID	
+		        , IN_DT
+		  )		  
+		VALUES(   FN_MAKE_PRD_CODE(#{prdTypeLv3})
+				, #{prdTypeLv1}
+				, #{prdTypeLv2}
+				, #{prdTypeLv3}
+				, #{prdNm}
+				, #{prdSpec}
+				, #{prdOrder}
+				, #{useYn}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<update id="updateProduct">
+		UPDATE /* [StandardProductService.query][updateProduct][모델 정보 수정]["Han Seong Jin"][2017. 11. 07.] */
+		  TB_MMS_STND_PRD_S 
+		   SET PRD_NM		= #{prdNm}  
+		     , PRD_SPEC 	= #{prdSpec}
+		     , PRD_ORDER 	= #{prdOrder}
+		     , USE_YN 	= #{useYn}
+		WHERE PRD_CD = #{prdCd}
+		  AND PRD_TYPE_LV1 = #{prdTypeLv1}
+		  AND PRD_TYPE_LV2 = #{prdTypeLv2}
+		  AND PRD_TYPE_LV3 = #{prdTypeLv3}
+	</update>
+	
+	<update id="deleteProduct">
+		UPDATE /* [StandardProductService.query][deleteProduct][모델 정보 삭제]["Han Seong Jin"][2017. 11. 07.] */
+		  TB_MMS_STND_PRD_S
+		      SET DEL_YN	= 'Y'
+		      	, UP_USER_ID =  #{s_userId}
+		  WHERE PRD_CD = #{prdCd}
+		  	AND PRD_TYPE_LV1 = #{prdTypeLv1}
+		  	AND PRD_TYPE_LV2 = #{prdTypeLv2}
+		  	AND PRD_TYPE_LV3 = #{prdTypeLv3}
+	</update>
+	
+	<select id="checkProductCd" resultType="HMap" >
+		SELECT /* [StandardProductService.query][checkProductCd][품번 Check][한성진][2017. 2. 27.] */
+		       COUNT(PRD_CD)
+		  FROM MMS.TB_MMS_STND_PRD_S
+		  WHERE PRD_CD = #{prdCd}
+	</select>
+	
+	<select id="getProductInfo" resultType="HMap" >
+		SELECT /* [StandardProductService.query][getProductList][제품(장비) 목록조회][한성진][2017. 2. 27.] */
+		       PRD_NM
+			 , PRD_SPEC
+			 , PRD_PRC
+			 , PRD_ORDER
+			 , MEMO
+		  FROM MMS.TB_MMS_STND_PRD_S
+		  WHERE PRD_CD = #{prdCd}  
+	</select>
+	
+	<select id="getPrdComboList" resultType="HMap" >
+		SELECT /* [StandardProductService.query][getPrdComboList][제품(장비) 콤보박스조회][김진호][2017. 2. 27.] */
+			   PRD_CD value
+			 , PRD_NM name
+		  FROM MMS.TB_MMS_STND_PRD_S
+		 WHERE 1=1
+		   <if test="prdTypeCd != null and !prdTypeCd.equals('')">
+		   AND PRD_TYPE_CD = #{prdTypeCd}
+		   </if>
+		   <if test="mfrSeq != null and !mfrSeq.equals('')">
+		   AND MFR_SEQ = #{mfrSeq}
+		   </if>
+	</select>
+	
+	<select id="getAllPrdNmComboList" resultType="HMap" >
+		SELECT /* [StandardProductService.query][getAllPrdNmComboList][모든 제품(장비) 콤보박스조회][김선호][2017. 11. 14.] */
+			   PRD_CD value
+			 , PRD_NM name
+		  FROM MMS.TB_MMS_STND_PRD_S
+		  <if test="aspCompCd != null and !aspCompCd.equals('')">
+		 WHERE ASP_COMP_CD = #{aspCompCd}
+		  </if>
+	</select>
+	
+	<select id="getAutoPrdList" resultType="HMap" >
+		SELECT 
+		/* [StandardProductService.query][getAutoPrdList][모든 제품(장비) 자동검색조회 변경][유승우] [201-11-28] */
+			   PRD_TYPE_LV1
+		  	 , PRD_TYPE_LV2
+		  	 , PRD_TYPE_LV3
+		  	 , PRD_TYPE_LV4
+		  	 , PRD_CD
+		  	 , IFNULL(PRD_NM, '') PRD_NM
+		  	 , IFNULL(PRD_SPEC, '') PRD_SPEC
+		  	 , CONCAT(
+			 		IF(PRD_TYPE_LV1_NM != '', PRD_TYPE_LV1_NM, ''),
+			 		IF(PRD_TYPE_LV2_NM != '', CONCAT(' > ',PRD_TYPE_LV2_NM), ''),
+			 		IF(PRD_TYPE_LV3_NM != '', CONCAT(' > ',PRD_TYPE_LV3_NM), ''),
+			 		IF(PRD_TYPE_LV4_NM != '', CONCAT(' > ',PRD_TYPE_LV4_NM), ''), 
+			 		IF(PRD_NM != '', CONCAT(' > ',PRD_NM), '')
+				 
+			 ) value
+		  	 , CONCAT(
+			 		IF(PRD_TYPE_LV1_NM != '', PRD_TYPE_LV1_NM, ''),
+			 		IF(PRD_TYPE_LV2_NM != '', CONCAT(' > ',PRD_TYPE_LV2_NM), ''),
+			 		IF(PRD_TYPE_LV3_NM != '', CONCAT(' > ',PRD_TYPE_LV3_NM), ''),
+			 		IF(PRD_TYPE_LV4_NM != '', CONCAT(' > ',PRD_TYPE_LV4_NM), ''), 
+			 		IF(PRD_NM != '', CONCAT(' > ',PRD_NM), '')
+				 
+			 ) name
+		   	 , PRD_TYPE_LV1_NM 
+		   	 , PRD_TYPE_LV2_NM 
+		   	 , PRD_TYPE_LV3_NM 
+		   	 , PRD_TYPE_LV4_NM 
+		   	 
+		  FROM (
+				  SELECT SP.PRD_TYPE_LV1
+				  	   , SP.PRD_TYPE_LV2
+				  	   , SP.PRD_TYPE_LV3
+				  	   , SP.PRD_TYPE_LV4
+				  	   , SP.PRD_CD
+				  	   , SP.PRD_SPEC
+				  	   , FN_GET_STND_PRD_NM(SP.PRD_TYPE_LV1, 1) PRD_TYPE_LV1_NM 
+				  	   , FN_GET_STND_PRD_NM(SP.PRD_TYPE_LV2, 2) PRD_TYPE_LV2_NM 
+				  	   , FN_GET_STND_PRD_NM(SP.PRD_TYPE_LV3, 3) PRD_TYPE_LV3_NM 
+				  	   , '' PRD_TYPE_LV4_NM 
+				  	   , SP.PRD_NM
+				    FROM TB_MMS_STND_PRD_S SP
+				   WHERE SP.USE_YN = 'Y'
+				     AND SP.DEL_YN = 'N'
+		  ) AS AUTO
+		  WHERE (
+		  	AUTO.PRD_TYPE_LV1_NM LIKE '%${keyWord}%' OR 
+		  	AUTO.PRD_TYPE_LV2_NM LIKE '%${keyWord}%' OR 
+		  	AUTO.PRD_TYPE_LV3_NM LIKE '%${keyWord}%' OR 
+		  	AUTO.PRD_TYPE_LV4_NM LIKE '%${keyWord}%' OR
+		  	AUTO.PRD_CD	  LIKE '%${keyWord}%' 		 OR
+		  	AUTO.PRD_NM	  LIKE '%${keyWord}%'		 OR
+		  	AUTO.PRD_SPEC LIKE '%${keyWord}%' 		 
+		  )
+  		  ORDER BY AUTO.PRD_NM DESC
+	</select>
+	
+		<select id="getAutoPrdInBrndList" resultType="HMap" >
+		SELECT /* [StandardProductService.query][getAutoPrdInBrndList][파트너사 내 품목조회][김선호][2017. 11. 22.] */
+			   PRD_TYPE_LV1
+		  	 , PRD_TYPE_LV2
+		  	 , PRD_TYPE_LV3
+		  	 , PRD_TYPE_LV4
+		  	 , PRD_CD
+		  	 , IFNULL(PRD_NM, '') PRD_NM
+		  	 , IFNULL(PRD_SPEC, '') PRD_SPEC
+		  	 , CONCAT(
+			 		IF(PRD_TYPE_LV1_NM != '', PRD_TYPE_LV1_NM, ''),
+			 		IF(PRD_TYPE_LV2_NM != '', CONCAT(' > ',PRD_TYPE_LV2_NM), ''),
+			 		IF(PRD_TYPE_LV3_NM != '', CONCAT(' > ',PRD_TYPE_LV3_NM), ''),
+			 		IF(PRD_NM != '', CONCAT(' > ',PRD_NM), '')
+				 
+			 ) value
+		  	 , CONCAT(
+			 		IF(PRD_TYPE_LV1_NM != '', PRD_TYPE_LV1_NM, ''),
+			 		IF(PRD_TYPE_LV2_NM != '', CONCAT(' > ',PRD_TYPE_LV2_NM), ''),
+			 		IF(PRD_TYPE_LV3_NM != '', CONCAT(' > ',PRD_TYPE_LV3_NM), ''),
+			 		IF(PRD_NM != '', CONCAT(' > ',PRD_NM), '')
+				 
+			 ) name
+		   	 , PRD_TYPE_LV1_NM 
+		   	 , PRD_TYPE_LV2_NM 
+		   	 , PRD_TYPE_LV3_NM 
+		   	 , PRD_TYPE_LV4_NM 
+		  FROM (
+				  SELECT SP.PRD_TYPE_LV1
+				  	   , SP.PRD_TYPE_LV2
+				  	   , SP.PRD_TYPE_LV3
+				  	   , SP.PRD_TYPE_LV4
+				  	   , SP.PRD_CD
+				  	   , SP.PRD_SPEC
+				  	   , FN_GET_STND_PRD_NM(SP.PRD_TYPE_LV1, 1) PRD_TYPE_LV1_NM 
+				  	   , FN_GET_STND_PRD_NM(SP.PRD_TYPE_LV2, 2) PRD_TYPE_LV2_NM 
+				  	   , FN_GET_STND_PRD_NM(SP.PRD_TYPE_LV3, 3) PRD_TYPE_LV3_NM 
+				  	   , '' PRD_TYPE_LV4_NM 
+				  	   , SP.PRD_NM
+<!-- 				  	   , SP.ASP_COMP_CD -->
+				    FROM TB_MMS_STND_PRD_S SP
+				   WHERE SP.USE_YN 	= 'Y'
+				     AND SP.DEL_YN 	= 'N'
+<!--  				     AND ASP_COMP_CD IN (SELECT ASP_COMP_CD FROM TB_MMS_STND_BRND_S WHERE BRND_NM = #{brndNm})  -->
+<!--     				 AND ASP_COMP_CD = #{s_companyCd} -->
+		  ) AS AUTO
+		  WHERE 	
+		  	 	AUTO.PRD_TYPE_LV1_NM LIKE '%${keyWord}%'
+		  	OR 	AUTO.PRD_TYPE_LV2_NM LIKE '%${keyWord}%'
+		  	OR 	AUTO.PRD_TYPE_LV3_NM LIKE '%${keyWord}%'
+		  	OR 	AUTO.PRD_TYPE_LV4_NM LIKE '%${keyWord}%'
+		  	OR 	AUTO.PRD_CD	  		 LIKE '%${keyWord}%'
+		  	OR 	AUTO.PRD_NM	  		 LIKE '%${keyWord}%'
+		  	OR 	AUTO.PRD_SPEC 		 LIKE '%${keyWord}%' 
+  		  ORDER BY AUTO.PRD_NM DESC
+	</select>
+	
+	<select id="pageTotalExcelDown" resultType="HMap">
+		SELECT  /* [StandardProductService.query][pageTotalExcelDown][품목관리 전체 다운로드][김선호][2018. 01. 30.] */
+				SP.PRD_CD
+			,	SP1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+			,	SP2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+			,	CC.CODE_NM AS PRD_TYPE_LV3_NM
+			,	SP.PRD_NM
+			,	SP.PRD_SPEC
+		FROM  TB_MMS_STND_PRD_S SP
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SP1
+		    ON SP.PRD_TYPE_LV1 = SP1.PRD_TYPE_CD
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SP2
+		    ON SP.PRD_TYPE_LV2 = SP2.PRD_TYPE_CD
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SP3
+		    ON SP.PRD_TYPE_LV3 = SP3.PRD_TYPE_CD
+		  LEFT JOIN TB_PARAGON_COMM_CODE CC
+		    ON SP3.PRD_TYPE_NM = CC.CODE_CD
+		    AND CC.CODE_GROUP_CD = 'SC0025'
+		ORDER BY CONCAT(LPAD(IFNULL(SP1.PRD_TYPE_ORDER, ''), 5, '0'), '_', SP.PRD_TYPE_LV1, '_', LPAD(IFNULL(SP2.PRD_TYPE_ORDER, ''), 5, '0'), '_', SP.PRD_TYPE_LV2, '_', LPAD(IFNULL(SP3.PRD_TYPE_ORDER, ''), 5, '0'), '_', SP.PRD_TYPE_LV3, '_', SP.PRD_CD)
+	</select>
+</mapper>

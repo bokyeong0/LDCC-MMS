@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LogService">
+	<!-- 로그인 내역 관련 Query  -->
+	<select id="getLoginList" resultType="HMap" > 
+		SELECT /* [LogService.query][getLoginList][Login 내역 조회]["Shin Dong Cheol"][2017. 11. 13.] */
+			TLL.USER_ID AS USER_ID
+			, TPU.USER_NM AS USER_NM
+			, TLL.CONNECT_IP  AS CONNECT_IP
+			, TLL.LOGIN_YN AS LOGIN_YN
+			, (CASE WHEN TLL.LOGIN_YN ='Y' THEN "성공" ELSE '실패' END) AS FLAG_NM
+			, DATE_FORMAT(TLL.LL_DT, '%Y-%m-%d %T') AS LL_DT
+		FROM
+			TB_LOG_LOGIN AS TLL, TB_PARAGON_USER AS TPU
+		WHERE
+			1=1
+			AND TLL.USER_ID = TPU.USER_ID
+		<if test="userNm != null and !userNm.equals('')">
+			 AND TLL.USER_ID 
+			  		IN (SELECT 
+			  				USER_ID 
+			  			FROM 
+			  				TB_PARAGON_USER 
+			  			WHERE 
+			  				USER_NM LIKE CONCAT('%',#{userNm},'%'))
+		</if>
+		<if test="loginYn != null and !loginYn.equals('')">
+			AND TLL.LOGIN_YN = #{loginYn}
+		</if>
+		<if test="startDate != null and !startDate.equals('')">
+			AND TLL.LL_DT <![CDATA[>=]]> CONCAT(#{startDate}, ' 00:00:00')
+		</if>
+		<if test="endDate != null and !endDate.equals('')">
+			AND TLL.LL_DT <![CDATA[<=]]> CONCAT(#{endDate}, ' 23:59:59')
+		</if>
+		ORDER BY LL_DT DESC
+	</select>
+	
+	<insert id="saveLoginInfo">
+		INSERT /* [LogService.query][saveLoginInfo][Login 성공 여부 저장]["Shin Dong Cheol"][2017. 11. 13.] */
+			INTO TB_LOG_LOGIN (
+					USER_ID
+					, CONNECT_IP
+					, LOGIN_YN
+					, LL_DT
+			)
+			VALUES (
+					#{userId}
+					, #{connectIp}
+					, #{loginYn}
+					, NOW()
+			)
+	</insert>
+	
+	<delete id="loginInfoDelete">
+		DELETE /* [LogService.query][loginInfoDelete][Login 내역 삭제(3개월)]["Shin Dong Cheol"][2017. 11. 15.] */
+		FROM
+			TB_LOG_LOGIN
+		WHERE
+			LL_DT  <![CDATA[<]]> (NOW() - INTERVAL 3 MONTH)
+	</delete>
+	<!-- 메뉴 사용 내역 관련 Query  -->
+	<select id="getProList" resultType="HMap" >
+		SELECT /* [LogService.query][getProList][접속 메뉴 내역 조회]["Shin Dong Cheol"][2017. 11. 13.] */
+			TLP.USER_ID AS USER_ID
+			, TPU.USER_NM AS USER_NM
+			, TLP.PRO_CD AS PRO_CD
+			, TPM.MENU_NM AS MENU_NM
+			, TLP.CONNECT_IP AS CONNECT_IP
+			, TLP.LP_CONTENT AS LP_CONTENT
+			, DATE_FORMAT(TLP.LP_DT, '%Y-%m-%d %T') AS LP_DT
+		FROM
+			TB_LOG_PRO AS TLP, TB_PARAGON_USER AS TPU, TB_PARAGON_MENU AS TPM
+		WHERE 
+			1=1
+			AND TLP.USER_ID=TPU.USER_ID
+			AND TLP.PRO_CD=TPM.PRO_CD
+		<if test="userId != null and !userId.equals('')">
+			AND TLP.USER_ID 
+			  		IN (SELECT 
+			  				USER_ID 
+			  			FROM 
+			  				TB_PARAGON_USER 
+			  			WHERE 
+			  				USER_ID LIKE CONCAT('%',#{userId},'%'))
+		</if>
+		<if test="userNm != null and !userNm.equals('')">
+			AND TLP.USER_ID 
+			  		IN (SELECT 
+			  				USER_ID 
+			  			FROM 
+			  				TB_PARAGON_USER 
+			  			WHERE 
+			  				USER_NM LIKE CONCAT('%',#{userNm},'%'))
+		</if>
+		<if test="proNm != null and !proNm.equals('')">
+			AND TLP.PRO_CD 
+			  		IN (SELECT 
+			  				PRO_CD
+			  			FROM
+			  				TB_PARAGON_MENU
+			  			WHERE
+			  				MENU_NM LIKE CONCAT('%',#{proNm},'%'))
+		</if>
+		<if test="startDate != null and !startDate.equals('')">
+			AND TLP.LP_DT <![CDATA[>=]]> CONCAT(#{startDate}, ' 00:00:00')
+		</if>
+		<if test="endDate != null and !endDate.equals('')">
+			AND TLP.LP_DT <![CDATA[<=]]> CONCAT(#{endDate}, ' 23:59:59')
+		</if>
+		ORDER BY LP_DT DESC
+	</select>
+	
+	<insert id="saveProInfo">
+		INSERT /* [LogService.query][saveProInfo][접속 메뉴 사용 내역 저장]["Shin Dong Cheol"][2017. 11. 13.] */
+			INTO TB_LOG_PRO (
+				USER_ID
+				, CONNECT_IP
+				, PRO_CD
+				, LP_CONTENT
+				, LP_DT
+			)
+			VALUES (
+				#{userId}
+				, #{connectIp}
+				, #{proCd}
+				, #{lpContent}
+				, NOW()
+			)
+	</insert>
+
+	<delete id="proInfoDelete">
+		DELETE /* [LogService.query][proInfoDelete][접속 메뉴 사용 내역 삭제(3개월)]["Shin Dong Cheol"][2017. 11. 15.] */
+		FROM
+			TB_LOG_PRO
+		WHERE
+			LP_DT  <![CDATA[<]]> (NOW() - INTERVAL 3 MONTH)
+	</delete>
+</mapper>
+ 

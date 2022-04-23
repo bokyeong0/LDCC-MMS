@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+
+<properties>
+	
+	<entry key="driver">org.mariadb.jdbc.Driver</entry>
+	<!-- 테스트 서버 -->
+	<entry key="url">jdbc:mysql://mms.vertexid.com/MMS</entry>
+<!-- 	<entry key="url">jdbc:mysql://115.71.233.35/MMS</entry> -->
+	<entry key="id">mms</entry>
+	<entry key="pw">e/4sadtkzEQT77E32K9bZw==</entry>
+	  
+</properties> 

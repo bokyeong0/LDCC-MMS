@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PreventiveCheckDetailService">
+
+	<select id="getPreventiveCheckDetailList" resultType="LHMap">
+		SELECT  /* [PreventiveCheckDetailService.query][getPreventiveCheckDetailList][예방 점검 상세목록 조회][김선호][2017-12-05] */
+		   AM.AST_SEQ
+		  , AM.AST_SERIAL
+		  , AM.ASP_COMP_CD
+		  , AC.ASP_COMP_NM
+		  , AM.STR_CD
+		  , SC.COMP_CD
+		  , SC.COMP_NM
+		  , SB.BRND_CD
+		  , SB.BRND_NM
+		  , SS.STR_NM
+		  , AM.AREA_CD
+		  , IFNULL(AM.AST_TYPE2, '') AS AST_TYPE2
+		  , IFNULL(AM.AST_TYPE1, '') AS AST_TYPE1
+		  , AM.PRD_CD
+		  , SP.PRD_NM
+		  , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+		  , SP.PRD_TYPE_LV2
+		  , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+		  , CC3.CODE_NM AS PRD_TYPE_LV3_NM
+		  , SP.PRD_SPEC
+		  , AM.AST_ST
+		  , PCC2.CODE_NM AS AST_ST_NM
+		  , 'N'  AS OBS_YN
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		  ON CC3.CODE_GROUP_CD = 'SC0025'
+		  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON SS.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		  ON SS.STR_ST = PCC.CODE_CD
+		  AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		  ON PCC2.CODE_GROUP_CD = 'AT0003'
+		  AND PCC2.CODE_CD = AM.AST_ST
+		WHERE AM.DEL_YN = 'N'
+		AND SS.COMP_YN = 'N'
+		AND SC.DEL_YN = 'N'
+		AND SB.DEL_YN = 'N'
+		AND SS.DEL_YN = 'N'
+		AND AM.USE_YN = 'Y'
+		<if test="dateDt != null and !dateDt.equals('')">
+			AND AM.AST_MFR_DT <![CDATA[>=]]> DATE_ADD(#{dateDt}, INTERVAL -12 MONTH)
+           	AND AM.AST_MFR_DT <![CDATA[<=]]> DATE_ADD(#{dateDt}, INTERVAL -11 MONTH)
+		</if>
+		<if test="s_companyCd != null and !s_companyCd.equals('')">
+				AND AM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="s_areaCd != null and !s_areaCd.equals('')">
+				AND AM.AREA_CD = #{s_areaCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+				AND SC.COMP_CD LIKE CONCAT('%',#{compCd},'%')
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+				AND SB.BRND_CD LIKE CONCAT('%',#{brndCd},'%')
+		</if>
+		<if test="strCd != null and !strCd.equals('')">
+				AND AM.STR_CD LIKE CONCAT('%',#{strCd},'%')
+		</if>
+		ORDER BY CASE WHEN FN_LENGTH(AM.AST_TYPE2) = 0 THEN 999999999 ELSE CAST(AM.AST_TYPE2 AS UNSIGNED) END, AM.PRD_CD												   		    				    	    
+	</select>
+	
+	<select id="getPreventiveCheckNotivePrd" resultType="HMap">
+		SELECT /* [PreventiveCheckVisitService.query][getPreventiveCheckNotivePrd][예방정검 유의사항 내용 중 품목 조회][김선호][2017-12-11] */
+			 SP.PRD_TYPE_LV1
+			, SP.PRD_TYPE_LV2
+		FROM TB_MMS_AST_MNG_M AM
+		LEFT JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = AM.STR_CD
+		LEFT JOIN TB_MMS_ASP_COMP AC
+		  ON AM.ASP_COMP_CD = AC.ASP_COMP_CD
+		LEFT JOIN TB_MMS_STND_AREA_S SA
+		  ON AM.AREA_CD = SA.AREA_CD
+		LEFT JOIN TB_MMS_STND_PRD_S SP
+		  ON AM.PRD_CD = SP.PRD_CD
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		  ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		  ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		  ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		  ON CC3.CODE_GROUP_CD = 'SC0025'
+		  AND SPT3.PRD_TYPE_NM = CC3.CODE_CD
+		LEFT JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD
+		LEFT JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE CC
+		  ON SS.STR_TYPE = CC.CODE_CD
+		  AND CC.CODE_GROUP_CD = 'SC0021'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		  ON SS.STR_ST = PCC.CODE_CD
+		  AND PCC.CODE_GROUP_CD = 'SC0024'
+		LEFT JOIN TB_PARAGON_COMM_CODE PCC2
+		  ON PCC2.CODE_GROUP_CD = 'AT0003'
+		  AND PCC2.CODE_CD = AM.AST_ST
+		WHERE AM.DEL_YN = 'N'
+		AND SS.COMP_YN = 'N'
+		AND SC.DEL_YN = 'N'
+		AND SB.DEL_YN = 'N'
+		AND SS.DEL_YN = 'N'
+		AND AM.ASP_COMP_CD = #{aspCompCd}
+		AND AM.STR_CD = #{strCd}
+		GROUP BY SP.PRD_TYPE_LV1, SP.PRD_TYPE_LV2
+	</select>
+	
+	<select id="getPrventiveCheckNoticeContent" resultType="HMap">
+			SELECT  /* [PreventiveCheckVisitService.query][getPrventiveCheckNoticeContent][예방정검 유의사항 내용 조회][김선호][2017-12-11] */
+					IFNULL(PM.CONTENT, '') 	AS CONTENT
+				,	CONCAT(SP1.PRD_TYPE_NM, " > ", SP2.PRD_TYPE_NM, " > ", "유의사항") AS PRD_TYPE_NM
+			FROM TB_MMS_CHECK_PRD_M PM
+			LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+			  ON PM.PRD_TYPE_LV2 = SP.PRD_TYPE_LV2
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SP1
+			  ON SP.PRD_TYPE_LV1 = SP1.PRD_TYPE_CD
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SP2
+			  ON SP.PRD_TYPE_LV2 = SP2.PRD_TYPE_CD
+			LEFT JOIN TB_MMS_STND_PRD_TYPE_S SP3
+			  ON SP.PRD_TYPE_LV3 = SP3.PRD_TYPE_CD
+			LEFT JOIN TB_PARAGON_COMM_CODE CC
+			  ON SP3.PRD_TYPE_NM = CC.CODE_CD
+			  AND CC.CODE_GROUP_CD = 'SC0025'
+			WHERE PM.PRD_TYPE_LV2 IN (
+			<if test="dt_list != null || dt_list != '' || dt_list.equals('')">		 
+			    <foreach item="list" index="dt_list" collection="dt_list" separator=",">
+					#{list.PRD_TYPE_LV2}
+	  			</foreach>
+  			</if>
+			)
+		GROUP BY SP.PRD_TYPE_LV2
+		ORDER BY CONCAT(LPAD(IFNULL(SP1.PRD_TYPE_ORDER, ''), 5, '0'), '_', SP.PRD_TYPE_LV1, '_', LPAD(IFNULL(SP2.PRD_TYPE_ORDER, ''), 5, '0'), '_', SP.PRD_TYPE_LV2, '_', LPAD(IFNULL(SP3.PRD_TYPE_ORDER, ''), 5, '0'), '_', SP.PRD_TYPE_LV3, '_', SP.PRD_CD)
+	</select>	
+	
+	<insert id="insertPreventiveCheckComplete" >
+		INSERT /* [PreventiveCheckVisitService.query][insertPreventiveCheckComplete][예방점검상세(방문) 점검완료, 점포당][김선호][2017-12-22] */
+		  INTO TB_MMS_CHECK_M 
+		  (
+			ASP_COMP_CD
+		,	AREA_CD
+		,	STR_CD
+		,	ENGR_NM
+		,	ENGR_ID
+		,	CHECK_DT
+		,	IN_DT
+		,	IN_USER_ID
+		,	UP_USER_ID
+		  )
+		  VALUES
+		  (
+			#{s_companyCd}
+		,	#{s_areaCd}
+		,	#{strCd}
+		,	(SELECT USER_NM FROM TB_PARAGON_USER WHERE USER_SEQ = #{s_userSeq})
+		,	#{s_userId}
+		,	now()
+		,	now()
+		,	#{s_userId}
+		,	#{s_userId}
+		  )
+ 		<selectKey resultType="long" order="AFTER" keyProperty="CHECK_SEQ"  >
+ 			SELECT LAST_INSERT_ID() 
+		</selectKey> 
+	</insert>
+	
+	<update id="updatePreventiveCheckCompleteFile">
+		UPDATE TB_MMS_CHECK_M /* [PreventiveCheckVisitService.query][updatePreventiveCheckComplete][예방점검상세(방문) 점검완료, 점포당 파일업로드][김선호][2017-12-22] */
+		SET 
+		  	ATTACH_PATH		=	#{attachPath}
+		,	ATTACH_NM		=	#{attachNm}
+		,	MNG_SIGN_PATH	=	#{mngSignPath}
+		,	MNG_SIGN_NM		=	#{mngSignNm}
+		,	ENGR_SIGN_PATH	=	#{engrSignPath}
+		,	ENGR_SIGN_NM	=	#{engrSignNm}
+		WHERE
+			CHECK_SEQ		=	#{checkSeq}
+	</update>
+	
+	<update id="insertPreventiveCheckCompleteLog" useGeneratedKeys="true" keyProperty="CHECK_SEQ">
+		<selectKey keyProperty="CHECK_SEQ" resultType="string" order="BEFORE">
+			SELECT 
+					MAX(CHECK_SEQ) AS CHECK_SEQ
+			FROM	TB_MMS_CHECK_M
+			WHERE	STR_CD = #{strCd}
+				AND	ENGR_ID	= #{s_userId}
+		</selectKey>
+		INSERT /* [PreventiveCheckVisitService.query][insertPreventiveCheckCompleteLog][예방점검상세(방문) 점검완료로그, 픔목 당][김선호][2017-12-22] */
+		INTO TB_MMS_CHECK_AST_L 
+		(
+				CHECK_SEQ
+			,	AST_SEQ
+			,	PRD_CD
+			,	OBS_YN
+			,	OBS_MEMO
+			,	IN_USER_ID
+			,	UP_USER_ID
+			,	IN_DT
+		)		  
+		VALUES
+		    <foreach item="list" index="dt_data" collection="dt_data"  separator="," >
+		    (
+				#{CHECK_SEQ}	
+			,	#{list.astSeq}
+			,	#{list.prdCd}
+			,	#{list.obsYn}
+			,	#{list.obsMemo}
+			,	#{s_userId}
+			,	#{s_userId}
+			,	NOW()
+			)
+  			</foreach>
+	</update>
+	
+	<select id="getPrventiveCheckObsFlag" resultType="HMap">
+		SELECT 
+				CODE_CD AS value
+			,	CODE_NM	AS name
+		  FROM TB_PARAGON_COMM_CODE
+		 WHERE CODE_GROUP_CD = 'SC0031'
+		 ORDER BY CODE_CD ASC
+	</select>
+	
+</mapper>

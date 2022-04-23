@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="AspCompanyService">
+
+	<select id="getAspCompanyList" resultType="HMap" > 
+		SELECT /* [AspCompanyService.query][getAspCompanyList][ASPCompany 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       ASP_COMP_CD
+		     , ASP_COMP_NM
+		     , ASP_CEO_NM
+		     , ASP_CORP_NUM
+		     , ASP_USER_NM
+		     , PHONE
+		     , IN_USER_ID
+		     , DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		  FROM TB_MMS_ASP_COMP  
+		 WHERE DEL_YN = 'N'
+		   AND USE_YN = 'Y'
+		   <if test="aspCompCd != null and !aspCompCd.equals('')"> 
+			   AND ASP_COMP_CD = #{aspCompCd}
+		   </if>
+		   <if test="aspCompNm != null and !aspCompNm.equals('')"> 
+			   AND ASP_COMP_NM LIKE CONCAT('%',#{aspCompNm},'%')
+		   </if>
+		 ORDER BY ASP_COMP_CD ASC
+	</select>
+	
+	<select id="getAspCompNameList" resultType="HMap" > 
+		SELECT /* [AspCompanyService.query][getAspCompNameList][AspCompany 코드, 이름 조회]["Han Seong Jin"][2017. 2. 27.] */
+		       DISTINCT AC.ASP_COMP_CD value
+		     , AC.ASP_COMP_NM name
+		  FROM VIEW_PARTNER VP
+	  LEFT JOIN TB_MMS_ASP_COMP AC 
+	  		ON VP.ASP_COMP_CD = AC.ASP_COMP_CD
+		 WHERE AC.DEL_YN = 'N'
+		   AND AC.USE_YN = 'Y'
+		   <if test="aspCompCd != null and !aspCompCd.equals('')"> 
+			   AND AC.ASP_COMP_CD = #{aspCompCd}
+		   </if>
+		 ORDER BY AC.ASP_COMP_NM ASC
+	</select>
+	
+	<select id="getMaAspCompNameList" resultType="HMap" > 
+		SELECT /* [AspCompanyService.query][getAspCompNameList][AspCompany 코드, 이름 조회]["Han Seong Jin"][2017. 2. 27.] */
+		       ASP_COMP_CD value
+		     , ASP_COMP_NM name
+		  FROM TB_MMS_ASP_COMP  
+		 WHERE DEL_YN = 'N'
+		   AND USE_YN = 'Y'
+		   <if test="aspCompCd != null and !aspCompCd.equals('')"> 
+			   AND ASP_COMP_CD = #{aspCompCd}
+		   </if>
+		 ORDER BY ASP_COMP_NM ASC
+	</select>
+	
+	<insert id="insertAspCompany">
+		INSERT /* [AspCompanyService.query][insertAspCompany][ASPCompany 등록]["Han Seong Jin"][2017. 2. 27.] */
+		  INTO TB_MMS_ASP_COMP (
+		  		  ASP_COMP_CD
+		  		, ASP_COMP_NM
+		  		, ASP_CORP_NUM
+		  		, ASP_CEO_NM
+		  		, ASP_USER_NM
+		  		, PHONE
+		  		, MEMO
+		        , IN_USER_ID
+		        , IN_DT
+		  )		  
+		VALUES(   #{aspCompCd}
+				, #{aspCompNm}
+				, #{aspCorpNum}
+				, #{aspCeoNm}
+				, #{aspUserNm}
+				, #{phone}
+				, #{memo}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+	
+	<select id="getCheckAspCompCd" resultType="HMap" > 
+		SELECT /* [AspCompanyService.query][getCheckAspCompCd][Asp서비스코드 중복 조회][Han Seong Jin][2016-09-13] */
+			count(ASP_COMP_CD) AS CNT
+		,	ASP_COMP_CD	
+		  FROM 
+		  	TB_MMS_ASP_COMP
+		  WHERE 
+		    ASP_COMP_CD = #{aspCompCd}
+	</select>
+	
+	<select id="getAspCompInfo" resultType="HMap" > 
+		SELECT /* [AspCompanyService.query][getAspCompInfo][ASPCompany 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       ASP_COMP_NM
+		     , IFNULL(ASP_CORP_NUM, "") ASP_CORP_NUM
+		     , IFNULL(ASP_CEO_NM, "") ASP_CEO_NM
+		     , IFNULL(ASP_USER_NM, "") ASP_USER_NM
+		     , IFNULL(PHONE, "") PHONE
+		     , IFNULL(MEMO, "") MEMO
+		  FROM TB_MMS_ASP_COMP  
+		 WHERE ASP_COMP_CD = #{aspCompCd}
+	</select>
+	
+	
+	<update id="updateAspCompany">
+		UPDATE TB_MMS_ASP_COMP /* [AspCompanyService.query][updateAspCompany][ASPCompany 수정]["Han Seong Jin"][2017. 2. 27.] */
+		   SET ASP_CORP_NUM	= #{aspCorpNum}
+		     , ASP_CEO_NM  	= #{aspCeoNm}
+		     , ASP_USER_NM 	= #{aspUserNm}
+		     , PHONE       	= #{phone}
+		     , MEMO        	= #{memo}
+		 WHERE ASP_COMP_CD = #{aspCompCd}
+	</update>
+	
+	
+	<update id="deleteAspCompany">
+		UPDATE TB_MMS_ASP_COMP /* [AspCompanyService.query][deleteAspCompany][ASPCompany 삭제]["Han Seong Jin"][2017. 2. 27.] */
+		  SET DEL_YN = 'Y'
+				, UP_USER_ID = #{s_userId}
+		  WHERE ASP_COMP_CD	= #{aspCompCd}
+	</update>
+	
+	<select id="getAspCompanyComboList" resultType="HMap">
+		SELECT /* [AspCompanyService.query][getAspCompanyComboList][ASPCompany 목록조회]["Han Seong Jin"][2017. 2. 27.] */
+		       ASP_COMP_CD value
+		     , ASP_COMP_NM name
+		  FROM TB_MMS_ASP_COMP  
+	</select>
+	
+
+	
+</mapper>
+ 

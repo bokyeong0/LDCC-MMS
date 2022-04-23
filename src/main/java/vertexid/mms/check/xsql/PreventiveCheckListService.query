@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PreventiveCheckListService">
+
+	<select id="getPreventiveCheckList" resultType="LHMap">
+		  SELECT  /* [PreventiveCheckService.query][getPreventiveCheckList][예방 점검 목록 조회][김선호][2017-12-05] */
+					TMCM.CHECK_SEQ
+				,	TMCM.ASP_COMP_CD
+				,	TMAC.ASP_COMP_NM
+				,	TMCM.AREA_CD
+				,	IFNULL(C.COMP_CD, '') AS COMP_CD
+				,	IFNULL(C.COMP_NM, '') AS COMP_NM
+				,	IFNULL(B.BRND_CD, '') AS BRND_CD
+				,	IFNULL(B.BRND_NM, '') AS BRND_NM
+				,	TMCM.STR_CD
+				,	S.STR_NM
+				,	TMCM.MNG_SIGN_PATH
+				,	IF(ISNULL(TMCM.MNG_SIGN_NM) OR TMCM.MNG_SIGN_NM = '' , "N", "Y")	AS MNG_SIGN_YN
+				,	TMCM.ENGR_SIGN_PATH
+				,	IF(ISNULL(TMCM.ENGR_SIGN_NM) OR TMCM.ENGR_SIGN_NM = '' , "N", "Y")	AS ENGR_SIGN_YN
+				,	TMCM.ATTACH_PATH
+				,	IF(ISNULL(TMCM.ATTACH_NM) OR TMCM.ATTACH_NM = '' , "N", "Y")	AS ATTACH_YN
+			 	, 	PC.CODE_NM AS AREA_NM
+				,	FN_COMM_CODE_NM('SC0027', S.AREA_SEQ, 'ko') AS AREA_NM
+				,	DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T') AS CHECK_DT
+				,	MAX(TMCM.ENGR_ID) AS ENGR_ID
+				,	MAX(TMCM.ENGR_NM) AS ENGR_NM
+		  FROM TB_MMS_CHECK_M TMCM
+		  LEFT JOIN TB_MMS_STND_STR_S S
+		    ON TMCM.STR_CD = S.STR_CD
+		    AND S.COMP_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_BRND_S B
+		    ON S.BRND_CD = B.BRND_CD
+		    AND B.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_COMP_S C
+		    ON S.COMP_CD = C.COMP_CD
+		    AND C.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_ASP_COMP TMAC
+		    ON TMCM.ASP_COMP_CD = TMAC.ASP_COMP_CD
+		  LEFT JOIN TB_PARAGON_COMM_CODE PC
+		    ON PC.CODE_CD = S.AREA_SEQ
+		    AND PC.CODE_GROUP_CD = 'SC0027'
+		  WHERE TMCM.DEL_YN = 'N'
+			<if test='s_companyCd != null and !s_companyCd.equals("")'>
+				AND TMCM.ASP_COMP_CD = #{s_companyCd}
+				<if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND TMCM.AREA_CD = #{s_areaCd}
+				</if>
+			</if>
+			<if test='s_compCd != null and !s_compCd.equals("")'>
+				AND C.COMP_CD = #{s_compCd}
+				<if test='s_brndCd != null and !s_brndCd.equals("")'>
+				AND B.BRND_CD = #{s_brndCd}
+				</if>
+			</if>
+			AND date_format(TMCM.CHECK_DT, '%Y-%m-%d') <![CDATA[>=]]> #{startDt}
+           	AND date_format(TMCM.CHECK_DT, '%Y-%m-%d') <![CDATA[<=]]> #{endDt}
+			<if test='compCd != null and !compCd.equals("")'>
+			   AND C.COMP_CD LIKE CONCAT('%',#{compCd},'%')
+			</if>
+			<if test='brndCd != null and !brndCd.equals("")'>
+			   AND B.BRND_CD LIKE CONCAT('%',#{brndCd},'%')
+			</if>
+			<if test='strCd != null and !strCd.equals("")'>
+			   AND TMCM.STR_CD LIKE CONCAT('%',#{strCd},'%')
+			</if>
+			<if test='aspCompCd != null and !aspCompCd.equals("")'>
+			   AND TMCM.ASP_COMP_CD LIKE CONCAT('%',#{aspCompCd},'%')
+			</if>
+			GROUP BY TMCM.CHECK_SEQ, TMCM.STR_CD, DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T')
+			ORDER BY TMCM.STR_CD, DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T')
+	</select>
+
+	<select id="getPreventHstList" resultType="LHMap">
+		SELECT  /* [PreventiveCheckService.query][getPreventHstList][예방 점검 이력조회][유승우][2018-01-17] */
+				TMCM.CHECK_SEQ
+			,	TMCM.ASP_COMP_CD
+			,	TMAC.ASP_COMP_NM
+			,	TMCM.AREA_CD
+			,	CONCAT(TMAC.ASP_COMP_NM, CASE WHEN IFNULL(SA.AREA_NM,'') !='' THEN CONCAT(' > ',SA.AREA_NM) ELSE '' END ) ASP_CATE	
+			,	IFNULL(C.COMP_CD, '') AS COMP_CD
+			,	IFNULL(C.COMP_NM, '') AS COMP_NM
+			,	IFNULL(B.BRND_CD, '') AS BRND_CD
+			,	IFNULL(B.BRND_NM, '') AS BRND_NM
+			,	TMCM.STR_CD
+			,	S.STR_NM
+			,	IF(ISNULL(TMCM.MNG_SIGN_NM) OR TMCM.MNG_SIGN_NM = '' , "N", "Y")	AS MNG_SIGN_YN
+			,	TMCM.ENGR_SIGN_PATH
+			,	IF(ISNULL(TMCM.ENGR_SIGN_NM) OR TMCM.ENGR_SIGN_NM = '' , "N", "Y")	AS ENGR_SIGN_YN
+			,	TMCM.ATTACH_PATH
+			,	IF(ISNULL(TMCM.ATTACH_NM) OR TMCM.ATTACH_NM = '' , "N", "Y")	AS ATTACH_YN
+			,	PC.CODE_NM AS AREA_NM
+			,	DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T') AS CHECK_DT
+			,	TMCM.ENGR_ID
+			,	TMCM.ENGR_NM
+		FROM TB_MMS_CHECK_M TMCM
+		LEFT JOIN TB_MMS_CHECK_AST_L TMCAL
+		  ON TMCAL.CHECK_SEQ = TMCM.CHECK_SEQ
+		LEFT JOIN TB_MMS_STND_STR_S S
+		  ON TMCM.STR_CD = S.STR_CD
+		  AND S.COMP_YN = 'N'
+		LEFT JOIN TB_MMS_STND_BRND_S B
+		  ON S.BRND_CD = B.BRND_CD
+		  AND B.DEL_YN = 'N'
+		LEFT JOIN TB_MMS_STND_COMP_S C
+		  ON S.COMP_CD = C.COMP_CD
+		  AND C.DEL_YN = 'N'
+		LEFT JOIN TB_MMS_ASP_COMP TMAC
+		  ON TMCM.ASP_COMP_CD = TMAC.ASP_COMP_CD
+		LEFT JOIN TB_PARAGON_COMM_CODE PC
+		  ON PC.CODE_CD = S.AREA_SEQ
+		  AND PC.CODE_GROUP_CD = 'SC0027'
+		LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+		  ON TMCM.AREA_CD = SA.AREA_CD
+		WHERE TMCM.DEL_YN = 'N'
+			<if test='s_companyCd != null and !s_companyCd.equals("")'>
+				AND TMCM.ASP_COMP_CD = #{s_companyCd}
+				<if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND TMCM.AREA_CD = #{s_areaCd}
+				</if>
+			</if>					
+			<if test='strCd != null and !strCd.equals("")'>
+			   AND TMCM.STR_CD = #{strCd}
+			</if>
+		GROUP BY TMCM.CHECK_SEQ, TMCM.STR_CD, DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T')
+		ORDER BY TMCM.CHECK_SEQ DESC, TMCM.STR_CD, DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T')
+	</select>
+	
+	<update id="getPrventiveCheckNoticeNewSave">
+	INSERT INTO TB_MMS_CHECK_CAUTION_M /* [PreventiveCheckVisitService.query][getPrventiveCheckNoticeNewSave][예방정검 유의사항 내용 등록(수정)][김선호][2017-12-11] */
+		   SET
+		   		CAUTION_PK = 0 
+		   ,	CONTENT = #{content}
+		   ,	IN_USER_ID	=	#{s_userId}
+		   ,	IN_DT		=	now()
+		ON DUPLICATE KEY UPDATE 
+		   		CONTENT = #{content}
+		   ,	UP_USER_ID	=	#{s_userId}
+		   ,	UP_DT		=	now()
+	</update>
+
+	<select id="getPreventiveCheckStrInfo" resultType="LHMap">
+		SELECT  /* [PreventiveCheckService.query][getPreventiveCheckStrInfo][예방점검 점포별 상세조회][김선호][2017-01-04] */
+			  TMCM.CHECK_SEQ
+			, TMAC.ASP_COMP_NM
+			, C.COMP_NM
+			, B.BRND_NM
+			, TMCM.STR_CD
+			, S.STR_NM
+			, DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T') AS CHECK_DT
+			, PC.CODE_NM AS AREA_NM
+			, TMCM.MNG_SIGN_PATH
+			, TMCM.MNG_SIGN_NM
+			, TMCM.ENGR_SIGN_PATH
+			, TMCM.ENGR_SIGN_NM
+			, TMCM.ATTACH_PATH
+			, TMCM.ATTACH_NM
+		FROM TB_MMS_CHECK_M TMCM
+		  LEFT JOIN TB_MMS_CHECK_AST_L TMCAL
+		    ON TMCAL.CHECK_SEQ = TMCM.CHECK_SEQ
+		  LEFT JOIN TB_MMS_STND_STR_S S
+		    ON TMCM.STR_CD = S.STR_CD
+		    AND S.COMP_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_BRND_S B
+		    ON S.BRND_CD = B.BRND_CD
+		    AND B.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_COMP_S C
+		    ON S.COMP_CD = C.COMP_CD
+		    AND C.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_ASP_COMP TMAC
+		    ON TMCM.ASP_COMP_CD = TMAC.ASP_COMP_CD
+		  LEFT JOIN TB_PARAGON_COMM_CODE PC
+		    ON PC.CODE_CD = S.AREA_SEQ
+		    AND PC.CODE_GROUP_CD = 'SC0027'
+		WHERE TMCM.CHECK_SEQ = #{checkSeq}
+		ORDER BY TMCM.CHECK_SEQ DESC
+	</select>
+
+	<select id="getPreventiveCheckStrInfoList" resultType="LHMap">
+		SELECT  /* [PreventiveCheckService.query][getPreventiveCheckStrInfoList][예방점검 점포별 상세조회 리스트][김선호][2017-01-04] */
+				TMCM.CHECK_SEQ
+			,	TMCAL.AST_SEQ
+			,	TMAMM.AST_SERIAL
+			,	TMAC.ASP_COMP_NM
+			,	C.COMP_NM
+			,	B.BRND_NM
+			,	TMCM.STR_CD
+			,	S.STR_NM
+			,	TMCM.ENGR_ID
+			,	TMCM.ENGR_NM
+			,	DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T') AS CHECK_DT
+			,	TMCM.MNG_SIGN_PATH
+			,	IF(ISNULL(TMCM.MNG_SIGN_NM) OR TMCM.MNG_SIGN_NM = '' , "N", "Y")	AS MNG_SIGN_YN
+			,	TMCM.ENGR_SIGN_PATH
+			,	IF(ISNULL(TMCM.ENGR_SIGN_NM) OR TMCM.ENGR_SIGN_NM = '' , "N", "Y")	AS ENGR_SIGN_YN
+			,	TMCM.ATTACH_PATH
+			,	IF(ISNULL(TMCM.ATTACH_NM) OR TMCM.ATTACH_NM = '' , "N", "Y")	AS ATTACH_YN
+			,	TMCAL.OBS_YN
+			,	TMCAL.OBS_MEMO
+			,	TMCAL.PRD_CD
+			,	TMSPS.PRD_NM
+			,	SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1
+			,	SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2
+			,	C2.CODE_NM AS PRD_TYPE_LV3
+			,	TMSPS.PRD_SPEC
+			,	IFNULL(TMAMM.AST_TYPE2, '') AS AST_TYPE2
+			,	IFNULL(TMAMM.AST_TYPE1, '') AS AST_TYPE1
+		FROM TB_MMS_CHECK_M TMCM
+		  LEFT JOIN TB_MMS_CHECK_AST_L TMCAL
+		    ON TMCAL.CHECK_SEQ = TMCM.CHECK_SEQ
+		  LEFT JOIN TB_MMS_AST_MNG_M TMAMM
+		    ON TMCM.ASP_COMP_CD = TMAMM.ASP_COMP_CD
+		    AND TMCM.STR_CD = TMAMM.STR_CD
+		    AND TMCAL.PRD_CD = TMAMM.PRD_CD
+		    AND TMCAL.AST_SEQ = TMAMM.AST_SEQ
+		  LEFT JOIN TB_MMS_STND_STR_S S
+		    ON TMCM.STR_CD = S.STR_CD
+		    AND S.COMP_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_BRND_S B
+		    ON S.BRND_CD = B.BRND_CD
+		    AND B.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_COMP_S C
+		    ON S.COMP_CD = C.COMP_CD
+		    AND C.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_PRD_S TMSPS
+		    ON TMCAL.PRD_CD = TMSPS.PRD_CD
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		    ON SPT1.PRD_TYPE_CD = TMSPS.PRD_TYPE_LV1
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		    ON SPT2.PRD_TYPE_CD = TMSPS.PRD_TYPE_LV2
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		    ON SPT3.PRD_TYPE_CD = TMSPS.PRD_TYPE_LV3
+		  LEFT JOIN TB_PARAGON_COMM_CODE C2
+		    ON C2.CODE_GROUP_CD = 'SC0025'
+		    AND SPT3.PRD_TYPE_NM = C2.CODE_CD
+		  LEFT JOIN TB_MMS_ASP_COMP TMAC
+		    ON TMCM.ASP_COMP_CD = TMAC.ASP_COMP_CD
+		WHERE TMCM.CHECK_SEQ = #{checkSeq}
+		ORDER BY TMCM.CHECK_SEQ DESC
+	</select>
+	
+	<select id="viewReport" resultType="HMap">
+		SELECT  /* [PreventiveCheckService.query][viewReport][예방 점검 목록 서비스리포트 조회][김선호][2018-01-22] */
+				TMCM.CHECK_SEQ
+			,	DATE_FORMAT(TMCM.CHECK_DT, '%Y-%m-%d %T') AS CHECK_DT
+			,	TMAC.ASP_COMP_NM
+			,	C.COMP_NM
+			,	B.BRND_NM
+			,	S.STR_NM
+			,	TMSPS.PRD_NM
+			,	TMAMM.AST_SERIAL
+			,	SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1
+			,	SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2
+			,	C2.CODE_NM AS PRD_TYPE_LV3
+			,	TMSPS.PRD_SPEC
+			,	IFNULL(TMAMM.AST_TYPE2, '') AS AST_TYPE2
+			,	IFNULL(TMAMM.AST_TYPE1, '') AS AST_TYPE1
+			,	IF(ISNULL(TMCAL.OBS_YN) OR TMCAL.OBS_YN = 'N' , "정상", "이상")	AS OBS_YN
+			,	TMCAL.OBS_MEMO
+			,	TMCM.MNG_SIGN_PATH
+			,	TMCM.ENGR_SIGN_PATH
+		FROM TB_MMS_CHECK_M TMCM
+		  LEFT JOIN TB_MMS_CHECK_AST_L TMCAL
+		    ON TMCAL.CHECK_SEQ = TMCM.CHECK_SEQ
+		  LEFT JOIN TB_MMS_AST_MNG_M TMAMM
+		    ON TMCM.ASP_COMP_CD = TMAMM.ASP_COMP_CD
+		    AND TMCM.STR_CD = TMAMM.STR_CD
+		    AND TMCAL.PRD_CD = TMAMM.PRD_CD
+		    AND TMCAL.AST_SEQ = TMAMM.AST_SEQ
+		  LEFT JOIN TB_MMS_STND_STR_S S
+		    ON TMCM.STR_CD = S.STR_CD
+		    AND S.COMP_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_BRND_S B
+		    ON S.BRND_CD = B.BRND_CD
+		    AND B.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_COMP_S C
+		    ON S.COMP_CD = C.COMP_CD
+		    AND C.DEL_YN = 'N'
+		  LEFT JOIN TB_MMS_STND_PRD_S TMSPS
+		    ON TMCAL.PRD_CD = TMSPS.PRD_CD
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		    ON SPT1.PRD_TYPE_CD = TMSPS.PRD_TYPE_LV1
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		    ON SPT2.PRD_TYPE_CD = TMSPS.PRD_TYPE_LV2
+		  LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		    ON SPT3.PRD_TYPE_CD = TMSPS.PRD_TYPE_LV3
+		  LEFT JOIN TB_PARAGON_COMM_CODE C2
+		    ON C2.CODE_GROUP_CD = 'SC0025'
+		    AND SPT3.PRD_TYPE_NM = C2.CODE_CD
+		  LEFT JOIN TB_MMS_ASP_COMP TMAC
+		    ON TMCM.ASP_COMP_CD = TMAC.ASP_COMP_CD
+		WHERE TMCM.DEL_YN = 'N'
+		AND TMCM.CHECK_SEQ = #{checkSeq}
+		ORDER BY TMCM.CHECK_SEQ DESC
+	</select>
+	
+</mapper>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ComponentService">
+	<select id="getComponentList" resultType="HMap" > 
+		SELECT /* [ComponentService.query][getComponentList][컴포넌트관리 목록 조회][Kim Jin Ho][2016-09-13] */
+			   COMP_SEQ
+		     , PP.PRO_CD
+		     , PP.PRO_NM
+		     , COMP_ID
+		     , COMP_NM     
+		     , COMP_DESC     
+		     , COMP_GBN
+		     , COMP_TYPE
+		     , PC.USE_YN
+		     , PP.IN_USER_ID
+		     , DATE_FORMAT(PC.IN_DT ,'%Y-%m-%d') IN_DT 
+	     FROM TB_PARAGON_COMPONENT PC
+	     LEFT OUTER JOIN TB_PARAGON_PRO PP
+	       ON PC.PRO_CD = PP.PRO_CD
+	    WHERE PC.DEL_YN ='N'
+		<if test="proCd != null and !proCd.equals('')"> 
+		   AND PP.PRO_CD = #{proCd}
+		</if>
+		<if test="compId != null and !compId.equals('')"> 
+		   AND PC.COMP_ID = #{compId}
+		</if>
+		<if test="compNm != null and !compNm.equals('')"> 
+		   AND PC.COMP_NM LIKE '%${compNm}%'
+		</if>
+		 ORDER BY PP.PRO_CD DESC 
+	</select>
+	
+	<update id="updateComponent" > 
+		UPDATE TB_PARAGON_COMPONENT /* [ComponentService.query][updateComponent][컴포넌트 정보 수정][Kim Jin Ho][2016-09-13] */
+		   SET PRO_CD = #{proCd}
+		     , COMP_ID = #{compId}
+		     , COMP_NM = #{compNm}
+		     , COMP_GBN = #{compGbn}
+		     , COMP_DESC = #{compDesc}
+		     , USE_YN = #{useYn}
+		     , UP_USER_ID = #{s_userId}
+		     , UP_DT = SYSDATE
+		 WHERE COMP_SEQ = #{compSeq}
+	</update>
+	
+	<insert id="insertComponent" > 
+		INSERT /* [ComponentService.query][insertComponent][컴포넌트 정보 등록][Kim Jin Ho][2016-09-13] */
+		  INTO TB_PARAGON_COMPONENT (
+		  		  COMP_ID 		
+				, COMP_NM 		
+				, PRO_CD 	
+				, COMP_DESC 	
+				, COMP_GBN 	
+				, COMP_TYPE 	
+				, USE_YN 		
+				, IN_USER_ID 	
+				, UP_USER_ID 	
+		  )
+		VALUES(	  #{compId}
+				, #{compNm}
+				, #{proCd}
+				, #{compDesc}
+				, #{compGbn}
+				, ''
+				, #{useYn}
+				, #{s_userId}
+				, #{s_userId}
+		)
+	</insert>
+
+	<delete id="deleteComponent" > 
+		UPDATE TB_PARAGON_COMPONENT /* [ComponentService.query][updateComponent][컴포넌트 정보 삭제][Kim Jin Ho][2016-09-13] */
+		   SET DEL_YN = 'Y'
+		  WHERE COMP_SEQ = #{compSeq}
+	</delete>
+	
+</mapper>
+ 

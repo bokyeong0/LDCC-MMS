@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Tree">
+	<select id="getTreeList" resultType="LHMap">
+		SELECT /* [TreeService.query][getTreeList][트리리스트 조회][Han Seong Jin][2016-09-13] */
+			  COM_CD id, CODE_NM text, PARENT_CD parent, 'true' child
+		  FROM TB_PARAGON_TREE
+		  where use_yn = 'Y'
+		  and del_yn ='N'
+	</select>
+	
+	<insert id="insertMenu">
+		INSERT INTO /* [TreeService.query][insertMenu][트리메뉴 추가][Han Seong Jin][2016-09-13] */
+			TB_PARAGON_TREE (COM_CD, CODE_NM, CODE_DESC, PARENT_CD, SYS_YN,  IN_DT, USE_YN)
+		VALUES (#{comCd}, #{codeNm}, #{codeDesc}, #{parentCd}, #{sysYn}, now(), #{useYn})
+	</insert>
+
+</mapper>

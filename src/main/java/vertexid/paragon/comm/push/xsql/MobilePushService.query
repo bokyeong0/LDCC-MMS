@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MobilePushService">
+
+	
+	
+	<select id="getSearchUserList" resultType="HMap" >
+		SELECT /* [AuthService.query][getAuthSearchUserList][사용자 조회 조회][Kim Jin Ho][2016-09-13] */
+			   USER_NO                                    
+			 , USER_ID
+			 , USER_NM
+			 , USER_POSITION
+			 , USER_ROLE_NM
+		 FROM(
+			SELECT USER_NO                                    
+				 , USER_ID
+				 , USER_NM
+				 , USER_POSITION
+				 , FN_COMM_CODE_NM('SC0011',USER_ROLE, #{s_language}) USER_ROLE_NM
+			  FROM TB_PARAGON_USER			  
+			 WHERE DEL_YN ='N'
+		 ) A<if test="searchWordArr.size != null and searchWordArr.size != 0">
+		 WHERE <foreach collection="searchWordArr" item="item" open="(" separator="OR" close=")">USER_NO LIKE '${item}%'</foreach>
+		    OR <foreach collection="searchWordArr" item="item" open="(" separator="OR" close=")">USER_ID LIKE '${item}%'</foreach>
+		    OR <foreach collection="searchWordArr" item="item" open="(" separator="OR" close=")">USER_NM LIKE '${item}%'</foreach>
+		    OR <foreach collection="searchWordArr" item="item" open="(" separator="OR" close=")">USER_POSITION LIKE '%${item}%'</foreach>
+		    OR <foreach collection="searchWordArr" item="item" open="(" separator="OR" close=")">A.USER_ROLE_NM LIKE '%${item}%'</foreach></if>
+	  ORDER BY USER_NM 
+	</select> 
+	
+	<select id="getUserDeviceList" resultType="HMap" >
+		SELECT /* [MobilePushService.query][getUserDeviceList][개인 PUSH 아이디 조회][김진호][2017. 6. 14.] */
+		       PUSH_ID
+		     , MOBILE_TYPE
+		     , USER_ID
+		FROM MMS.TB_PARAGON_USER_MOBILE
+		WHERE MOBILE_AUTH_YN = 'Y'
+		 AND MOBILE_LOC_SEND_YN = 'Y'
+		 AND USER_ID = (
+		 				SELECT USER_ID
+		 				  FROM TB_PARAGON_USER
+		 				 WHERE USER_NO = #{userIdArr}
+		                 ) 
+<!-- 		 <foreach collection="userIdArr" item="item"  index="idx" open="AND USER_ID IN(" separator="," close=")">#{item}</foreach> -->
+	</select>
+	<select id="getAreaDeviceList" resultType="HMap" >
+		SELECT /* [MobilePushService.query]["getAreaDeviceList"][권역 PUSH 아이디 조회][김진호][2017. 6. 14.] */
+		       UM.PUSH_ID
+		     , MOBILE_TYPE
+             , PU.AREA_SEQ
+             , UM.USER_ID
+		FROM MMS.TB_PARAGON_USER_MOBILE UM
+        LEFT OUTER JOIN TB_PARAGON_USER PU
+          ON UM.USER_ID = PU.USER_ID
+	   WHERE MOBILE_AUTH_YN = 'Y'
+		 AND MOBILE_LOC_SEND_YN = 'Y'
+		 AND PU.AREA_SEQ = #{areaSeq}
+	</select>
+</mapper>

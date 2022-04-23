@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardObstacleService">
+	
+	<select id="getStndObsList" resultType="HMap" >
+		SELECT /* [StandardObstacleService.query][getStndObsList][기준정보 장애유형 목록조회][이현주][2017. 2. 27.] */
+			'' AS ASP_COMP_CD
+		  , OBS_SEQ
+<!-- 		  , COMP_CD -->
+		  , OBS_PRT_SEQ 
+<!-- 		  , PRD_TYPE_SEQ -->
+<!-- 		  , FN_COMM_CODE_NM('SC0022', PRD_TYPE_SEQ, #{s_language}) PRD_TYPE_SEQ_NM -->
+		  , OBS_NM
+		  , OBS_MANUAL
+		  , OBS_LV								<!-- 분류 단계 -->
+		  , OBS_ORDER							<!-- 순서 -->
+		  , USE_YN
+		  , DEL_YN
+		  , IN_USER_ID
+		  , UP_USER_ID
+		  , DATE_FORMAT(IN_DT,'%Y-%m-%d') IN_DT
+		  , DATE_FORMAT(IN_DT,'%Y-%m-%d') UP_DT 
+		FROM 
+			TB_MMS_STND_OBS_S
+		WHERE DEL_YN = 'N'
+		  <if test="obsPrtSeq != null and !obsPrtSeq.equals('')">
+		  AND OBS_PRT_SEQ = #{obsPrtSeq}
+		  </if>
+		  <if test="obsPrtSeq == null">
+		  AND (OBS_PRT_SEQ IS NULL OR  OBS_PRT_SEQ = 0)
+		  </if>
+<!-- 		  <if test="compCd != null">
+		  AND (OBS_PRT_SEQ IS NULL OR  OBS_PRT_SEQ = 0)
+		  AND COMP_CD = #{compCd}
+		  </if> -->
+		  <if test="prdTypeSeq != null and !prdTypeSeq.equals('')">
+		  AND PRD_TYPE_SEQ = #{prdTypeSeq}
+		  </if>
+		  <if test="obsNm != null and !obsNm.equals('')">
+		  AND OBS_NM = #{obsNm}
+		  </if>
+		  ORDER BY CAST(OBS_ORDER AS SIGNED)
+	    <!-- ORDER BY OBS_ORDER ASC -->
+		<!-- ORDER BY OBS_LV ASC, OBS_NM ASC -->
+		  
+	</select>
+	<insert id="insertObstacle">
+		INSERT INTO TB_MMS_STND_OBS_S(
+			   OBS_PRT_SEQ
+			 , COMP_CD
+			 , OBS_NM
+			 , OBS_MANUAL
+			 , OBS_LV
+			 , OBS_ORDER
+			 , USE_YN
+			 , IN_USER_ID
+			 , UP_USER_ID
+			 , IN_DT
+		)
+		VALUES(
+			   #{obsPrtSeq}
+			  , #{compCd}
+			  , #{obsNm}
+			  , #{obsManual}
+			  , #{obsLv}
+			  , #{obsOrder}			  
+			  , #{useYn}
+			  , #{s_userId}
+			  , #{s_userId}
+			  , NOW()
+		)
+		
+	</insert>
+	<insert id="addObstacle">
+		INSERT INTO TB_MMS_STND_OBS_S(
+			   OBS_PRT_SEQ
+			 , COMP_CD
+			 , OBS_NM
+			 , OBS_LV
+			 , OBS_ORDER
+			 , IN_USER_ID
+			 , UP_USER_ID
+			 , IN_DT
+		)
+		VALUES(#{obsPrtSeq}
+			  , #{compCd}
+			  , #{obsNm}
+			  , #{obsLv}
+			  , #{obsOrder}			  
+			  , #{s_userId}
+			  , #{s_userId}
+			  , NOW()
+		)
+		<selectKey keyProperty="obsSeq" resultType="java.lang.Integer">
+		    SELECT LAST_INSERT_ID()
+		</selectKey>
+		
+	</insert>
+	
+	<update id="updateObstacle">
+		UPDATE TB_MMS_STND_OBS_S
+		SET OBS_NM = #{obsNm}
+		  <if test="obsManual != null and !obsManual.equals('')">
+		  , OBS_MANUAL = #{obsManual}
+		  </if>
+		  <if test="obsLv != null and !obsLv.equals('')">
+		  , OBS_LV = #{obsLv}
+		  </if>
+		  <if test="obsOrder != null and !obsOrder.equals('')">
+		  , OBS_ORDER = #{obsOrder}
+		  </if>
+		  , USE_YN = #{useYn}
+		WHERE OBS_SEQ = #{obsSeq}
+	</update>
+	
+	<update id="deleteObstacle">
+		UPDATE TB_MMS_STND_OBS_S
+		 SET DEL_YN	= 'Y'
+		     , UP_USER_ID =  #{s_userId}
+		 WHERE OBS_SEQ = #{obsSeq}
+	</update>
+	
+	<!-- <select id="getObsComboList" resultType="LHMap" >
+		SELECT /* [StandardObstacleService.query][getObsComboList][장애유형콤보조회][김진호][2016-09-13] */
+			   OBS_SEQ value
+			 , OBS_NM name
+		  FROM TB_MMS_STND_OBS_S
+		 WHERE 
+	//[유승우][2017-11-10]	     회사정보 미사용 COMP_CD = #{compCd}  AND USE_YN = 'Y'   AND DEL_YN = 'N'  
+		       USE_YN = 'Y'
+		   AND DEL_YN = 'N'
+		  <choose>
+		  	<when test="obsPrtSeq != null and !obsPrtSeq.equals('')">
+			  AND OBS_PRT_SEQ = #{obsPrtSeq}
+		  	</when>
+		  	<otherwise>
+			  AND (OBS_PRT_SEQ IS NULL OR  OBS_PRT_SEQ = 0)
+		  	</otherwise>
+		  </choose>
+		ORDER BY OBS_NM ASC
+	</select> -->
+    <select id="getObsComboList" resultType="LHMap" >
+    	SELECT 	 /* [StandardObstacleService.query][getObsComboList][장애유형콤보조회][유승우][2017-11-24] */
+    	       OBS_SEQ value  
+			 , OBS_NM name
+	    FROM (
+			SELECT   
+		       PRD_TYPE_CD OBS_SEQ
+			 , PRD_TYPE_PRT_CD  OBS_PRT_SEQ
+			 , PRD_TYPE_NM OBS_NM
+			 , '1' OBS_LV
+			 , PRD_TYPE_ORDER OBS_ORDER
+			 , USE_YN
+			 , DEL_YN			 
+		  FROM TB_MMS_STND_PRD_TYPE_S
+		 WHERE PRD_TYPE_LV = '2'
+		UNION ALL 
+			SELECT 
+			   OBS_SEQ 
+			 , OBS_PRT_SEQ 
+			 , OBS_NM
+			 , OBS_LV
+			 , OBS_ORDER
+			 , USE_YN
+			 , DEL_YN			 
+		  	FROM TB_MMS_STND_OBS_S
+	    ) 	ALL_OBS_TABLES
+	      WHERE 
+		      USE_YN = 'Y'
+		   AND DEL_YN = 'N'  
+		  <if test="obsSeq != null and !obsSeq.equals('')">
+		   AND OBS_SEQ = #{obsSeq}
+		  </if>		   
+		  <choose>
+			<when test="obsPrtSeq != null and !obsPrtSeq.equals('')">
+			  AND OBS_PRT_SEQ = #{obsPrtSeq}
+		  	</when>
+		  	<otherwise>
+			  AND OBS_LV = '1'
+		  	</otherwise>		
+		  </choose>		  	
+		  ORDER BY CAST(OBS_ORDER AS SIGNED)  		     	
+	</select> 
+	<select id="getObsMenualList" resultType="LHMap" >
+		SELECT /* [StandardObstacleService.query][getObsMenualList][장애매뉴얼조회][김진호][2016-09-13] */
+		       SO4.OBS_PRT_SEQ
+		     , SO4.COMP_CD
+		     , SC.COMP_NM
+		     , SO1.OBS_NM OBS_NM_LV1
+		     , SO2.OBS_NM OBS_NM_LV2
+		     , SO3.OBS_NM OBS_NM_LV3
+		     , SO4.OBS_NM OBS_NM_LV4
+		     , SO1.OBS_SEQ OBS_SEQ_LV1
+		     , SO2.OBS_SEQ OBS_SEQ_LV2
+		     , SO3.OBS_SEQ OBS_SEQ_LV3
+		     , SO4.OBS_SEQ OBS_SEQ_LV4
+		     , SO4.OBS_MANUAL
+		     , SO4.OBS_LV
+		     , SO4.IN_USER_ID
+		     , DATE_FORMAT(SO4.IN_DT,'%Y-%m-%d') IN_DT
+		  FROM MMS.TB_MMS_STND_OBS_S SO4
+		  LEFT OUTER JOIN TB_MMS_STND_OBS_S SO3
+		    ON SO4.OBS_PRT_SEQ = SO3.OBS_SEQ
+		  LEFT OUTER JOIN TB_MMS_STND_OBS_S SO2
+		    ON SO3.OBS_PRT_SEQ = SO2.OBS_SEQ
+		  LEFT OUTER JOIN TB_MMS_STND_OBS_S SO1
+		    ON SO2.OBS_PRT_SEQ = SO1.OBS_SEQ
+		  LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		    ON SO4.COMP_CD = SC.COMP_CD
+		 WHERE SO4.DEL_YN = 'N'
+		   AND SO4.OBS_LV = 4
+		   <if test="compCd != null and !compCd.equals('')">
+		   AND SO4.COMP_CD = #{compCd}
+		  </if>
+		   <if test="obsSeqLv1 != null and !obsSeqLv1.equals('')">
+		   AND SO1.OBS_SEQ = #{obsSeqLv1}
+		  </if>
+		   <if test="obsSeqLv2 != null and !obsSeqLv2.equals('')">
+		   AND SO2.OBS_SEQ = #{obsSeqLv2}
+		  </if>
+		   <if test="obsSeqLv3 != null and !obsSeqLv3.equals('')">
+		   AND SO3.OBS_SEQ = #{obsSeqLv3}
+		  </if>
+<!-- 		   <if test="obsSeqLv4 != null and !obsSeqLv4.equals('')"> -->
+<!-- 		   AND SO4.OBS_SEQ = #{obsSeqLv4} -->
+<!-- 		  </if> -->
+		   <if test="obsManual != null and !obsManual.equals('')">
+		   AND (SO4.OBS_NM LIKE '%${obsManual}%' OR  SO4.OBS_MANUAL LIKE '%${obsManual}%')
+		  </if>
+		 ORDER BY SC.COMP_NM ASC, SO1.IN_DT DESC
+		 
+		 
+	</select>
+	<select id="getObsMenualView" resultType="LHMap" >
+		SELECT /* [StandardObstacleService.query][getObsMenualView][장애매뉴얼조회][김진호][2016-09-13] */
+		       SO4.OBS_PRT_SEQ
+		     , SO4.COMP_CD
+		     , SC.COMP_NM
+		     , SO1.OBS_NM OBS_NM_LV1
+		     , SO2.OBS_NM OBS_NM_LV2
+		     , SO3.OBS_NM OBS_NM_LV3
+		     , SO4.OBS_NM OBS_NM_LV4
+		     , SO1.OBS_SEQ OBS_SEQ_LV1
+		     , SO2.OBS_SEQ OBS_SEQ_LV2
+		     , SO3.OBS_SEQ OBS_SEQ_LV3
+		     , SO4.OBS_SEQ OBS_SEQ_LV4
+		     , SO4.OBS_MANUAL
+		     , SO4.OBS_LV
+		     , SO4.IN_USER_ID
+		     , DATE_FORMAT(SO4.IN_DT,'%Y-%m-%d') IN_DT
+		  FROM MMS.TB_MMS_STND_OBS_S SO4
+		  LEFT OUTER JOIN TB_MMS_STND_OBS_S SO3
+		    ON SO4.OBS_PRT_SEQ = SO3.OBS_SEQ
+		  LEFT OUTER JOIN TB_MMS_STND_OBS_S SO2
+		    ON SO3.OBS_PRT_SEQ = SO2.OBS_SEQ
+		  LEFT OUTER JOIN TB_MMS_STND_OBS_S SO1
+		    ON SO2.OBS_PRT_SEQ = SO1.OBS_SEQ
+		  LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		    ON SO4.COMP_CD = SC.COMP_CD
+		 WHERE SO4.DEL_YN = 'N'
+		   AND SO4.OBS_LV = 4
+		   AND SO4.OBS_SEQ = #{obsSeqLv4} 
+<!-- 		   AND SO4.COMP_CD = #{compCd} -->
+	</select>
+	
+</mapper>
+
+

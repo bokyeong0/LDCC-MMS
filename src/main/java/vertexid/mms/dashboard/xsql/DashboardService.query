@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DashboardService">
+
+	<select id="getDashboard" resultType="LHMap">
+		SELECT DATE_FORMAT(now(), '%Y-%m-%d') DAY
+			 , COUNT(RS.RCPT_SEQ) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='N', 1, 0)), 0) RCPT_CMPL_N_CNT
+		FROM TB_MMS_OBS_RCPT_M RM
+		LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		 AND RS.LAST_PROC_YN = 'Y'
+		LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  ON CC.CODE_GROUP_CD = 'OS0001'
+		 AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = RM.STR_CD
+		WHERE RM.DEL_YN = 'N'
+		 AND DATE_FORMAT(RM.RCPT_DT, '%Y-%m-%d') = DATE_FORMAT(now(), '%Y-%m-%d')
+		<if test="s_companyCd != null and !s_companyCd.equals('')">
+        	AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+        	AND SS.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+        	AND SS.BRND_CD = #{brndCd}
+		</if>
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%Y-%m-%d') DAY
+			 , COUNT(RS.RCPT_SEQ) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='N', 1, 0)), 0) RCPT_CMPL_N_CNT
+		FROM TB_MMS_OBS_RCPT_M RM
+		LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		 AND RS.LAST_PROC_YN = 'Y'
+		LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  ON CC.CODE_GROUP_CD = 'OS0001'
+		 AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = RM.STR_CD
+		WHERE RM.DEL_YN = 'N'
+		 AND DATE_FORMAT(RM.RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+		<if test="s_companyCd != null and !s_companyCd.equals('')">
+        	AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+        	AND SS.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+        	AND SS.BRND_CD = #{brndCd}
+		</if>
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(DATE_ADD(now(), INTERVAL -1 MONTH), INTERVAL 1 DAY), '%Y-%m-%d') DAY
+			 , COUNT(RS.RCPT_SEQ) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='N', 1, 0)), 0) RCPT_CMPL_N_CNT
+		FROM TB_MMS_OBS_RCPT_M RM
+		LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		 AND RS.LAST_PROC_YN = 'Y'
+		LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  ON CC.CODE_GROUP_CD = 'OS0001'
+		 AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = RM.STR_CD
+		WHERE RM.DEL_YN = 'N'
+		 AND DATE_FORMAT(RM.RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(DATE_ADD(now(), INTERVAL -1 MONTH), INTERVAL 1 DAY), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+		<if test="s_companyCd != null and !s_companyCd.equals('')">
+        	AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+        	AND SS.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+        	AND SS.BRND_CD = #{brndCd}
+		</if>
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(DATE_ADD(now(), INTERVAL - 1 YEAR), INTERVAL 1 DAY), '%Y-%m-%d') DAY
+			 , COUNT(RS.RCPT_SEQ) RCPT_TOT_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='Y', 1, 0)), 0) RCPT_CMPL_CNT
+			 , IFNULL(SUM(IF(CC.CODE_OTHER2='N', 1, 0)), 0) RCPT_CMPL_N_CNT
+		FROM TB_MMS_OBS_RCPT_M RM
+		LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		 AND RS.LAST_PROC_YN = 'Y'
+		LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  ON CC.CODE_GROUP_CD = 'OS0001'
+		 AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = RM.STR_CD
+		WHERE RM.DEL_YN = 'N'
+		 AND DATE_FORMAT(RM.RCPT_DT, '%Y-%m') BETWEEN DATE_FORMAT(DATE_ADD(DATE_ADD(now(), INTERVAL -1 YEAR), INTERVAL 1 DAY), '%Y-%m') and DATE_FORMAT(now(), '%Y-%m')
+		<if test="s_companyCd != null and !s_companyCd.equals('')">
+        	AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+        	AND SS.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+        	AND SS.BRND_CD = #{brndCd}
+		</if>
+	</select>
+	
+	<select id="getLineChart" resultType="LHMap">
+		SELECT MON.MON XTICK
+		     , IFNULL(RC.RCPT_CMPL_CNT, 0) RCPT_CMPL_CNT
+		     , IFNULL(RC.RCPT_CMPL_N_CNT, 0) RCPT_CMPL_N_CNT
+		FROM (
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -10 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -9 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -8 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -7 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -5 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -4 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -3 MONTH), '%Y-%m') MON
+		UNION 
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -2 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 MONTH), '%Y-%m') MON
+		UNION
+		SELECT DATE_FORMAT(now(), '%Y-%m') MON
+		)MON
+		LEFT OUTER JOIN(
+		SELECT DATE_FORMAT(RM.RCPT_DT, '%Y-%m') RCPT_DT
+			 , SUM(IF(CC.CODE_OTHER2='Y', 1, 0)) RCPT_CMPL_CNT
+			 , SUM(IF(CC.CODE_OTHER2='N', 1, 0)) RCPT_CMPL_N_CNT
+		FROM TB_MMS_OBS_RCPT_M RM
+		LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+		  ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		 AND RS.LAST_PROC_YN = 'Y'
+		LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+		  ON CC.CODE_GROUP_CD = 'OS0001'
+		 AND RS.RCPT_STS_TYPE = CC.CODE_CD
+		LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  ON SS.STR_CD = RM.STR_CD  
+		WHERE DATE_FORMAT(RM.RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+			AND RM.DEL_YN ='N'
+		<if test="s_companyCd != null and !s_companyCd.equals('')">
+        	AND RM.ASP_COMP_CD = #{s_companyCd}
+		</if>
+		<if test="compCd != null and !compCd.equals('')">
+        	AND SS.COMP_CD = #{compCd}
+		</if>
+		<if test="brndCd != null and !brndCd.equals('')">
+        	AND SS.BRND_CD = #{brndCd}
+		</if> 
+		GROUP BY DATE_FORMAT(RCPT_DT, '%Y-%m'), DATE_FORMAT(RCPT_DT, '%m')
+			) RC
+		ON MON.MON = RC.RCPT_DT
+	</select>
+	
+<!-- 	<select id="getTodayCnt" resultType="LHMap"> -->
+<!-- 		SELECT DATE_FORMAT(now(), '%Y/%m/%d') TODAY -->
+<!-- 			 , COUNT(RCPT_DT) RCPT_TOT_CNT -->
+<!-- 			 , COUNT(RCPT_CMPL_DT) RCPT_CMPL_CNT -->
+<!-- 		FROM TB_MMS_OBS_RCPT_M -->
+<!-- 		WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') = DATE_FORMAT(now(), '%Y-%m-%d') -->
+<!-- 	</select> -->
+<!-- 	<select id="getWeekCnt" resultType="LHMap"> -->
+<!-- 		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%m/%d') WEEK -->
+<!-- 			 , COUNT(RCPT_DT) RCPT_TOT_CNT -->
+<!-- 			 , COUNT(RCPT_CMPL_DT) RCPT_CMPL_CNT -->
+<!-- 		FROM TB_MMS_OBS_RCPT_M -->
+<!-- 		WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d') -->
+<!-- 	</select> -->
+<!-- 	<select id="getMonthCnt" resultType="LHMap"> -->
+<!-- 		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 MONTH), '%m/%d') MONTH -->
+<!-- 			 , COUNT(RCPT_DT) RCPT_TOT_CNT -->
+<!-- 			 , COUNT(RCPT_CMPL_DT) RCPT_CMPL_CNT -->
+<!-- 		FROM TB_MMS_OBS_RCPT_M -->
+<!-- 		WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 MONTH), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d') -->
+<!-- 	</select> -->
+<!-- 	<select id="getYearCnt" resultType="LHMap"> -->
+<!-- 		SELECT DATE_FORMAT(DATE_ADD(now(), INTERVAL - 1 YEAR), '%Y/%m') YEAR -->
+<!-- 			 , COUNT(RCPT_DT) RCPT_TOT_CNT -->
+<!-- 			 , COUNT(RCPT_CMPL_DT) RCPT_CMPL_CNT -->
+<!-- 		FROM TB_MMS_OBS_RCPT_M -->
+<!-- 		WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 YEAR), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d') -->
+<!-- 	</select> -->
+	
+	<select id="getRcptTodayCnt" resultType="LHMap">
+		SELECT ROUND((COUNT(RCPT_CMPL_DT)/COUNT(RCPT_DT))*100, 2) RCPT_CMPL_TODAY_RATE
+			 , COUNT(RCPT_DT) RCPT_TODAY_CNT
+			 , SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0))  RCPT_CMPL_TODAY_CNT
+			 , COUNT(RCPT_DT)- SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0)) RCPT_CMPL_N_CNT
+        FROM TB_MMS_OBS_RCPT_M ORM
+        	LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+        	ON ORM.STR_CD = SS.STR_CD
+        WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') = DATE_FORMAT(now(), '%Y-%m-%d')
+        <if test="s_compCd != null and !s_compCd.equals('')">
+        	AND SS.COMP_CD = #{s_compCd}
+		</if>  
+	</select>
+	
+	<select id="getRcptWeekCnt" resultType="LHMap">
+		SELECT ROUND((COUNT(RCPT_CMPL_DT)/COUNT(RCPT_DT))*100, 2) RCPT_CMPL_WEEK_RATE
+		 	 , COUNT(RCPT_DT) RCPT_WEEK_CNT
+			 , SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0))  RCPT_CMPL_WEEK_CNT
+			 , COUNT(RCPT_DT)- SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0)) RCPT_CMPL_N_CNT
+        FROM TB_MMS_OBS_RCPT_M ORM
+        	LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+        	ON ORM.STR_CD = SS.STR_CD
+        WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -6 DAY), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+        <if test="s_compCd != null and !s_compCd.equals('')">
+        	AND SS.COMP_CD = #{s_compCd}
+		</if>  
+	</select>
+	
+	<select id="getRcptMonthCnt" resultType="LHMap">
+		SELECT ROUND((COUNT(RCPT_CMPL_DT)/COUNT(RCPT_DT))*100, 2) RCPT_CMPL_MONTH_RATE
+			 , COUNT(RCPT_DT) RCPT_MONTH_CNT
+			 , SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0))  RCPT_CMPL_MONTH_CNT
+			 , COUNT(RCPT_DT)- SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0)) RCPT_CMPL_N_CNT
+			 
+        FROM TB_MMS_OBS_RCPT_M ORM
+        	LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+        	ON ORM.STR_CD = SS.STR_CD
+         WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 MONTH), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+        <if test="s_compCd != null and !s_compCd.equals('')">
+        	AND SS.COMP_CD = #{s_compCd}
+		</if>  
+	</select>
+	
+	<select id="getRcptYearCnt" resultType="LHMap">
+		SELECT ROUND((COUNT(RCPT_CMPL_DT)/COUNT(RCPT_DT))*100, 2) RCPT_CMPL_YEAR_RATE
+			 , COUNT(RCPT_DT) RCPT_YEAR_CNT
+			 , SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0))  RCPT_CMPL_YEAR_CNT
+			 , COUNT(RCPT_DT)- SUM(IF(RCPT_CMPL_TYPE != '01' AND RCPT_CMPL_TYPE != '07', 1, 0)) RCPT_CMPL_N_CNT
+			 
+         FROM TB_MMS_OBS_RCPT_M ORM
+        	LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+        	ON ORM.STR_CD = SS.STR_CD
+         WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -1 YEAR), '%Y-%m-%d') and DATE_FORMAT( now(), '%Y-%m-%d')
+        <if test="s_compCd != null and !s_compCd.equals('')">
+        	AND SS.COMP_CD = #{s_compCd}
+		</if>  
+	</select>
+	
+	<select id="dddd" resultType="LHMap">
+		SELECT SC.COMP_CD
+		     , SC.COMP_NM
+	    FROM TB_MMS_OBS_RCPT_M ORM
+		    LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		    ON ORM.STR_CD = SS.STR_CD
+		    LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		    ON SC.COMP_CD = SS.COMP_CD
+		WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN IF(ISNULL(NULL), DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m-%d'), NULL)
+		                                       AND IF(ISNULL(NULL), DATE_FORMAT(now(), '%Y-%m-%d'), NULL)
+		AND ORM.DEL_YN = 'N'
+		AND RCPT_COST IS NOT NULL 
+	    GROUP BY SC.COMP_CD
+	    ORDER BY COUNT(ORM.RCPT_DT) DESC
+	</select>
+	
+	
+	<select id="getLineChart02" resultType="LHMap">
+	 	SELECT RCPT_MON as XTICK ,
+	 		<foreach collection="labelData" item="item" separator="," index="idx"  >
+	 		  	MAX(CASE WHEN RC.RN = ${startRow}+1+${idx} THEN RCPT_TOT_CNT ELSE '' END) AS "COMP${idx}"
+			</foreach>
+		FROM(
+			SELECT RCPT_DATA.* 
+		         , RCPT_STR.RN
+		    FROM(
+		    	SELECT A.COMP_CD 
+	                 , @rownum2:=@rownum2+1 RN
+	            FROM (
+	                  SELECT SS.COMP_CD
+	                       , COUNT(RCPT_DT) RCS
+	                  FROM TB_MMS_OBS_RCPT_M ORM
+                      LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+                      ON ORM.STR_CD = SS.STR_CD
+	                  WHERE  DATE_FORMAT(RCPT_DT, '%Y-%m') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m') and DATE_FORMAT( now(), '%Y-%m')
+						AND ORM.DEL_YN = 'N'
+	                  GROUP BY SS.COMP_CD
+	                  ORDER BY RCS DESC
+	            ) A
+	            ,(select @rownum2:=0) B 
+		    ) RCPT_STR
+		    LEFT OUTER JOIN(
+		    	SELECT SSS.COMP_CD
+		    		 , DATE_FORMAT(RCPT_DT, '%Y-%m') RCPT_MON
+		    		 , DATE_FORMAT(RCPT_DT, '%m') MON
+		    		 , COUNT(RCPT_DT) RCPT_TOT_CNT
+		    		 , RCPT_DT
+		    	FROM TB_MMS_OBS_RCPT_M BBB
+            LEFT OUTER JOIN TB_MMS_STND_STR_S SSS
+            ON BBB.STR_CD = SSS.STR_CD
+		    	WHERE 1=1
+				AND BBB.DEL_YN = 'N'
+		    	AND DATE_FORMAT(RCPT_DT, '%Y-%m') BETWEEN DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m') and DATE_FORMAT(now(), '%Y-%m')
+		    	AND RCPT_COST IS NOT NULL
+		    	GROUP BY SSS.COMP_CD, DATE_FORMAT(RCPT_DT, '%Y-%m')
+		    ) RCPT_DATA 
+		    ON RCPT_STR.COMP_CD = RCPT_DATA.COMP_CD
+		) AS RC
+		GROUP BY MON
+		ORDER BY RCPT_MON
+	</select>
+	
+	<select id="getPieData" resultType="LHMap">
+		SELECT SUM(RCPT_COST) RCPT_COST_TOT
+	         , SC.COMP_NM
+	         , SC.COMP_CD
+	         , ORM.STR_CD
+	         
+	         , COUNT(ORM.RCPT_DT) RCPT_CNT
+			 , SUM(IF(ORM.RCPT_CMPL_TYPE != '01' AND ORM.RCPT_CMPL_TYPE != '07', 1, 0))  RCPT_CMPL_CNT
+			 , COUNT(ORM.RCPT_DT)- SUM(IF(ORM.RCPT_CMPL_TYPE != '01' AND ORM.RCPT_CMPL_TYPE != '07', 1, 0)) RCPT_CMPL_N_CNT
+	         
+	         
+	    FROM TB_MMS_OBS_RCPT_M ORM
+		    LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		    ON ORM.STR_CD = SS.STR_CD
+		    LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		    ON SC.COMP_CD = SS.COMP_CD
+		WHERE DATE_FORMAT(RCPT_DT, '%Y-%m-%d') BETWEEN IF(ISNULL(#{startDate}), DATE_FORMAT(DATE_ADD(now(), INTERVAL -11 MONTH), '%Y-%m-%d'), #{startDate})
+		                                       and IF(ISNULL(#{endDate}), DATE_FORMAT(now(), '%Y-%m'), #{endDate})
+		AND ORM.DEL_YN = 'N'
+		AND RCPT_COST IS NOT NULL
+		AND SS.COMP_YN = 'N'
+	    GROUP BY SC.COMP_CD
+	    ORDER BY COUNT(ORM.RCPT_DT) DESC
+	</select>
+		
+	<select id="getDashboard03" resultType="LHMap">
+		SELECT 
+			   COUNT(RM.RCPT_DT) RCPT_TOT_CNT
+			 , SUM(IF(RM.RCPT_CMPL_TYPE = '01', 1, 0)) + SUM(IF(RM.RCPT_CMPL_TYPE = '07', 1, 0)) RCPT_STS_CNT
+			 , SUM(IF(RM.RCPT_COST_TYPE = '02', 1, 0)) AS RCPT_COST_CNT
+		FROM TB_MMS_OBS_RCPT_M RM
+		JOIN TB_MMS_STND_STR_S SS
+		ON RM.STR_CD = SS.STR_CD
+		WHERE RM.DEL_YN = 'N'
+		<if test="s_compCd != null and !s_compCd.equals('')">
+        	AND SS.COMP_CD = #{s_compCd}
+		</if>
+	</select>
+</mapper>

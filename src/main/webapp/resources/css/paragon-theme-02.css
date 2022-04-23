@@ -1,0 +1,307 @@
+.logo-text {
+    font-size: 16px !important;
+}
+.info-tab{
+	text-align: center;
+}
+.info-tab .info-tab-a{
+	margin-left:0px !important;
+}
+.add-btn{
+	font-size: 12px;
+	padding: 1px 7px;
+}
+#mainBasicUserInfoForm , #mainBasicUserPwdForm , #mainMobileCheck{
+	margin-top: 10px;
+}
+.mapIcon{
+	color:#5C9AFF !important;
+}
+.notic-date{
+	min-width: 30px;
+}
+.notic-partner{
+	padding-right:0px;
+	padding-left:0px;
+}
+.arrow{
+	text-align:center;
+	margin-top: 340px;
+}
+.arrow-icon:before{
+	font-family:FontAwesome;
+	content:"\f101";
+	font-size:55px;
+}
+/* site현황 지도*/
+.store-loc{
+	padding:12px;
+}
+.store-loc p.loc-title{
+	font-weight:bold;
+	font-size:14px;
+	height:20px !important;
+
+}
+.store-loc p.loc-title:before{
+	font-family:FontAwesome;
+	content:"\f08d";
+/* 	content:"\f041"; */
+	padding-right:5px;
+}
+.store-loc p{
+	height:10px;
+}
+/* 검색 폼 부분 */
+.form-control{
+	padding:5px 11px 5px 5px !important;
+}
+.col-md-12{
+	padding-right: 0px !important;
+}
+.dash-notice{
+	padding-right:10px !important;
+}
+.col-md-p20{
+	padding-right: 7px;
+    padding-left: 0px;
+}
+.col-md-p60{
+	padding-right: 0px;
+    padding-left: 0px;
+}
+.search-controls .col-md-p20:nth-child(5){
+	padding-right:0px;
+}
+.search-controls .col-md-p20:first-child{
+	padding-right:7px;
+}
+.col-md-p25{
+	padding-right: 7px;
+	padding-left: 0px;
+}
+.p-r-7{
+	padding-right:7px;
+}
+div.search-form{
+	padding:10px;
+}
+.search-button-group{
+/* 	position: unset !important; */
+	position: static;
+	text-align: right;
+}
+.form-group {
+    margin-bottom: 10px;
+}
+.input-group-addon{
+	min-width: 70px;
+}
+
+.input-category {
+    width: 100%;
+    min-width: 100%;
+    border-radius: 3px !important;
+}
+#callObsStsHistLv4Search_input{
+	min-width:100% !important;
+	border-radius: 3px !important;
+}
+.type-input{
+	width:32.8% !important;
+	display: inline-block;
+}
+.input-nobtn{
+	margin-bottom:0px;
+}
+.input-group > .input-group.input-daterange > input {
+    width: 100%;
+    min-width: 100%;
+}
+.combobox-container {
+    margin-bottom: 0px;
+}
+.combobox-container input.input-select{
+	border-radius: 0px !important;
+}
+.caret-dropdown{
+	min-width:8px !important;
+}
+.search-form.multi {
+	height: 52px;
+    padding: 10px 10px 10px 15px;
+}
+.tab-content.main-tab .search-form.multi .toggle-btn{
+    background: #252a31;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    text-align: center;
+    padding-top: 1%;
+}
+.input-select-box{
+	width:100%;
+}
+.input-select{
+	float:left;
+    width: 49% !important;
+	margin-right:2%;
+	    
+}
+.input-select.input-selectOne{
+	width:40% !important;
+}
+
+.input-select.input-selectTwo{
+	width:58% !important;
+}
+.input-select:last-child{
+	margin-right:0px;
+}
+select.input-select-one{
+	border-top-right-radius: 3px !important;
+    border-bottom-right-radius: 3px !important;
+}
+select.input-select-two{
+	border-radius: 3px !important;
+}
+
+.input-select-two:first-child{
+	margin-right:2%;
+}
+.input-select-secon{
+	width:99% !important;
+}
+.input-daterange .input-group-addon{
+	padding:4px 1px !important;
+}
+.input-group.input-daterange{
+	width:100%;
+}
+.standard-pro{
+	padding: 4px 4px 4px 4px !important;
+}
+.partner-input-box{
+	padding-right:0px;
+	padding-left:0px;
+	margin-right:10px !important;
+}
+.partner-input{
+	padding:0px !important;
+}
+.partner{
+	padding:10px !important;;
+}
+/**/
+
+
+/* sr */
+.career{
+	padding:0px 5px !important;
+	margin: 32px 0px;
+}
+.nav-career{
+	width: 33%;
+    text-align: center;
+}
+.nav-pills > li + li {
+    margin-left: 0px !important;
+}
+/* 팝업창 */
+.modal-footer .btn + .btn {
+    margin-left: 0px;
+}
+.search-controls .col-md-3{
+	padding-left: 0px;
+}
+.search-controls .col-md-3:nth-child(4) {
+    padding-right: 0px;
+}
+/**/
+.infoDiv{
+	width:650px;
+	height:400px;
+}
+.infoDiv2{
+	margin: 0px 28px 0px 0px;
+	padding:0px 15px;
+	overflow-y:auto;
+	height:398px;
+}
+
+.col-md-p45{
+	padding-right: 0px;
+	padding-left: 0px;
+}
+.partner-grid{
+	padding-left: 0px;
+	padding-right:0px;
+}
+.partner-grid-second{
+	padding-right: 0px;
+	padding-left:5px;
+}
+.partner-height{
+	height:30px;
+}
+/* 크로스브라우징 */
+/* html>body .search-button-group { position:unset; }  */
+
+:root .search-button-group { 
+/* 	position:inherit\0/IE9; 
+	bottom:0px\0/IE9; */
+	position:static; 
+	bottom:10px; 
+} 
+
+/* @supports (-webkit-appearance:none) {
+	.search-button-group{position:unset ;}
+} */
+
+/* 미디어쿼리 */
+
+@media (max-width: 1024px){
+	.search-controls .form-group {
+	    padding-right: 0px !important;
+	}
+	.col-md-p25{
+		width:100%;
+	}
+	.input-daterange{
+		width:100%;
+	}
+	.partner-input-box{
+		margin-right:0px !important;
+	}
+	.partner-input-box.partner-first{
+		margin-bottom:5px !important;
+	}
+	.arrow{
+		text-align:center;
+		margin-top: 0px;
+	}
+	.arrow-icon:before{
+		content:"\f103";
+	}
+	.partner-grid-second{
+		padding-left: 0px;
+	}
+}
+
+@media (min-width: 992px){
+	div.content-form > div {
+    	padding-right: 5px !important;
+	}
+	
+	
+	
+}
+@media (max-width: 767px){
+	.search-controls .form-group {
+	    padding-right: 0px !important;
+	}	
+	.partner-grid-second{
+		padding-left: 0px;
+	}
+}
+

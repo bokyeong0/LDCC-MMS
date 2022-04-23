@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ObstacleHistoryService">
+
+	<select id="getObsStsList" resultType="LHMap" >
+		SELECT /* [ObstacleHistoryService.query][getObsStsList][장애처리내역조회 조회][김진호][2016-09-13] */
+			   RCPT_STS_SEQ
+			 , RS.RCPT_SEQ
+		     , RCPT_STS_TYPE
+		     , RCPT_STS_DT
+		     , FN_COMM_CODE_NM('OS0001', RCPT_STS_TYPE, 'ko') RCPT_STS_TYPE_NM
+		     , RCPT_STS_TIME
+		     , RCPT_STS_CONT
+		     , RCPT_STS_COST
+		     , RCPT_STS_COST_DT
+         	 , RCPT_STS_COST_TYPE
+         	 , FN_COMM_CODE_NM('OS0002', RCPT_STS_COST_TYPE, 'ko') RCPT_STS_COST_TYPE_NM
+		     , RCPT_STS_DPST_NM
+		     , RCPT_STS_DPST_YN
+		     , LAST_PROC_YN
+		     , CURR_HIST_CONT
+		     , FN_GET_USER_NM(RCPT_STS_ENGR) RCPT_STS_ENGR_NM
+		     , RCPT_STS_ENGR
+		     , RCPT_STS_AREA_SEQ
+		     , SA.AREA_NM
+		     , FN_GET_USER_NM(RS.IN_USER_ID) IN_USER_NM
+       		 , DATE_FORMAT(RS.IN_DT,'%Y-%m-%d') IN_DT
+       		 , RS.SIGN_PATH
+ 			 , RS.SIGN_NM
+ 			 , CASE WHEN RS.SIGN_PATH IS NULL THEN 'N' ELSE 'Y' END SIGH_CKECK
+ 			 , AM.AST_ST
+ 			 , AM.AST_SEQ
+		   FROM TB_MMS_OBS_RCPT_STS_L RS
+		   LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+		   ON SA.AREA_SEQ = RS.RCPT_STS_AREA_SEQ
+		   LEFT OUTER JOIN TB_MMS_OBS_RCPT_M RM
+		   ON RM.RCPT_SEQ = RS.RCPT_SEQ
+		   LEFT OUTER JOIN TB_MMS_AST_MNG_M AM
+		   ON AM.AST_SEQ = RM.AST_SEQ
+    	  WHERE RS.DEL_YN = 'N'		  
+		  	AND RS.RCPT_SEQ = #{rcptSeq}
+		  ORDER BY LAST_PROC_YN DESC, RCPT_STS_SEQ DESC
+	</select>
+	<select id="getPrevStsInfo" resultType="LHMap" >
+		SELECT /* [ObstacleHistoryService.query][getPrevStsInfo][이전 처리내역 조회][김진호][2016-09-13] */
+			   RM.RCPT_ENGR
+			 , FN_GET_USER_NM(RM.RCPT_ENGR) RCPT_ENGR_NM
+			 , FN_GET_USER_NM(#{rcptStsEngr}) CURR_RCPT_ENGR_NM
+			 , IFNULL(RS.RCPT_STS_TYPE,'01')  RCPT_STS_TYPE
+			 , FN_COMM_CODE_NM('OS0001',IFNULL(RS.RCPT_STS_TYPE,'01') , 'KO') AS RCPT_STS_NM	
+		  FROM TB_MMS_OBS_RCPT_M RM
+		  LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L RS
+			ON RM.RCPT_SEQ = RS.RCPT_SEQ
+			<choose>
+				<when test='modFlag != null and modFlag.equals("UPDATE")'>
+				   AND RS.RCPT_STS_SEQ = (SELECT MAX(RCPT_STS_SEQ) FROM TB_MMS_OBS_RCPT_STS_L WHERE LAST_PROC_YN = 'N' AND RCPT_SEQ = #{rcptSeq})
+				 WHERE RM.RCPT_SEQ = #{rcptSeq}
+				</when>
+				<otherwise>
+				   AND RS.LAST_PROC_YN = 'Y'
+				 WHERE RM.RCPT_SEQ = #{rcptSeq}
+				</otherwise>
+			</choose>
+	</select>
+	
+	<update id="updateRcptEngr">
+		UPDATE TB_MMS_OBS_RCPT_M /* [ObstacleHistoryService.query][updateRcptEngr][장애처리 수정][김진호][2016-09-13] */
+		   SET RCPT_ENGR     = #{rcptStsEngr}    
+		     , UP_USER_ID =  #{s_userId}
+		 WHERE RCPT_SEQ = #{rcptSeq}
+	
+	</update>
+	<update id="updateObsSts">
+		UPDATE TB_MMS_OBS_RCPT_STS_L /* [ObstacleHistoryService.query][updateObsSts][장애처리 수정][김진호][2016-09-13] */
+		   SET RCPT_STS_TYPE      = #{rcptStsType}    
+			 , RCPT_STS_DT        = #{rcptStsDt}      
+			 , RCPT_STS_TIME      = #{rcptStsTime}    
+			 , RCPT_STS_CONT      = #{rcptStsCont}    
+			 , RCPT_STS_COST      = #{rcptStsCost}    
+			 , RCPT_STS_COST_TYPE = #{rcptStsCostType}
+			 , RCPT_STS_COST_DT   = #{rcptStsCostDt}  
+			 , RCPT_STS_DPST_NM   = #{rcptStsDpstNm}  
+			 , RCPT_STS_DPST_YN   = #{rcptStsDpstYn}
+			 , RCPT_STS_ENGR	= #{rcptStsEngr}
+			 , RCPT_STS_DPST_YN   = #{rcptStsDpstYn}
+			 , RCPT_STS_AREA_SEQ  = #{areaSeq}
+<!-- 			 , RCPT_STS_DPST_YN   = #{rcptStsDpstYn} -->
+<!-- 			 , RCPT_STS_DPST_YN   = #{rcptStsDpstYn} -->
+		     , CURR_HIST_CONT     = CONCAT(#{prevRcptStsNm},' > ', FN_COMM_CODE_NM('OS0001',#{rcptStsType} , 'ko'), IFNULL(#{rcptHitUser},''))
+		     <if test="signPath != null and !signPath.equals('')"> 
+			 , SIGN_PATH   = #{signPath}  
+			 , SIGN_NM   = #{signNm}  
+			 </if>
+		     , UP_USER_ID =  #{s_userId}
+		 WHERE RCPT_STS_SEQ = #{rcptStsSeq}
+	
+	</update>
+	<insert id="insertObsSts">
+  
+		INSERT /* [ObstacleHistoryService.query][insertObsSts][장애처리 신규등록][김진호][2016-09-13] */
+		  INTO TB_MMS_OBS_RCPT_STS_L(
+			   ASP_COMP_CD
+			 , RCPT_SEQ
+			 , RCPT_STS_TYPE
+			 , RCPT_STS_DT
+			 , RCPT_STS_TIME
+			 , RCPT_STS_CONT
+			 , RCPT_STS_COST
+			 , RCPT_STS_COST_TYPE
+			 , RCPT_STS_COST_DT
+			 , RCPT_STS_DPST_NM
+			 , RCPT_STS_DPST_YN
+			 , RCPT_STS_ENGR
+			 , RCPT_STS_AREA_SEQ
+			 , CURR_HIST_CONT
+			 <if test="signPath != null and !signPath.equals('')"> 
+			 , SIGN_PATH  
+			 , SIGN_NM  
+			 </if>
+			 , IN_USER_ID
+			 , UP_USER_ID
+			 , IN_DT
+		)
+		VALUES( #{s_companyCd}
+			  , #{rcptSeq}
+			  , #{rcptStsType}
+			  , #{rcptStsDt}
+			  , #{rcptStsTime}
+			  , #{rcptStsCont}
+			  , #{rcptStsCost}
+			  , #{rcptStsCostType}
+			  , #{rcptStsCostDt}
+			  , #{rcptStsDpstNm}
+			  , #{rcptStsDpstYn}
+			  , #{rcptStsEngr}
+			  , #{areaSeq}
+			  , CONCAT(
+			  	  #{prevRcptStsNm},' > '
+			  	, FN_COMM_CODE_NM('OS0001',#{rcptStsType} , 'ko')
+			  	, IFNULL(#{rcptHitUser},'')
+			  )
+			  <if test="signPath != null and !signPath.equals('')"> 
+			  , #{signPath}
+			  , #{signNm}
+			  </if>
+			  , #{s_userId}
+			  , #{s_userId}
+			  , NOW()
+		)
+	</insert>
+<!-- 	<update id="updateObsRept"> -->
+  
+<!-- 		UPDATE TB_MMS_OBS_RCPT_M /* [ObstacleHistoryService.query][updateObsRept][장애처리 담당자 변경][김진호][2016-09-13] */ -->
+<!-- 		   SET RCPT_ENGR = #{rcptEngr} -->
+<!-- 		     , UP_USER_ID =  #{s_userId} -->
+<!-- 		 WHERE ASP_COMP_CD =  #{s_companyCd} -->
+<!-- 		   AND RCPT_SEQ = #{rcptSeq} -->
+<!-- 	</update> -->
+	<update id="updateObsRept">
+		UPDATE TB_MMS_OBS_RCPT_M /* [ObstacleHistoryService.query][updateObsRept][장애처리 최종상태 변경][김진호][2016-09-13] */
+		   SET RCPT_CMPL_TYPE = #{rcptStsType}
+		     , UP_USER_ID =  #{s_userId}
+		     <if test="rcptStsEngr != null and !rcptStsEngr.equals('')"> 
+		     , RCPT_ENGR = #{rcptStsEngr}
+		     </if>
+		     <choose>
+		     	<when test="rcptStsType != null and ( !rcptStsType.equals('01') or !rcptStsType.equals('07') )">
+			     , RCPT_CMPL_DT = STR_TO_DATE(DATE_FORMAT('${rcptStsDt} ${rcptStsTime}','%Y%m%d%H%i%S'),'%Y%m%d%H%i%S') 
+		     	</when>
+		     	<otherwise>
+			     , RCPT_CMPL_DT = NULL
+		     	</otherwise>
+		     </choose>
+		 WHERE ASP_COMP_CD =  #{s_companyCd}
+		   AND RCPT_SEQ = #{rcptSeq}
+	</update>
+	
+	<update id="updateObsStsProc">
+		UPDATE TB_MMS_OBS_RCPT_STS_L /* [ObstacleHistoryService.query][updateObsStsProc][최종 처리상태 업데이트][김진호][2016-09-13] */
+		   SET LAST_PROC_YN = 'N'
+		 WHERE ASP_COMP_CD =  #{s_companyCd}
+		   AND RCPT_SEQ = #{rcptSeq}
+	</update>
+</mapper>

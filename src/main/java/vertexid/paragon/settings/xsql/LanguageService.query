@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LanguageService">
+
+	
+	<select id="getLanguageList" resultType="HMap" > 
+		SELECT /* [LanguageService.query][getLanguageList][언어관리 목록 조회][Kim Jin Ho][2016-09-13] */
+			   LANG_SEQ 
+			 , PC.PRO_CD
+			 , FN_GET_PRO_NM(PC.PRO_CD) PRO_NM
+			 , PL.COMP_ID 
+			 , PC.COMP_NM 
+			 , LANG_CD 
+			 , FN_COMM_CODE_NM('SC0013',LANG_CD, #{s_language}) LANG_NM
+			 , LANG_VALUE
+			 , PL.USE_YN 
+			 , PL.IN_USER_ID
+			 , DATE_FORMAT(PL.IN_DT ,'%Y-%m-%d') IN_DT 
+		  FROM TB_PARAGON_LANG PL
+		  JOIN TB_PARAGON_COMPONENT PC
+		    ON PL.COMP_ID = PC.COMP_ID 
+		 WHERE PL.DEL_YN = 'N'
+		<if test="proCd != null and !proCd.equals('')"> 
+		   AND PC.PRO_CD = #{proCd}
+		</if>
+		<if test="compId != null and !compId.equals('')"> 
+		   AND PL.COMP_ID = #{compId}
+		</if>
+		<if test="compNm != null and !compNm.equals('')"> 
+		   AND PC.COMP_NM LIKE '%${compNm}%'
+		</if>
+		 ORDER BY PL.COMP_ID DESC , LANG_CD DESC
+	</select>
+	<select id="getLangColumns" resultType="String" > 
+		SELECT /* [LanguageService.query][getLangColumns][테이블 컬럼 언어 목록조회 조회][Kim Jin Ho][2016-09-13] */
+		       LANG_VALUE
+		  FROM TB_PARAGON_LANG  
+		 WHERE COMP_ID = #{compId}
+		   AND LANG_CD = #{s_language} 
+	</select>
+	
+	
+	<update id="updateLanguage" > 
+		UPDATE TB_PARAGON_LANG /* [LanguageService.query][updateLanguage][언어 정보 수정][Kim Jin Ho][2016-09-13] */
+		   SET COMP_ID = #{compId}
+		     , LANG_CD = #{langCd}
+		     , LANG_VALUE = #{langValue}
+		     , USE_YN = #{useYn}
+		     , UP_USER_ID = #{s_userId}		     
+		 WHERE LANG_SEQ = #{langSeq}
+	</update>
+	
+	<insert id="insertLanguage" > 
+		INSERT /* [LanguageService.query][insertLanguage][언어 정보 등록][Kim Jin Ho][2016-09-13] */
+		  INTO TB_PARAGON_LANG (
+		  		  COMP_ID 		
+				, LANG_CD 	
+				, LANG_VALUE 	
+				, USE_YN 		
+				, IN_USER_ID 	
+				, UP_USER_ID
+				, IN_DT 	
+		  )
+		VALUES(	   #{compId}
+				, #{langCd}
+				, #{langValue}
+				, #{useYn}
+				, #{s_userId}
+				, #{s_userId}
+				, NOW()
+		)
+	</insert>
+
+	<delete id="deleteLanguage" > 
+		DELETE /* [LanguageService.query][updateLanguage][언어 정보 삭제][Kim Jin Ho][2016-09-13] */
+		  FROM TB_PARAGON_LANG
+		  WHERE LANG_SEQ = #{langSeq}
+	</delete>
+	
+</mapper>
+ 

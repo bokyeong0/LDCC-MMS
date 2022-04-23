@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StandardAreaService">
+	
+	<select id="getStndAreaList" resultType="HMap" >
+		SELECT /* [StandardAreaService.query][getStndAreaList][권역관리 목록조회][최판석][2017. 3. 20.] */
+			   AREA_SEQ
+			 , AREA_CD
+			 , AREA_NM
+			 , MEMO
+			 , UP_DT
+			 , USE_YN
+		  FROM TB_MMS_STND_AREA_S 
+		  WHERE DEL_YN = 'N'
+		  <if test="areaNm != null and !areaNm.equals('')"> 
+		   AND AREA_NM LIKE CONCAT('%',#{areaNm},'%')
+		  </if>
+		  <if test="aspCompCd != null and !aspCompCd.equals('')"> 
+		   AND ASP_COMP_CD = #{aspCompCd}
+		  </if>
+	</select>
+	
+	<select id="getStndAreaNameList" resultType="HMap" >
+	SELECT /* [StandardAreaService.query][getStndAreaNameList][권역관리 목록조회 value/name][최판석][2017. 4. 07.] */
+			   AREA_CD as value
+			 , AREA_NM as name
+		  FROM TB_MMS_STND_AREA_S 
+		  WHERE DEL_YN = 'N'
+		  <if test='aspCompCd != null and !aspCompCd.equals("")'>
+		   AND ASP_COMP_CD =#{aspCompCd}   
+		  </if>
+		  <if test="areaCd != null and !areaCd.equals('')"> 
+		   AND AREA_CD = #{areaCd}
+		  </if>		  
+		  <if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND ASP_COMP_CD = #{s_companyCd}
+		  </if>		
+		  <if test="(s_areaCd != null and !s_areaCd.equals('')) and !s_authSeq.equals('200')"> 
+		   AND AREA_CD = #{s_areaCd}
+		  </if>		  
+		  <if test='useYn != null and useYn.equals("Y")'> 
+		   AND USE_YN = #{useYn}
+		  </if>		  
+		  ORDER BY AREA_NM ASC
+	</select>
+	
+	<insert id="insertStndAreaList">
+		INSERT INTO TB_MMS_STND_AREA_S (
+			   ASP_COMP_CD
+			 , AREA_CD
+			 , AREA_NM
+			 , MEMO
+			 , USE_YN
+			 , IN_USER_ID
+			 , IN_DT
+			 , AREA_SEQ
+		)
+		VALUES( #{aspCompCd}
+			  , FN_MAKE_AREA_CD(#{aspCompCd})
+			  , #{areaNm}
+			  , #{memo}
+			  , #{useYn}
+			  , #{s_userId}
+			  , NOW()
+			  , 0
+		)
+	</insert>
+	
+	<update id="updateStndAreaList">
+		UPDATE TB_MMS_STND_AREA_S
+		   SET AREA_NM	= #{areaNm}  
+		     , MEMO 	= #{memo}
+		     , USE_YN	= #{useYn}
+		     , UP_USER_ID =  #{s_userId}
+		WHERE ASP_COMP_CD =  #{aspCompCd}
+		  AND AREA_CD = #{areaCd}
+	</update>
+	
+	<update id="deleteStndAreaList">
+		UPDATE TB_MMS_STND_AREA_S
+		   SET DEL_YN	= 'Y'
+		     , UP_USER_ID =  #{s_userId}
+		WHERE ASP_COMP_CD =  #{aspCompCd}
+		  AND AREA_CD = #{areaCd}
+	</update>
+	
+</mapper>

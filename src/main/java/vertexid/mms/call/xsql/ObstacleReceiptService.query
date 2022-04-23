@@ -1,0 +1,988 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ObstacleReceiptService">
+
+	<select id="getObsReptList" resultType="LHMap" >
+	
+		SELECT /* [ObstacleReceiptService.query][getObsReptList][장애 접수 목록 조회][유승우][2017-12-04] */
+			   RCPT_SEQ
+			 , RCPT_NO
+			 , COMP_CD
+			 , STR_CD
+			 , STR_NM
+			 , COMP_NM
+			 , IFNULL(BRND_NM, '') BRND_NM			       
+			 , AREA_SEQ 
+			 , IFNULL(AREA_NM,'') AREA_NM
+			 , PHONE_NUM 
+			 /* 쿼리추가 18.02.06 */
+			 , (SELECT  PRD_TYPE_NM FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV ='1' AND PRD_TYPE_CD = RCPT_STND_PRD_LV1) RCPT_STND_PRD_LV1_NM
+			 , RCPT_OBS_LV1_NM
+			 , RCPT_OBS_LV2_NM
+			 , RCPT_OBS_LV3_NM
+			 , RCPT_OBS_LV4_NM			 
+			 , PRD_NM			 
+			 , CONCAT(
+			 		IF(RCPT_OBS_LV3_NM IS NOT NULL, CONCAT(RCPT_OBS_LV3_NM), ''),
+			 		IF(RCPT_OBS_LV4_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV4_NM), '') 
+				 
+			 ) RCPT_OBS_NM
+			 , RCPT_VISIT_DT	
+			 , RCPT_COMP_DT		
+			 , ASP_COMP_NM
+			 , ASP_COMP_CD			 
+			 , ASP_PART_NM			 			 	 		 
+			 , RCPT_STS_TYPE
+       		 , RCPT_STS_NM			
+       		 , RCPT_CMPL_TYPE
+			 , RCPT_DT
+			 , RCPT_TIME
+			 , ACCEPT_DT			 
+			 , RCPT_CONT
+			 , RCPT_STS_CONT			 
+			 , RCPT_CUST_NM			 
+			 , RCPT_ENGR_NM
+			 , RCPT_STS_COST	 
+			 , RCPT_STS_COST_TYPE
+			 , AST_SEQ
+			 , AST_SERIAL
+ 			 , IN_USER_NM
+ 			 , IN_USER_ID
+			 , CONCAT(
+            	  	  CASE WHEN RCPT_GAP_DAY > 0 THEN CONCAT(RCPT_GAP_DAY,'일') ELSE '' END
+            		, CASE WHEN RCPT_GAP_HOUR > 0 THEN CONCAT(' ',LPAD(RCPT_GAP_HOUR,2,'0'),'시간') ELSE '' END
+            		, CASE WHEN RCPT_GAP_MIN > 0 THEN CONCAT(' ',LPAD(RCPT_GAP_MIN,2,'0'),'분') ELSE '' END	
+			   ) RCPT_CMPL_DT
+        	, IN_DT
+  		 FROM (SELECT RM.RCPT_SEQ
+			 		, RM.RCPT_NO
+			 		, SC.COMP_CD
+			 		, RM.STR_CD
+			 		, RM.AST_SEQ
+			 		, SS.STR_NM
+       				, DATE_FORMAT(RM.RCPT_CMPL_DT,'%Y-%m-%d %H:%i') RCPT_CMPL_DT
+			 		, IFNULL(SC.COMP_NM,'') COMP_NM
+			 		, IFNULL(SB.BRND_NM,'') BRND_NM			
+        			, SS.AREA_SEQ
+        			, AM.AST_SERIAL
+			 		, FN_COMM_CODE_NM('SC0027', SS.AREA_SEQ, 'ko') AREA_NM
+			 		, SS.PHONE_NUM
+			 		, IFNULL(SL.RCPT_STS_TYPE,'01') RCPT_STS_TYPE 
+			 		, (SELECT  PRD_TYPE_PRT_CD FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV ='2' AND PRD_TYPE_CD = RM.RCPT_OBS_LV1 ) RCPT_STND_PRD_LV1
+			 		, (SELECT  PRD_TYPE_NM  FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV ='2' AND PRD_TYPE_CD = RM.RCPT_OBS_LV1 ) RCPT_OBS_LV1_NM
+			        , (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV2 ) RCPT_OBS_LV2_NM
+			        , (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV3 ) RCPT_OBS_LV3_NM
+			        , (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV4 ) RCPT_OBS_LV4_NM
+			        , IFNULL((SELECT PRD_NM from TB_MMS_STND_PRD_S WHERE PRD_CD = RM.PRD_CD ),'') PRD_NM
+			        , DATE_FORMAT(RM.RCPT_VISIT_DT, '%Y-%m-%d %H:%i') RCPT_VISIT_DT
+			        , DATE_FORMAT(CONCAT(SL.RCPT_STS_DT,' ', SL.RCPT_STS_TIME), '%Y-%m-%d %H:%i') RCPT_COMP_DT	
+			        , AC.ASP_COMP_NM 	
+			        , AC.ASP_COMP_CD 				        
+			        , SA.AREA_NM ASP_PART_NM
+			        , SL.RCPT_STS_AREA_CD			        		        		        
+			        , RM.RCPT_CMPL_TYPE
+       				, CC.CODE_NM AS RCPT_STS_NM			
+			 		, RM.RCPT_DT
+			 		, RM.RCPT_TIME
+       				, DATE_FORMAT(CONCAT(RM.RCPT_DT,' ', RM.RCPT_TIME), '%Y-%m-%d %H:%i') ACCEPT_DT				 		
+			 		, RM.RCPT_CONT
+			 		, SL.RCPT_STS_CONT			 		
+			 		, CASE WHEN IFNULL(RM.RCPT_CUST_NM,'' ) = '' THEN 
+			 		   FN_COMM_CODE_NM('OS0003' ,RM.RCPT_CUST_TYPE, 'ko')  
+                      ELSE RM.RCPT_CUST_NM END RCPT_CUST_NM
+			 		, SL.RCPT_STS_COST
+			 		, FN_COMM_CODE_NM('OS0002', SL.RCPT_STS_COST_TYPE, 'ko') RCPT_STS_COST_TYPE
+			 		, SL.RCPT_STS_COST_TYPE AS RCPT_COST_TYPE_CODE
+			 		, TIMESTAMPDIFF(DAY, CONCAT(RCPT_DT,' ',RCPT_TIME ), 
+       				                 CASE WHEN IFNULL(RM.RCPT_CMPL_DT,'') ='' THEN NOW() ELSE RM.RCPT_CMPL_DT END
+       				                ) RCPT_GAP_DAY
+       				, MOD(TIMESTAMPDIFF(HOUR, CONCAT(RCPT_DT,' ',RCPT_TIME ),
+       				                    CASE WHEN IFNULL(RM.RCPT_CMPL_DT,'') ='' THEN NOW() ELSE RM.RCPT_CMPL_DT END), 24
+       				                ) RCPT_GAP_HOUR
+       				, MOD(TIMESTAMPDIFF(MINUTE, CONCAT(RCPT_DT,' ',RCPT_TIME ), 
+       				                    CASE WHEN IFNULL(RM.RCPT_CMPL_DT,'') ='' THEN NOW() ELSE RM.RCPT_CMPL_DT END), 60
+       				                ) RCPT_GAP_MIN                                
+       				<!-- , TIMESTAMPDIFF(DAY, CONCAT(RCPT_DT,' ',RCPT_TIME ), now()) RCPT_GAP_DAY
+       				, MOD(TIMESTAMPDIFF(HOUR, CONCAT(RCPT_DT,' ',RCPT_TIME ), now()), 24) RCPT_GAP_HOUR
+       				, MOD(TIMESTAMPDIFF(MINUTE, CONCAT(RCPT_DT,' ',RCPT_TIME ), now()), 60) RCPT_GAP_MIN -->
+<!--        				, FN_GET_USER_NM(RM.RCPT_ENGR) RCPT_ENGR_NM -->
+       				, RM.RCPT_ENGR_NM
+       				, RM.IN_USER_ID
+       				, FN_GET_USER_NM(RM.IN_USER_ID) IN_USER_NM
+       				, DATE_FORMAT(RM.IN_DT,'%Y-%m-%d') IN_DT
+       				, SS.BRND_CD
+		 		 		 		 FROM TB_MMS_OBS_RCPT_M RM
+  		 		 LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+  		   		   ON RM.STR_CD =  SS.STR_CD
+  		 		 LEFT OUTER JOIN TB_MMS_STND_BRND_S SB
+           		   ON SS.BRND_CD = SB.BRND_CD 
+      	 		 LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+           		   ON SS.COMP_CD = SC.COMP_CD
+         		 LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L SL
+           		   ON RM.RCPT_SEQ =SL.RCPT_SEQ 
+           		  AND RM.ASP_COMP_CD = SL.ASP_COMP_CD
+          		  AND SL.LAST_PROC_YN = 'Y'
+          		 LEFT OUTER JOIN TB_MMS_ASP_COMP AC
+          		   ON  RM.ASP_COMP_CD = AC.ASP_COMP_CD
+         		 LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+           		   ON SL.RCPT_STS_AREA_CD = SA.AREA_CD             		             		  
+         		 LEFT OUTER JOIN TB_PARAGON_USER PU
+           		   ON RM.RCPT_ENGR =PU.USER_ID     
+         		 LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+           		   ON  RM.RCPT_CMPL_TYPE = CC.CODE_CD 
+           		   AND CC.CODE_GROUP_CD = 'OS0001'
+           		 LEFT OUTER JOIN TB_MMS_AST_MNG_M  AM
+           		   ON  RM.AST_SEQ = AM.AST_SEQ 
+           		   AND AM.USE_YN='Y' AND AM.DEL_YN='N'
+				WHERE RM.DEL_YN= 'N'
+				<if test="stsCompSearch != null and !stsCompSearch.equals('')"> 
+				  AND SS.COMP_CD = #{stsCompSearch}
+		    	</if>  
+				<if test="strBrndNmSearch != null and !strBrndNmSearch.equals('')"> 
+				  AND SB.BRND_CD = #{strBrndNmSearch}
+		    	</if>  		    	
+				<if test="stsStrNmSearch != null and !stsStrNmSearch.equals('')"> 
+				  AND SS.STR_NM LIKE '%${stsStrNmSearch}%'
+		    	</if>
+				<if test="stsStrCdSearch != null and !stsStrCdSearch.equals('')"> 
+				  AND SS.STR_CD = #{stsStrCdSearch}
+		    	</if>		    		    	  			    		    	
+				<if test="stsRcptLv1Search != null and !stsRcptLv1Search.equals('')"> 
+				  AND RM.RCPT_OBS_LV1 = #{stsRcptLv1Search}
+		    	</if>  
+				<if test="stsRcptLv2Search != null and !stsRcptLv2Search.equals('')"> 
+				  AND RM.RCPT_OBS_LV2 = #{stsRcptLv2Search}
+		    	</if>  
+				<if test="stsRcptLv3Search != null and !stsRcptLv3Search.equals('')"> 
+				  AND RM.RCPT_OBS_LV3 = #{stsRcptLv3Search}
+		    	</if>  
+				<if test="stsRcptLv4Search != null and !stsRcptLv4Search.equals('')"> 
+				  AND RM.RCPT_OBS_LV4 = #{stsRcptLv4Search}
+		    	</if>
+				<if test="stsRcptPrdSearch != null and !stsRcptPrdSearch.equals('')"> 
+				  AND RM.PRD_CD = #{stsRcptPrdSearch}
+		    	</if>
+		    	<if test="strObsPartSearch != null and !strObsPartSearch.equals('')">
+				  AND SL.RCPT_STS_AREA_CD = #{strObsPartSearch}
+				</if> 	
+		    	<if test="stsEngrSearch != null and !stsEngrSearch.equals('')"> 
+				  AND RM.RCPT_ENGR = #{stsEngrSearch}
+		    	</if>
+		    	GROUP BY RCPT_SEQ   
+      	) RCPT
+      	WHERE 1=1
+      	  <if test="cntFlag != null and cntFlag.equals('cmpl')"> 
+		  AND RCPT.RCPT_STS_TYPE NOT IN('01','07')
+    	  </if>  
+      	  <if test="cntFlag != null and cntFlag.equals('incmpl')"> 
+		  AND RCPT.RCPT_STS_TYPE IN('01','07')
+    	  </if>  
+      	  <if test="stsRcptNoSearch != null and !stsRcptNoSearch.equals('')"> 
+		  AND RCPT.RCPT_NO LIKE '${stsRcptNoSearch}%'
+    	  </if>  
+    	  <if test="stsDateTypeSearch != null and  !stsDateTypeSearch.equals('')">
+	    	  <if test="stsDateTypeSearch.equals('typeRcpt')">
+	    	  	<!-- #접수일자검색 -->
+	        	  <if test="stsStartDateSearch != null and !stsStartDateSearch.equals('')"> 
+		  AND RCPT.RCPT_DT <![CDATA[>=]]> #{stsStartDateSearch}
+	    	  	  </if>  
+	      	 	  <if test="stsEndDateSearch != null and !stsEndDateSearch.equals('')"> 
+		  AND RCPT.RCPT_DT <![CDATA[<=]]> #{stsEndDateSearch}
+	    	  	  </if>    	    
+	    	  </if>
+	    	  <if test="stsDateTypeSearch.equals('typeVisit')">
+	    	    <!-- #방문일자검색 -->
+	        	  <if test="stsStartDateSearch != null and !stsStartDateSearch.equals('')"> 
+		  AND DATE_FORMAT(RCPT.RCPT_VISIT_DT, '%Y-%m-%d') <![CDATA[>=]]> #{stsStartDateSearch}
+	    	  	  </if>  
+	      	 	  <if test="stsEndDateSearch != null and !stsEndDateSearch.equals('')"> 
+		  AND DATE_FORMAT(RCPT.RCPT_VISIT_DT, '%Y-%m-%d') <![CDATA[<=]]> #{stsEndDateSearch}
+	    	  	  </if>    	    
+	    	  </if>
+	    	  <if test="stsDateTypeSearch.equals('typeCmpl')">
+	    	    <!-- #완료일자검색 -->
+	        	  <if test="stsStartDateSearch != null and !stsStartDateSearch.equals('')"> 
+	      AND DATE_FORMAT(RCPT.RCPT_COMP_DT, '%Y-%m-%d') <![CDATA[>=]]> #{stsStartDateSearch}
+	    	  	  </if>  
+	      	 	  <if test="stsEndDateSearch != null and !stsEndDateSearch.equals('')"> 
+		  AND DATE_FORMAT(RCPT.RCPT_COMP_DT, '%Y-%m-%d') <![CDATA[<=]]> #{stsEndDateSearch}
+	    	  	  </if>    	    
+	    	  </if>    	
+    	  </if>
+      	  <if test="stsTypeSearch != null and !stsTypeSearch.equals('')"> 
+		  AND RCPT.RCPT_STS_TYPE = #{stsTypeSearch}
+    	  </if>  
+         /* 처리구분/상태 조회 처리*/
+         <if test='stsType2Search != null and stsType2Search.equals("Y")'> 
+		  AND RCPT.RCPT_STS_TYPE NOT IN('01','07')
+    	  </if>  
+      	  <if test='stsType2Search != null and stsType2Search.equals("N")'> 
+		  AND RCPT.RCPT_STS_TYPE IN('01','07')
+    	  </if>   	  
+      	  <if test="stsCostTypeSearch != null and !stsCostTypeSearch.equals('')"> 
+		  AND RCPT.RCPT_COST_TYPE_CODE = #{stsCostTypeSearch}
+    	  </if>  
+      	  <if test="stsAreaSearch != null and !stsAreaSearch.equals('')"> 
+		  AND RCPT.AREA_SEQ = #{stsAreaSearch}
+    	  </if>  
+      	  <if test="stsWriterSearch != null and !stsWriterSearch.equals('')">
+      	  AND RCPT.IN_USER_ID = #{stsWriterSearch}
+    	  </if>
+      	  <if test="stsSerialSearch != null and !stsSerialSearch.equals('')">
+      	  AND RCPT.AST_SERIAL = #{stsSerialSearch}
+    	  </if>
+       	  <if test="strObsRctPaterSearch != null and !strObsRctPaterSearch.equals('')">
+      	  AND RCPT.ASP_COMP_CD = #{strObsRctPaterSearch}
+    	  </if>
+   	      <if test="strObsPartSearch != null and !strObsPartSearch.equals('')">
+    	  AND RCPT_STS_AREA_CD = #{strObsPartSearch}
+   	      </if>
+       	  <if test="s_companyCd != null and !s_companyCd.equals('')">
+      	  AND RCPT.ASP_COMP_CD = #{s_companyCd}
+    	  </if>
+   	      <if test="s_areaCd != null and !s_areaCd.equals('')">
+    	  AND RCPT_STS_AREA_CD = #{s_areaCd}
+   	      </if>
+       	  <if test="s_compCd != null and !s_compCd.equals('')">
+      	  AND RCPT.COMP_CD = #{s_compCd}
+    	  </if>
+       	  <if test="s_brndCd != null and !s_brndCd.equals('')">
+      	  AND RCPT.BRND_CD = #{s_brndCd}
+    	  </if>
+      	  <if test="stsStndLv1Search != null and !stsStndLv1Search.equals('')"> 
+		  AND RCPT.RCPT_STND_PRD_LV1 = #{stsStndLv1Search}
+    	  </if>  
+    	       	  
+		ORDER BY RCPT.ACCEPT_DT DESC, RCPT.RCPT_CMPL_TYPE, RCPT_SEQ DESC
+	</select>
+	
+	<select id="getObsStrRcptList" resultType="LHMap" >
+		SELECT /* [ObstacleReceiptService.query][getObsStrRcptList][Site단위 장애 접수 목록 조회MAP용][김진호][2016-09-13] */
+			   RCPT_SEQ
+			 , RCPT_NO
+			 , CONCAT(
+			 		IF(RCPT_OBS_LV1_NM IS NOT NULL, RCPT_OBS_LV1_NM, ''),
+			 		IF(RCPT_OBS_LV2_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV2_NM), ''),
+			 		IF(RCPT_OBS_LV3_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV3_NM), ''),
+			 		IF(RCPT_OBS_LV4_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV4_NM), '') 
+			 ) RCPT_OBS_NM
+			 , RCPT_STS_NM	
+			 , RCPT_DT
+			 , RCPT_TIME
+			 , RCPT_CONT	
+			 , IFNULL( RCPT_ENGR_NM,'') RCPT_ENGR_NM
+			 , RCPT_CMPL_TYPE	 
+			 , IFNULL(DATE_FORMAT(RCPT_CMPL_DT,'%Y-%m-%d %H:%i'),'')  RCPT_CMPL_DT
+			 , (CONCAT(
+            	  	  CASE WHEN RCPT_GAP_DAY > 0 THEN CONCAT(RCPT_GAP_DAY,'일') ELSE '' END
+            		, CASE WHEN RCPT_GAP_HOUR > 0 THEN CONCAT(' ',LPAD(RCPT_GAP_HOUR,2,'0'),'시간') ELSE '' END
+            		, CASE WHEN RCPT_GAP_MIN > 0 THEN CONCAT(' ',LPAD(RCPT_GAP_MIN,2,'0'),'분') ELSE '' END
+	            	)
+        	 ) RCPT_OVER_DT
+  		 FROM (SELECT RM.RCPT_SEQ
+			 		, RM.RCPT_NO
+			 		, RM.RCPT_CMPL_DT	
+			 		, IFNULL(SL.RCPT_STS_TYPE,'01') RCPT_STS_TYPE 
+			 		, (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV1 ) RCPT_OBS_LV1_NM
+			 		, (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV2 ) RCPT_OBS_LV2_NM
+			 		, (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV3 ) RCPT_OBS_LV3_NM
+			 		, (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV4 ) RCPT_OBS_LV4_NM
+			 		, RM.RCPT_CMPL_TYPE
+			 		, CC.CODE_NM AS RCPT_STS_NM			
+			 		, RM.RCPT_DT
+			 		, RM.RCPT_TIME
+			 		, RM.RCPT_CONT
+			 		, RM.RCPT_CUST_NM 
+			 		, SL.RCPT_STS_COST_TYPE
+			 		, TIMESTAMPDIFF(DAY, CONCAT(RCPT_DT,' ',RCPT_TIME ), now()) RCPT_GAP_DAY
+			 		, MOD(TIMESTAMPDIFF(HOUR, CONCAT(RCPT_DT,' ',RCPT_TIME ), now()), 24) RCPT_GAP_HOUR
+			 		, MOD(TIMESTAMPDIFF(MINUTE, CONCAT(RCPT_DT,' ',RCPT_TIME ), now()), 60) RCPT_GAP_MIN
+			 		, PU.USER_NM AS RCPT_ENGR_NM
+			 		, RM.IN_USER_ID IN_USER_NM
+		 		 FROM MMS.TB_MMS_OBS_RCPT_M RM
+  		 		 LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+  		   		   ON RM.STR_CD =  SS.STR_CD
+         		 LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L SL
+           		   ON RM.RCPT_SEQ =SL.RCPT_SEQ 
+          		  AND SL.LAST_PROC_YN = 'Y'
+         		 LEFT OUTER JOIN TB_PARAGON_USER PU
+           		   ON RM.RCPT_ENGR = PU.USER_ID     
+         		 LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC
+           		   ON CC.CODE_GROUP_CD = 'OS0001' 
+           		  AND RM.RCPT_CMPL_TYPE = CC.CODE_CD
+         		 LEFT OUTER JOIN TB_PARAGON_COMM_CODE CC2
+           		   ON CC2.CODE_GROUP_CD = 'OS0001' 
+           		  AND SL.RCPT_STS_TYPE = CC2.CODE_CD
+				WHERE RM.DEL_YN= 'N'
+		       	  <if test="s_companyCd != null and !s_companyCd.equals('')">
+		      	  AND RM.ASP_COMP_CD = #{s_companyCd}
+		    	  </if>
+				   AND RM.STR_CD = #{strCd}
+				   AND CC2.CODE_OTHER2 = 'N' OR (CC2.CODE_OTHER2 = 'Y' AND TIMESTAMPDIFF(MINUTE, RM.RCPT_CMPL_DT, now()) <![CDATA[<]]>  60)
+		    	     
+      	) RCPT 	     
+      	  
+		ORDER BY RCPT.RCPT_CMPL_TYPE, RCPT_SEQ DESC
+	</select>
+	<select id="viewObsRcpt" resultType="LHMap" >
+		SELECT /* [ObstacleReceiptService.query][viewObsRcpt][Site 장애 접수 상세정보 조회][유승우][2017-12-05] */
+			   RCPT_SEQ
+			 , RCPT_NO
+			 , ASP_COMP_CD
+			 , STR_CD
+			 , STR_NM
+			 , COMP_CD
+			 , COMP_NM
+			 , BRND_NM          
+			 , AREA_SEQ
+			 , IFNULL(AREA_NM,'') AREA_NM
+			 , ASP_PART_NM         
+			 , PHONE_NUM 
+			 , PRD_TYPE_LV1          
+			 , RCPT_OBS_LV1
+			 , RCPT_OBS_LV2
+			 , RCPT_OBS_LV3
+			 , RCPT_OBS_LV4
+			 , CONCAT(
+			    IF(RCPT_OBS_LV1_NM IS NOT NULL, RCPT_OBS_LV1_NM, ''),
+			    IF(RCPT_OBS_LV2_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV2_NM), ''),
+			    IF(RCPT_OBS_LV3_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV3_NM), ''),
+			    IF(RCPT_OBS_LV4_NM IS NOT NULL, CONCAT(' > ',RCPT_OBS_LV4_NM), '')
+			   ) RCPT_OBS_NM
+			 , PRD_CD
+			 , IFNULL(PRD_NM, '') PRD_NM
+			 , IFNULL(PRD_SPEC, '') PRD_SPEC
+			 , CONCAT(
+			    IF(PRD_TYPE_LV1_NM != '', PRD_TYPE_LV1_NM, ''),
+			    IF(PRD_TYPE_LV2_NM != '', CONCAT(' > ',PRD_TYPE_LV2_NM), ''),
+			    IF(PRD_TYPE_LV3_NM != '', CONCAT(' > ',PRD_TYPE_LV3_NM), ''),
+			    IF(PRD_TYPE_LV4_NM != '', CONCAT(' > ',PRD_TYPE_LV4_NM), ''), 
+			    IF(PRD_NM != '', CONCAT(' > ',PRD_NM), '')
+			   ) RCPT_PRD_NM
+			 , RCPT_STS_TYPE
+			 , RCPT_STS_NM
+			 , RCPT_DT
+			 , RCPT_DT_EXCEL
+			 , RCPT_TIME
+			 , RCPT_CONT
+			 , RCPT_CUST_TYPE           
+			 , RCPT_CUST_TYPE_NM
+			 , RCPT_CUST_NM
+			 , RCPT_CUST_PHONE
+			 , IFNULL(RCPT_CUST_EMAIL,'') RCPT_CUST_EMAIL              
+			 , CONCAT(
+			    IF(RCPT_CUST_TYPE_NM != '', RCPT_CUST_TYPE_NM, ''),
+			    IF(RCPT_CUST_NM != '', CONCAT(' / ',RCPT_CUST_NM), ''),
+			    IF(RCPT_CUST_PHONE != '', CONCAT(' / ',RCPT_CUST_PHONE), '')
+			   ) RCPT_CUST_INFO
+			 , RCPT_STS_AREA_CD    
+			 , RCPT_ENGR    
+			 , RCPT_ENGR_NM
+			 , RCPT_ENGR_SEQ         
+			 , RCPT_STS_COST_TYPE
+			 , RCPT_STS_COST_TYPE_NM
+			 , RCPT_STS_COST
+			 , IN_USER_NM
+			 , IN_DT
+			 , COMP_FILE
+			 , COMP_FILE_NM
+			 , AST_SEQ
+			 , AST_SERIAL
+			 , RCPT_CMPL_DT
+			 , CMPL_DATE
+			 , CMPL_TIME         
+			 , RCPT_STS_CONT
+			 , CURR_HIST_CONT
+			 , RCPT_VISIT_DT
+			 , RCPT_VISIT_YMD
+			 , RCPT_VISIT_TIME         
+			 , SIGN_PATH
+			 , SIGN_NM
+		  FROM (
+		  		SELECT RM.RCPT_SEQ
+			          , RM.ASP_COMP_CD
+			      	  , RM.RCPT_NO
+			      	  , RM.STR_CD
+			      	  , RM.AST_SEQ
+			      	  , IFNULL(AM.AST_SERIAL, '') AST_SERIAL
+			      	  , S.STR_NM
+			      	  , IFNULL(DATE_FORMAT(RM.RCPT_CMPL_DT, '%Y/%m/%d %H:%i'), '') AS RCPT_CMPL_DT
+			      	  , IFNULL(DATE_FORMAT(RM.RCPT_CMPL_DT, '%Y-%m-%d'), '') AS CMPL_DATE
+			      	  , IFNULL(DATE_FORMAT(RM.RCPT_CMPL_DT, '%H:%i'), '') AS CMPL_TIME 
+			      	  , C.COMP_CD
+			      	  , IFNULL(C.COMP_NM,'') COMP_NM
+			      	  , IFNULL(B.BRND_NM,'') BRND_NM   
+			      	  , SS.AREA_SEQ
+			      	  , CC5.CODE_NM AREA_NM
+			      	  , IFNULL(SA.AREA_NM, '') ASP_PART_NM                   
+			      	  , SS.PHONE_NUM
+			      	  , SP.PRD_TYPE_LV1
+			      	  , SL.RCPT_STS_TYPE 
+			      	  , RM.RCPT_OBS_LV1
+			      	  , RM.RCPT_OBS_LV2
+			      	  , RM.RCPT_OBS_LV3
+			      	  , RM.RCPT_OBS_LV4
+			      	  , (SELECT PRD_TYPE_NM  FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV ='2' AND PRD_TYPE_CD = RM.RCPT_OBS_LV1 ) RCPT_OBS_LV1_NM
+			      	  , (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV2 ) RCPT_OBS_LV2_NM
+			      	  , (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV3 ) RCPT_OBS_LV3_NM
+			      	  , (SELECT OBS_NM from TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV4 ) RCPT_OBS_LV4_NM
+			      	  , CC1.CODE_NM AS RCPT_STS_NM
+			      	  , RM.RCPT_DT
+			      	  , IFNULL(DATE_FORMAT(RM.RCPT_DT, '%Y/%m/%d'), '') AS RCPT_DT_EXCEL
+			      	  , RM.RCPT_TIME
+			      	  , RM.RCPT_CONT
+			      	  , RM.RCPT_CUST_TYPE                 
+			      	  , CC2.CODE_NM AS RCPT_CUST_TYPE_NM
+			      	  , RM.RCPT_CUST_NM 
+			      	  , RM.RCPT_CUST_PHONE 
+			      	  , RM.RCPT_CUST_EMAIL
+			      	  , SP.PRD_CD
+			      	  , SP.PRD_NM
+			      	  , SP.PRD_SPEC
+			      	  , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+			      	  , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+			      	  , CC4.CODE_NM AS PRD_TYPE_LV3_NM
+			      	  , '' PRD_TYPE_LV4_NM
+			      	  , SL.RCPT_STS_COST_TYPE
+			      	  , SL.RCPT_STS_AREA_CD
+			      	  , CC3.CODE_NM AS RCPT_STS_COST_TYPE_NM
+			      	  , (CASE WHEN SL.RCPT_STS_COST_TYPE='01' THEN '0' ELSE SL.RCPT_STS_COST END) RCPT_STS_COST
+			      	  , IFNULL(SL.RCPT_STS_CONT, '') AS RCPT_STS_CONT
+			      	  , IFNULL(SL.CURR_HIST_CONT, '') AS CURR_HIST_CONT
+			      	  , RM.RCPT_ENGR
+			      	  , RM.RCPT_ENGR_NM 
+			      	  , RM.RCPT_ENGR_SEQ                  
+			      	  , FN_GET_USER_NM(RM.IN_USER_ID) IN_USER_NM
+			      	  , DATE_FORMAT(RM.IN_DT,'%Y-%m-%d') IN_DT
+			      	  , IFNULL(SC.COMP_FILE,'') COMP_FILE
+			      	  , IFNULL(SC.COMP_FILE_NM,'') COMP_FILE_NM 
+			      	  , IFNULL(DATE_FORMAT(RM.RCPT_VISIT_DT, '%Y/%m/%d %h:%i'), '') AS RCPT_VISIT_DT
+			      	  , DATE_FORMAT(RM.RCPT_VISIT_DT,'%Y-%m-%d' ) RCPT_VISIT_YMD
+			      	  , DATE_FORMAT(RM.RCPT_VISIT_DT,'%H:%i' ) RCPT_VISIT_TIME
+			      	  , IFNULL(SL.SIGN_PATH, '') AS SIGN_PATH
+			      	  , IFNULL(SL.SIGN_NM, '') AS SIGN_NM
+			      	  , SL.IN_DT AS SL_IN_DT
+			      	  , SL.UP_DT AS SL_UP_DT
+		      FROM TB_MMS_OBS_RCPT_M RM
+		      LEFT JOIN TB_MMS_STND_STR_S S
+		        ON RM.STR_CD = S.STR_CD
+		        AND S.COMP_YN = 'N'
+		      LEFT JOIN TB_MMS_STND_BRND_S B
+		        ON S.BRND_CD = B.BRND_CD
+		      LEFT JOIN TB_MMS_STND_COMP_S C
+		        ON S.COMP_CD = C.COMP_CD
+		      LEFT JOIN TB_PARAGON_COMM_CODE CC
+		        ON S.STR_TYPE = CC.CODE_CD
+		        AND CC.CODE_GROUP_CD = 'SC0021'
+		      LEFT JOIN TB_PARAGON_COMM_CODE PCC
+		        ON S.STR_TYPE = PCC.CODE_CD
+		        AND PCC.CODE_CD = S.AREA_SEQ
+		        AND PCC.CODE_GROUP_CD = 'SC0021'
+		      LEFT OUTER JOIN TB_PARAGON_COMM_CODE PCC2
+		        ON PCC2.CODE_GROUP_CD = 'SC0027'
+		        AND PCC.CODE_OTHER1 = PCC2.CODE_CD
+		      LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		        ON RM.STR_CD =  SS.STR_CD
+		      LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		        ON SS.COMP_CD = SC.COMP_CD
+		      LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L SL
+		        ON RM.RCPT_SEQ =SL.RCPT_SEQ 
+		       AND SL.LAST_PROC_YN = 'Y'
+		      LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+		        ON SL.RCPT_STS_AREA_CD = SA.AREA_CD
+		      LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+		        ON RM.PRD_CD = SP.PRD_CD
+		      LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		      ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		      LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		        ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		      LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		        ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		      LEFT JOIN TB_PARAGON_COMM_CODE CC1
+		        ON CC1.CODE_GROUP_CD = 'OS0001'
+		        AND IFNULL(SL.RCPT_STS_TYPE,'01') = CC1.CODE_CD
+		      LEFT JOIN TB_PARAGON_COMM_CODE CC2
+		        ON CC2.CODE_GROUP_CD = 'OS0003'
+		        AND RM.RCPT_CUST_TYPE = CC2.CODE_CD
+		      LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		        ON CC3.CODE_GROUP_CD = 'OS0002'
+		        AND SL.RCPT_STS_COST_TYPE = CC3.CODE_CD
+		      LEFT JOIN TB_PARAGON_COMM_CODE CC4
+		        ON CC4.CODE_GROUP_CD = 'SC0025'
+		        AND SPT3.PRD_TYPE_NM = CC4.CODE_CD
+		      LEFT JOIN TB_PARAGON_COMM_CODE CC5
+		      	ON CC5.CODE_GROUP_CD = 'SC0027'
+		      	AND SS.AREA_SEQ = CC5.CODE_CD
+		      LEFT OUTER JOIN TB_MMS_AST_MNG_M  AM
+		      ON RM.AST_SEQ = AM.AST_SEQ 
+		      WHERE RM.DEL_YN= 'N'
+		) RCPT
+		WHERE RCPT_SEQ = #{rcptSeq}
+		ORDER BY SL_UP_DT DESC, SL_IN_DT DESC
+		LIMIT 1
+	</select>
+	<select id="viewReport" resultType="LHMap">
+	    SELECT /* [ObstacleReceiptService.query][viewReport][서비스리포트 엑셀출력용][유승우][2018-01-16] */
+			   RCPT_SEQ
+			 , ASP_COMP_CD
+			 , RCPT_NO
+			 , STR_CD
+			 , AST_SEQ
+			 , AST_SERIAL
+			 , STR_NM
+			 , RCPT_CMPL_DT
+			 , COMP_CD
+			 , COMP_NM
+			 , BRND_NM
+			 , AREA_SEQ
+			 , ASP_PARTER_NM   
+			 , ASP_PART_NM
+			 , PRD_TYPE_LV1
+			 , RCPT_STS_TYPE
+			 , IFNULL(RCPT_OBS_LV1_NM, '') RCPT_OBS_LV1_NM
+			 , IFNULL(RCPT_OBS_LV2_NM, '') RCPT_OBS_LV2_NM
+			 , IFNULL(RCPT_OBS_LV3_NM, '') RCPT_OBS_LV3_NM
+			 , IFNULL(RCPT_OBS_LV4_NM, '') RCPT_OBS_LV4_NM
+			 , RCPT_STS_NM
+			 , RCPT_DT
+			 , RCPT_DT_EXCEL
+			 , RCPT_CONT
+			 , RCPT_CUST_TYPE
+			 , RCPT_CUST_TYPE_NM
+			 , RCPT_CUST_NM
+			 , PRD_NM
+			 , PRD_SPEC
+			 , PRD_TYPE_LV1_NM
+			 , PRD_TYPE_LV2_NM
+			 , PRD_TYPE_LV3_NM
+			 , RCPT_STS_AREA_CD
+			 , RCPT_STS_COST_TYPE_NM
+			 , RCPT_STS_COST
+			 , RCPT_STS_CONT
+			 , CURR_HIST_CONT
+			 , RCPT_ENGR_NM
+			 , IN_USER_NM
+			 , IN_DT
+			 , RCPT_VISIT_DT
+			 , SIGN_PATH
+			 , SIGN_NM
+		 FROM (
+			 SELECT 
+				  	   RM.RCPT_SEQ
+				     , IFNULL(RM.ASP_COMP_CD, '') ASP_COMP_CD
+				     , RM.RCPT_NO
+				     , RM.STR_CD
+				     , RM.AST_SEQ
+				     , IFNULL(AM.AST_SERIAL,'') AS AST_SERIAL
+				     , S.STR_NM
+				     , IFNULL(DATE_FORMAT(RM.RCPT_CMPL_DT, '%Y/%m/%d %h:%i'), '') AS RCPT_CMPL_DT
+				     , C.COMP_CD
+				     , IFNULL(C.COMP_NM,'') COMP_NM
+				     , IFNULL(B.BRND_NM,'') BRND_NM 
+				     , S.AREA_SEQ
+				     , IFNULL(AC.ASP_COMP_NM, '') ASP_PARTER_NM     
+				     , IFNULL(SA.AREA_NM, '') ASP_PART_NM
+				     , SP.PRD_TYPE_LV1
+				     , SL.RCPT_STS_TYPE 
+				     , (SELECT PRD_TYPE_NM  FROM TB_MMS_STND_PRD_TYPE_S WHERE PRD_TYPE_LV ='2' AND PRD_TYPE_CD = RM.RCPT_OBS_LV1 ) RCPT_OBS_LV1_NM
+				     , (SELECT OBS_NM FROM TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV2 ) RCPT_OBS_LV2_NM
+				     , (SELECT OBS_NM FROM TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV3 ) RCPT_OBS_LV3_NM
+				     , (SELECT OBS_NM FROM TB_MMS_STND_OBS_S WHERE OBS_SEQ = RM.RCPT_OBS_LV4 ) RCPT_OBS_LV4_NM
+				     , CC.CODE_NM AS RCPT_STS_NM
+				     , RM.RCPT_DT
+				     , CONCAT(IFNULL(DATE_FORMAT(RM.RCPT_DT, '%Y/%m/%d'), ''),' ',IFNULL(RM.RCPT_TIME, '')) AS RCPT_DT_EXCEL
+				     , RM.RCPT_CONT
+				     , RM.RCPT_CUST_TYPE
+				     , CC2.CODE_NM AS RCPT_CUST_TYPE_NM
+				     , RM.RCPT_CUST_NM
+				     , SP.PRD_NM
+				     , SP.PRD_SPEC
+				     , SPT1.PRD_TYPE_NM AS PRD_TYPE_LV1_NM
+				     , SPT2.PRD_TYPE_NM AS PRD_TYPE_LV2_NM
+				     , CC4.CODE_NM AS PRD_TYPE_LV3_NM
+				     , SL.RCPT_STS_AREA_CD
+				     , CC3.CODE_NM AS RCPT_STS_COST_TYPE_NM
+				     , (CASE WHEN SL.RCPT_STS_COST_TYPE='01' THEN '0' ELSE SL.RCPT_STS_COST END) RCPT_STS_COST
+				     , IFNULL(SL.RCPT_STS_CONT, '') AS RCPT_STS_CONT
+				     , IFNULL(SL.CURR_HIST_CONT, '') AS CURR_HIST_CONT
+				     , RM.RCPT_ENGR_NM 
+				     , FN_GET_USER_NM(RM.IN_USER_ID) IN_USER_NM
+				     , DATE_FORMAT(RM.IN_DT,'%Y-%m-%d') IN_DT
+				     , IFNULL(DATE_FORMAT(RM.RCPT_VISIT_DT, '%Y/%m/%d %h:%i'), '') AS RCPT_VISIT_DT
+				     , IFNULL(SL.SIGN_PATH, '') AS SIGN_PATH
+				     , IFNULL(SL.SIGN_NM, '') AS SIGN_NM
+			 FROM TB_MMS_OBS_RCPT_M RM
+		     LEFT JOIN TB_MMS_STND_STR_S S
+		       ON S.COMP_YN = 'N'
+		       AND RM.STR_CD = S.STR_CD
+		     LEFT JOIN TB_MMS_STND_BRND_S B
+		       ON S.BRND_CD = B.BRND_CD
+  		     LEFT JOIN TB_MMS_STND_COMP_S C
+ 		       ON S.COMP_CD = C.COMP_CD
+		     LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L SL
+		      ON RM.RCPT_SEQ =SL.RCPT_SEQ 
+		      AND SL.LAST_PROC_YN = 'Y'
+		     LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+		      ON SL.RCPT_STS_AREA_CD = SA.AREA_CD 
+		     LEFT OUTER JOIN TB_MMS_ASP_COMP AC
+		     ON  RM.ASP_COMP_CD = AC.ASP_COMP_CD    
+		     LEFT OUTER JOIN TB_MMS_STND_PRD_S SP
+		      ON RM.PRD_CD = SP.PRD_CD
+		     LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT1
+		       ON SPT1.PRD_TYPE_CD = SP.PRD_TYPE_LV1
+		     LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT2
+		       ON SPT2.PRD_TYPE_CD = SP.PRD_TYPE_LV2
+		     LEFT JOIN TB_MMS_STND_PRD_TYPE_S SPT3
+		       ON SPT3.PRD_TYPE_CD = SP.PRD_TYPE_LV3
+		     LEFT JOIN TB_PARAGON_COMM_CODE CC
+		       ON CC.CODE_GROUP_CD = 'OS0001'
+		       AND IFNULL(SL.RCPT_STS_TYPE,'01') = CC.CODE_CD
+		     LEFT JOIN TB_PARAGON_COMM_CODE CC2
+		       ON CC2.CODE_GROUP_CD = 'OS0003'
+		       AND RM.RCPT_CUST_TYPE = CC2.CODE_CD
+		     LEFT JOIN TB_PARAGON_COMM_CODE CC3
+		       ON CC3.CODE_GROUP_CD = 'OS0002'
+		       AND SL.RCPT_STS_COST_TYPE = CC3.CODE_CD
+		     LEFT JOIN TB_PARAGON_COMM_CODE CC4
+		       ON CC4.CODE_GROUP_CD = 'SC0025'
+		       AND SPT3.PRD_TYPE_NM = CC4.CODE_CD
+		     LEFT OUTER JOIN TB_MMS_AST_MNG_M AM  
+		       ON RM.AST_SEQ = AM.AST_SEQ
+		       AND AM.DEL_YN = 'N'
+		     WHERE  RM.DEL_YN = 'N'
+		) REPORT
+		WHERE RCPT_SEQ = #{rcptSeq}
+	</select>
+	<select id="getEngrList" resultType="LHMap" >
+		SELECT /* [ObstacleReceiptService.query][getEngrList][사용자 리스트 조회][김진호][2016-09-13] */
+			   USER_NO
+			 , USER_ID
+		     , USER_NM
+		     , USER_POSITION
+		     , FN_COMM_CODE_NM('SC0016', USER_POSITION, 'ko') USER_POSITION_NM
+		     , USER_PHONE
+		     , USER_EMAIL
+		     , SA.AREA_SEQ
+         	 , IFNULL(SA.AREA_NM,'') AREA_NM
+		     , IF(U.USE_YN='Y','정상', '휴면') LIVE_YN
+		     , USER_JOIN_DATE 
+		     , TIMESTAMPDIFF(month, USER_JOIN_DATE, now()) as LIVE_DATE
+		   FROM TB_PARAGON_USER U
+    	   LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+    		 ON U.AREA_SEQ = SA.AREA_SEQ
+    	  WHERE U.DEL_YN = 'N'		  
+		  	AND U.AREA_SEQ = #{areaSeq}
+		  ORDER BY U.AREA_SEQ DESC
+	</select>
+	<select id="getEngrCombo" resultType="LHMap" >
+		SELECT /* [ObstacleReceiptService.query][getEngrCombo][엔지니어 리스트 조회][김진호][2016-09-13] */
+			   USER_ID value
+		     , CONCAT(USER_NM,'[',USER_POSITION,']') name
+		   FROM TB_PARAGON_USER U
+    	   LEFT OUTER JOIN TB_MMS_STND_AREA_S SA
+    		 ON U.AREA_CD = SA.AREA_CD
+    		AND SA.DEL_YN = 'N'
+    	  WHERE U.DEL_YN = 'N'
+    	    AND USER_TYPE=2
+			  <if test="aspCompCd != null and !aspCompCd.equals('')"> 
+			    AND U.ASP_COMP_CD =#{aspCompCd}   
+			  </if>		  
+    	  		AND U.AREA_CD = #{areaCd}
+			<if test='s_companyCd != null and !s_companyCd.equals("")'>
+				AND U.ASP_COMP_CD = #{s_companyCd}
+			  <if test="s_areaCd != null and !s_areaCd.equals('')"> 
+			    AND U.AREA_CD = #{s_areaCd}
+			  </if>		  
+			</if>				    
+		  ORDER BY U.AREA_CD DESC
+	</select>
+	<select id="getEngrDeInfo" resultType="LHMap" >
+		SELECT   /* [ObstacleReceiptService.query][getEngrDeInfo][엔지니어 상세][유승우][2017-11-30] */
+		     USER_SEQ
+		   , USER_ID
+		   , USER_NM 
+		   , USER_PHONE
+		   , USER_EMAIL
+		   , USER_DEPT
+		   , USER_POSITION
+		   , ASP_COMP_CD
+		   , AREA_CD 
+		 FROM TB_PARAGON_USER 
+		WHERE DEL_YN ='N' 
+    	<if test="user_type != null and !user_type.equals('')"> 		
+		   AND 	USER_TYPE = #{user_type}
+    	</if> 		
+    	<if test="EngrID != null and !EngrID.equals('')"> 		
+		   AND 	USER_ID = #{EngrID}
+    	</if>  
+	</select>		
+	<select id="getObsHstList" resultType="LHMap" >
+		 SELECT /* [ObstacleReceiptService.query][getObsHstList][Site 장애 접수 목록 조회 수정][유승우][2018-01-17] */
+			  RM.RCPT_SEQ
+			, RM.RCPT_NO
+			, RM.STR_CD
+			, RM.RCPT_DT
+			, RM.RCPT_TIME
+			, RM.RCPT_CONT
+			, RM.RCPT_CUST_NM
+		 FROM TB_MMS_OBS_RCPT_M RM
+		 LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L SL
+		   ON RM.RCPT_SEQ =SL.RCPT_SEQ 
+           	   AND RM.ASP_COMP_CD = SL.ASP_COMP_CD
+          	   AND SL.LAST_PROC_YN = 'Y'
+		WHERE STR_CD = #{strCd}
+		<if test='s_companyCd != null and !s_companyCd.equals("")'>
+		   AND RM.ASP_COMP_CD =#{s_companyCd}
+		   <if test='s_areaCd != null and !s_areaCd.equals("")'>
+				AND SL.RCPT_STS_AREA_CD = #{s_areaCd}
+	       </if>
+		</if>		
+		ORDER BY RM.RCPT_DT DESC , SUBSTRING(RM.RCPT_TIME,6) DESC , RM.RCPT_TIME DESC
+		LIMIT 0, 100
+	</select>
+	<select id="getCustHstList" resultType="LHMap" >
+		SELECT /* [ObstacleReceiptService.query][getCustHstList][Site 장애 접수 목록 조회][김진호][2016-09-13] */
+			RCPT_SEQ
+			, RCPT_NO
+			, STR_CD
+			, RCPT_DT
+			, RCPT_TIME
+			, CONCAT(
+			 		IF(RCPT_CUST_NM IS NOT NULL, RCPT_CUST_NM, ''),
+			 		IF(RCPT_CUST_PHONE IS NOT NULL, CONCAT(' / ',RCPT_CUST_PHONE), ''),
+			 		IF(RCPT_CUST_EMAIL IS NOT NULL, CONCAT(' / ',RCPT_CUST_EMAIL), '')
+			 ) RCPT_CUST_INFO
+<!-- 			, RCPT_CUST_NM -->
+<!-- 			, RCPT_CUST_PHONE -->
+<!-- 			, IFNULL(RCPT_CUST_EMAIL, '') RCPT_CUST_EMAIL -->
+		FROM MMS.TB_MMS_OBS_RCPT_M
+		WHERE STR_CD = #{strCd}
+	    GROUP BY RCPT_CUST_PHONE
+	    ORDER BY RCPT_CUST_EMAIL DESC, COUNT(RCPT_CUST_PHONE) DESC
+		LIMIT 0, 30
+	</select>
+	<select id="view_RCPT_M" resultType="LHMap" >
+	  SELECT  
+	        RCPT_SEQ
+	      , RCPT_NO
+  		  , DATE_FORMAT(CONCAT(RCPT_DT,' ', RCPT_TIME), '%Y-%m-%d %H:%i') ACCEPT_DT	
+  		  , RCPT_CMPL_DT
+  		  , RCPT_CMPL_TYPE
+	  FROM TB_MMS_OBS_RCPT_M
+	  WHERE RCPT_SEQ = #{rcptSeq}
+	</select>		
+	<select id="getMailUserinfo" resultType="LHMap" >
+	  SELECT   /* [ObstacleReceiptService.query][getMailUserinfo][메일 발송정보용][유승우][2018-02-08] */
+		    RM.RCPT_SEQ
+		  , RM.RCPT_NO
+		  , CONCAT(COMP_NM, IF(BRND_NM IS NULL OR BRND_NM = '' ,'', CONCAT(' ',BRND_NM)) ,' [', STR_NM,']') STORE_NM  
+		  , RM.RCPT_CONT
+		  , DATE_FORMAT(CONCAT(RM.RCPT_DT,' ', RM.RCPT_TIME), '%Y-%m-%d %H:%i') ACCEPT_DT
+		  , FN_COMM_CODE_NM('OS0001',IFNULL(SL.RCPT_STS_TYPE,'01') , 'ko') AS RCPT_STS_NM
+		  , CONCAT(
+			FN_COMM_CODE_NM('OS0003', RM.RCPT_CUST_TYPE, 'ko'),
+			IF(RCPT_CUST_NM != '', CONCAT(' / ',RCPT_CUST_NM), ''),
+			IF(RCPT_CUST_PHONE != '', CONCAT(' / ',RCPT_CUST_PHONE), '')
+	 		) RCPT_CUST_INFO  
+		  , FN_GET_USER_NM(RM.IN_USER_ID) IN_USER_NM
+		  , FN_GET_USER_NM(SL.RCPT_STS_ENGR) ENGR_NM 
+		  , (SELECT USER_EMAIL FROM TB_PARAGON_USER WHERE USER_ID = SL.RCPT_STS_ENGR ) ENGR_EMAIL
+		FROM TB_MMS_OBS_RCPT_M RM
+		LEFT OUTER JOIN TB_MMS_OBS_RCPT_STS_L SL
+		 ON RM.RCPT_SEQ =SL.RCPT_SEQ 
+		 AND RM.ASP_COMP_CD = SL.ASP_COMP_CD 
+		 AND SL.LAST_PROC_YN = 'Y'
+		LEFT OUTER JOIN TB_MMS_STND_STR_S SS
+		  ON RM.STR_CD =  SS.STR_CD
+		LEFT OUTER JOIN TB_MMS_STND_BRND_S SB
+		  ON SS.BRND_CD = SB.BRND_CD 
+		LEFT OUTER JOIN TB_MMS_STND_COMP_S SC
+		  ON SS.COMP_CD = SC.COMP_CD
+		 WHERE RM.RCPT_SEQ = #{rcptSeq}
+		 LIMIT 0 ,1
+	</select>
+	<update id="updateRcpt">
+		UPDATE TB_MMS_OBS_RCPT_M
+		   SET STR_CD       = #{strCd}                
+			 , PRD_CD       = #{prdCd}                
+<!-- 			 , PAT_CD       = #{patCd}                 -->
+			 , RCPT_OBS_LV1 = #{rcptObsLv1}           
+			 , RCPT_OBS_LV2 = #{rcptObsLv2}           
+			 , RCPT_OBS_LV3 = #{rcptObsLv3}           
+			 , RCPT_OBS_LV4 = #{rcptObsLv4}
+			 , RCPT_CUST_TYPE = #{rcptCustType} 			            
+			 , RCPT_CUST_NM = #{rcptCustNm}           
+			 , RCPT_DT      = #{rcptDt}               
+			 , RCPT_TIME    = #{rcptTime}
+		     <if test="rcptStsVisitDt != null and !rcptStsVisitDt.equals('') and rcptStsVisitTime != null and !rcptStsVisitTime.equals('')">
+			 , RCPT_VISIT_DT =  STR_TO_DATE(DATE_FORMAT('${rcptVisitDate} ${rcptVisitTime}','%Y%m%d%H%i%S'),'%Y%m%d%H%i%S')   
+			 </if>           
+			 , RCPT_CONT    = #{rcptCont}             
+			 , RCPT_ENGR    = #{rcptEngr}
+			 , RCPT_ENGR_NM = #{rcptEngrNm}    	
+			 , RCPT_ENGR_SEQ = #{rcptEngrSeq}    					 		              
+		   <if test='astSeq != null and !astSeq.equals("")'>
+			 , AST_SEQ      = #{astSeq}               
+	       </if>
+			 , UP_USER_ID   = #{s_userId}
+	    WHERE RCPT_SEQ = #{rcptSeq}             
+	    
+	</update>
+	<update id="updateRcptStsLp">
+      /* [ObstacleReceiptService.query][updateRcptStsLp][장애수정엔지니어 정보 수정][유승우][2017-12-12] */
+		UPDATE TB_MMS_OBS_RCPT_STS_L
+		   SET  RCPT_STS_ENGR = #{rcptEngr}
+		       ,RCPT_STS_AREA_CD = #{rcptAreaCd}
+		 WHERE ASP_COMP_CD =  #{s_companyCd}
+		   AND RCPT_SEQ = #{rcptSeq}
+		   AND LAST_PROC_YN = 'Y'	
+	</update>	
+	<update id="updateDelRcpt">
+		UPDATE TB_MMS_OBS_RCPT_M
+		   SET DEL_YN       = 'Y'                
+			 , UP_USER_ID   = #{s_userId}
+			 , UP_DT         = NOW()
+	    WHERE RCPT_SEQ = #{rcptSeq}             
+	    
+	</update>
+	<update id="updateDelRcptLp">
+		UPDATE TB_MMS_OBS_RCPT_STS_L
+		   SET DEL_YN        = 'Y'
+			 , UP_USER_ID   = #{s_userId}		     
+		     , UP_DT         = NOW()
+		WHERE RCPT_SEQ = #{rcptSeq} 
+	</update>	
+	
+	<insert id="insertRcpt">
+	
+		INSERT INTO TB_MMS_OBS_RCPT_M(
+			   ASP_COMP_CD
+			 , RCPT_NO
+			 , STR_CD
+			 , PRD_CD
+			 , RCPT_OBS_LV1
+			 , RCPT_OBS_LV2
+			 , RCPT_OBS_LV3
+			 , RCPT_OBS_LV4
+			 , RCPT_CUST_TYPE
+			 , RCPT_CUST_NM
+			 , RCPT_CUST_PHONE
+			 , RCPT_CUST_EMAIL
+			 , RCPT_DT
+			 , RCPT_TIME
+			 , RCPT_CONT
+			 , RCPT_ENGR_NM			 
+			 , RCPT_ENGR
+			 , RCPT_ENGR_SEQ
+			 , RCPT_COST
+			 , RCPT_COST_TYPE			 
+			  <if test="astSeq != null and !astSeq.equals('')">  
+			 , AST_SEQ
+			 </if>
+			 , RCPT_CMPL_TYPE
+			 <if test="rcptStsType != null and rcptStsType >= 100"> 
+			 , RCPT_CMPL_DT
+			 </if>
+			 <if test="rcptStsDt != null and !rcptStsDt.equals('')">  
+			 , RCPT_VISIT_DT			 
+			 </if>					 
+			 , IN_USER_ID
+			 , UP_USER_ID
+			 , IN_DT
+		)
+		VALUES( #{s_companyCd}
+			  , FN_MAKE_REPT_NO()
+			  , #{strCd}
+			  , #{prdCd}
+			  , #{rcptObsLv1}
+			  , #{rcptObsLv2}
+			  , #{rcptObsLv3}
+			  , #{rcptObsLv4}
+			  , #{rcptCustType}
+			  , #{rcptCustNm}
+			  , #{rcptCustPhone}
+			  , #{rcptCustEmail}
+			  , #{rcptDt}
+			  , #{rcptTime}
+			  , #{rcptCont}
+			  , #{rcptStsEngrNm}			  
+			  , #{rcptStsEngr}			  
+			  , #{rcptStsEngrId}
+			  , #{rcptStsCost}
+			  , #{rcptStsCostType}
+			  <if test="astSeq != null and !astSeq.equals('')">  
+			  , #{astSeq}
+			  </if>
+			  , IFNULL(#{rcptStsType},'01')
+			  <if test="rcptStsType != null and rcptStsType >= 100"> 
+			  , STR_TO_DATE(DATE_FORMAT('${rcptCompDt} ${rcptCompTime}','%Y%m%d%H%i%S'),'%Y%m%d%H%i%S') 
+			  </if>
+			  <if test="rcptStsDt != null and !rcptStsDt.equals('')">  
+			  , STR_TO_DATE(DATE_FORMAT('${rcptStsDt} ${rcptStsTime}','%Y%m%d%H%i%S'),'%Y%m%d%H%i%S')   
+			  </if>					  
+			  , #{s_userId}
+			  , #{s_userId}
+			  , NOW()    
+		)
+		
+		<selectKey keyProperty="rcptSeq" resultType="java.lang.Integer" order="AFTER">
+		    SELECT LAST_INSERT_ID()
+		</selectKey>
+		
+	</insert>
+	<insert id="updateRcptSts">
+  
+		UPDATE TB_MMS_OBS_RCPT_STS_L
+		   SET LAST_PROC_YN = 'N'
+		 WHERE ASP_COMP_CD =  #{s_companyCd}
+		   AND RCPT_SEQ = #{rcptSeq}
+	</insert>
+	<insert id="insertRcptSts">
+  
+		INSERT INTO TB_MMS_OBS_RCPT_STS_L(
+			   ASP_COMP_CD
+			 , RCPT_SEQ
+			 , RCPT_STS_TYPE
+			 , RCPT_STS_DT
+			 , RCPT_STS_TIME
+			 , RCPT_STS_CONT
+			 , RCPT_STS_COST
+			 , RCPT_STS_COST_TYPE
+			 , RCPT_STS_COST_DT
+			 , RCPT_STS_DPST_NM
+			 , RCPT_STS_DPST_YN
+			 , RCPT_STS_ENGR
+			 , RCPT_STS_AREA_CD
+			 , CURR_HIST_CONT
+			 , IN_USER_ID
+			 , UP_USER_ID
+			 , IN_DT
+		)
+		VALUES( #{s_companyCd}
+			  , #{rcptSeq}
+			  , #{rcptStsType}
+			  , #{rcptCompDt}
+			  , #{rcptCompTime}
+			  , #{rcptStsCont}
+			  , #{rcptStsCost}
+			  , #{rcptStsCostType}
+			  , #{rcptStsCostDt}
+			  , #{rcptStsDpstNm}
+			  , #{rcptStsDpstYn}
+			  , #{rcptStsEngr}
+			  , #{areaCd}
+			  ,   FN_GET_OBS_RCPT_TYPE_INFO('OS0001', #{rcptStsType},'CATE_TEXT')
+			  , #{s_userId}
+			  , #{s_userId}
+			  , NOW()
+		)
+	</insert>
+
+	<insert id="saveTest" >
+		INSERT ALL ${table_nm} 
+			<foreach collection="headerColunm" item="colnames" open="(" separator="," close=")"  >${colnames}</foreach><foreach collection="dt_test" item="test_dr"  separator=","    ><foreach collection="headerColunm" item="colValue" open="values(" separator="," close=")"  >'${test_dr[colValue]}'</foreach>
+			</foreach>		
+		select from dual
+	</insert>
+</mapper>

@@ -1,0 +1,160 @@
+﻿
+function ID(x){
+	return document.getElementById(x);
+}
+
+function E(x){
+	return document.getElementById(x);
+}
+
+/* form object내의 name을 갖는 object를 얻는다 */
+function getFormElement(form, name){
+	if(form == null || name == null)
+		return null;
+	
+	for (var i=0; i<form.length; i++)
+	{
+		if(form.elements[i].name == name)
+		{
+			return form.elements[i];
+		}
+	}
+	return null;
+}
+
+function getFormValue(form, name){
+	var e = getFormElement(form, name);
+	if(e) return e.value;
+	return null;
+}
+
+/* javascript 파일을 동적으로 로드 가능하다. 즉 include와 동일 기능을 한다.
+ * callback function의 함수 파라미터는 event가 전달이 된다.
+ */
+function loadScript(url, callback)
+{
+	// adding the script tag to the head as suggested before
+	var head= document.getElementsByTagName('head')[0];
+	var script= document.createElement('script');
+	script.type= 'text/javascript';
+	script.src= url;
+
+	// then bind the event to the callback function 
+	// there are several events for cross browser compatibility
+	script.onreadystatechange = callback;
+	script.onload = callback
+
+	// fire the loading
+	head.appendChild(script);
+}
+
+function includeJs(jsFilePath) {
+/*	
+	var js = document.createElement("script");
+
+	js.type = "text/javascript";
+	js.src = jsFilePath;
+
+	document.body.appendChild(js);
+*/	
+	document.write('<script type="text/javascript" src="' + jsFilePath + '"></script>'); 	
+}
+
+function overThumbnail(obj)
+{
+  obj.style.opacity=0.7;
+  obj.filters.alpha.opacity=70;
+}
+
+function outThumbnail(obj)
+{
+  obj.style.opacity=1;
+  obj.filters.alpha.opacity=100;
+}
+
+
+function showMiniLoginBox(){
+	var box = E('miniLoginBox');
+	var form = E('miniLoginForm');
+	
+	box.style.top = (event.clientY) + 'px';
+	box.style.left = (event.clientX - 150) + 'px';
+	box.style.visibility= 'visible';
+	
+	var input = getFormElement(form, 'id');
+	if(input != null) input.focus();
+}
+
+function hideMiniLoginBox(){
+	var box = E("miniLoginBox");
+	box.style.visibility='hidden';
+}
+
+/*
+function jsLoaded(event){
+	alert('jsLoaded ' + event);
+}
+*/
+//loadScript('/include/js/cipher/tea-block.js', jsLoaded);
+loadScript('/resources/js/javascript/cipher/tea-block.js', null);
+loadScript('/resources/js/javascript/cipher/base64.js', null);
+loadScript('/resources/js/javascript/cipher/utf8.js', null);
+
+loadScript('/resources/js/javascript/cipher/jsbn.js', null);
+loadScript('/resources/js/javascript/cipher/rsa.js', null);
+
+function GenerateKey(){
+	time = new Date().getTime();
+	random = Math.floor(65536*Math.random());
+	return (time*random).toString();	
+}
+
+function EncryptTEA(k, text){	
+	return Tea.encrypt(text, k);	
+}
+
+function EncryptRSA(m, e, text){
+	var rsa = new RSAKey();
+	rsa.setPublic(m, e);
+	return rsa.encrypt(text);
+}
+
+function ActionLogin(inForm){
+	
+	if(!getFormValue(inForm, 'id')){
+		alert('ID를 입력하세요.');
+		inForm.id.focus();
+		return false;
+	}
+
+	if(!getFormValue(inForm, 'passwd')){
+		alert('비밀번호를 입력하세요.');
+		inForm.passwd.focus();
+		return false;
+	}
+	
+	key = GenerateKey();
+	
+	eId = EncryptTEA(key, getFormValue(inForm, 'id'));
+	ePasswd = EncryptTEA(key, getFormValue(inForm, 'passwd'));
+	
+	m = ID('iFormCommon').m.value;
+	e = ID('iFormCommon').e.value;
+	eKey = EncryptRSA(m, e, key);
+	
+	actionForm = ID('iLoginFormAction');
+
+	actionForm.id.value = eId;
+	actionForm.passwd.value = ePasswd;
+	actionForm.key.value = eKey;
+	
+	actionForm.submit();	
+	
+	return true;
+}
+
+
+function actionLogout(obj){
+	obj.action = "/member/logout_action.jsp";
+	obj.submit();
+}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>assets</key>
+			<array>
+				<dict>
+					<key>kind</key>
+					<string>software-package</string>
+					<key>url</key>
+					<string>http://localhost:8080/install/ios/mms.ipa</string>
+				</dict>
+				<dict>
+					<key>kind</key>
+					<string>display-image</string>
+					<key>url</key>
+					<string>https://googledrive.com/host/0Byr_hGV1u4TdRzhPQmp5VUlFZkk/icon.png</string>
+				</dict>
+				<dict>
+					<key>kind</key>
+					<string>full-size-image</string>
+					<key>url</key>
+					<string>https://googledrive.com/host/0Byr_hGV1u4TdRzhPQmp5VUlFZkk/icon1.png</string>
+				</dict>
+			</array>
+			<key>metadata</key>
+			<dict>
+				<key>bundle-identifier</key>
+				<string>com.VertexID.mms</string>
+				<key>bundle-version</key>
+				<string>0.5.0</string>
+				<key>kind</key>
+				<string>software</string>
+				<key>title</key>
+				<string>mms</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>
